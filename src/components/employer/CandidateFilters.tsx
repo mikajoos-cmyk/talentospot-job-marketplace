@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Map } from 'lucide-react';
 import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
 import { locationData, refugeeOriginCountries } from '@/data/locationData';
 
@@ -18,6 +18,7 @@ interface CandidateFiltersProps {
 const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersChange }) => {
   const [skillInput, setSkillInput] = useState('');
   const [qualificationInput, setQualificationInput] = useState('');
+  const [showMap, setShowMap] = useState(false);
 
   const handleAddSkill = () => {
     if (skillInput.trim() && !filters.skills.includes(skillInput.trim())) {
@@ -156,9 +157,20 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
         </div>
 
         <div>
-          <Label className="text-body-sm font-medium text-foreground mb-3 block">
-            Work Radius: {filters.workRadius} km
-          </Label>
+          <div className="flex items-center justify-between mb-3">
+            <Label className="text-body-sm font-medium text-foreground">
+              Work Radius: {filters.workRadius} km
+            </Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowMap(!showMap)}
+              className="bg-transparent text-primary hover:bg-primary/10 hover:text-primary font-normal h-8 px-2"
+            >
+              <Map className="w-4 h-4 mr-1" strokeWidth={1.5} />
+              {showMap ? 'Hide' : 'Show'} Map
+            </Button>
+          </div>
           <Slider
             value={[filters.workRadius]}
             onValueChange={(value) => onFiltersChange({ ...filters, workRadius: value[0] })}
@@ -167,6 +179,17 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
             step={5}
             className="mt-2"
           />
+          {showMap && (
+            <div className="mt-4">
+              <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center border border-border">
+                <div className="text-center">
+                  <Map className="w-12 h-12 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
+                  <p className="text-body-sm text-muted-foreground">Map View</p>
+                  <p className="text-caption text-muted-foreground">Radius: {filters.workRadius} km</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div>

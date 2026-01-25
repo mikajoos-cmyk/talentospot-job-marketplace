@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
-import { LayoutDashboard, Briefcase, User, Menu } from 'lucide-react';
+import { LayoutDashboard, Briefcase, User, MessageSquare } from 'lucide-react';
 
 const MobileNav: React.FC = () => {
   const { user } = useUser();
@@ -10,15 +10,15 @@ const MobileNav: React.FC = () => {
   const candidateTabs = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/candidate/dashboard' },
     { icon: Briefcase, label: 'Jobs', path: '/candidate/jobs' },
+    { icon: MessageSquare, label: 'Messages', path: '/candidate/messages' },
     { icon: User, label: 'Profile', path: '/candidate/profile' },
-    { icon: Menu, label: 'More', path: '/candidate/settings' },
   ];
 
   const employerTabs = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/employer/dashboard' },
     { icon: User, label: 'Candidates', path: '/employer/candidates' },
+    { icon: MessageSquare, label: 'Messages', path: '/employer/messages' },
     { icon: Briefcase, label: 'Jobs', path: '/employer/jobs' },
-    { icon: Menu, label: 'More', path: '/employer/settings' },
   ];
 
   const tabs = user.role === 'candidate' ? candidateTabs : employerTabs;

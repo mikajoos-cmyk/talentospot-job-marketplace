@@ -27,8 +27,8 @@ const ProfileViewsChart: React.FC = () => {
         <AreaChart data={data}>
           <defs>
             <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(330, 95%, 67%)" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="hsl(330, 95%, 67%)" stopOpacity={0} />
+              <stop offset="5%" stopColor="hsl(217, 33%, 50%)" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="hsl(217, 33%, 50%)" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 90%)" />
@@ -52,7 +52,7 @@ const ProfileViewsChart: React.FC = () => {
           <Area 
             type="monotone" 
             dataKey="views" 
-            stroke="hsl(330, 95%, 67%)" 
+            stroke="hsl(217, 33%, 50%)" 
             strokeWidth={2}
             fill="url(#colorViews)" 
             animationDuration={1000}

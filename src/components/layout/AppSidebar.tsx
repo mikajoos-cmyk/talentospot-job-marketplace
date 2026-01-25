@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
-import { LayoutDashboard, User, Briefcase, Bookmark, Settings, Users, Building2, ChevronLeft, ChevronRight, Shield, CreditCard } from 'lucide-react';
+import { LayoutDashboard, User, Briefcase, Settings, Users, Building2, ChevronLeft, ChevronRight, Shield, CreditCard, Bookmark, Mail, MessageSquare, Network as NetworkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
@@ -19,6 +19,9 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
     { icon: User, label: 'My Profile', path: '/candidate/profile' },
     { icon: Briefcase, label: 'Find Jobs', path: '/candidate/jobs' },
     { icon: Bookmark, label: 'Saved Jobs', path: '/candidate/saved' },
+    { icon: Mail, label: 'Invitations', path: '/candidate/invitations' },
+    { icon: MessageSquare, label: 'Messages', path: '/candidate/messages' },
+    { icon: NetworkIcon, label: 'My Network', path: '/candidate/network' },
     { icon: CreditCard, label: 'Packages', path: '/candidate/packages' },
     { icon: Settings, label: 'Settings', path: '/candidate/settings' },
   ];
@@ -28,6 +31,8 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
     { icon: Users, label: 'Find Candidates', path: '/employer/candidates' },
     { icon: Briefcase, label: 'My Jobs', path: '/employer/jobs' },
     { icon: Building2, label: 'Company Profile', path: '/employer/profile' },
+    { icon: MessageSquare, label: 'Messages', path: '/employer/messages' },
+    { icon: NetworkIcon, label: 'My Network', path: '/employer/network' },
     { icon: CreditCard, label: 'Packages', path: '/employer/packages' },
     { icon: Settings, label: 'Settings', path: '/employer/settings' },
   ];
@@ -52,8 +57,18 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
     >
       <div className="flex flex-col h-full">
         <div className="h-16 flex items-center justify-between px-4 border-b border-secondary-hover">
-          {!collapsed && (
-            <h1 className="text-h4 font-heading text-secondary-foreground">TalentoSpot</h1>
+          {!collapsed ? (
+            <img 
+              src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png" 
+              alt="TalentoSpot" 
+              className="h-8 w-auto"
+            />
+          ) : (
+            <img 
+              src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png" 
+              alt="TalentoSpot" 
+              className="h-6 w-auto mx-auto"
+            />
           )}
           <Button
             variant="ghost"
@@ -70,7 +85,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
           <ul className="space-y-1 px-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+              const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
               
               return (
                 <li key={item.path}>

@@ -8,14 +8,14 @@
   :root {
     --color-border: 220 15% 90%;
     --color-input: 220 15% 90%;
-    --color-ring: 160 84% 39%;
+    --color-ring: 217 33% 50%;
     --color-background: 0 0% 99%;
     --color-foreground: 220 15% 20%;
     
-    --color-primary: 160 84% 39%;
+    --color-primary: 217 33% 50%;
     --color-primary-foreground: 0 0% 100%;
-    --color-primary-hover: 160 84% 34%;
-    --color-primary-active: 160 84% 29%;
+    --color-primary-hover: 217 33% 45%;
+    --color-primary-active: 217 33% 40%;
     
     --color-secondary: 220 29% 10%;
     --color-secondary-foreground: 0 0% 98%;
@@ -25,10 +25,10 @@
     --color-tertiary: 0 0% 97%;
     --color-tertiary-foreground: 220 15% 20%;
     
-    --color-accent: 330 95% 67%;
+    --color-accent: 28 45% 60%;
     --color-accent-foreground: 0 0% 100%;
     
-    --color-success: 160 84% 39%;
+    --color-success: 217 33% 50%;
     --color-success-foreground: 0 0% 100%;
     
     --color-warning: 40 100% 50%;
@@ -82,14 +82,14 @@
 
 @layer utilities {
   .text-gradient-primary {
-    background: linear-gradient(135deg, hsl(160, 84%, 39%) 0%, hsl(155, 70%, 52%) 100%);
+    background: linear-gradient(135deg, hsl(217, 33%, 50%) 0%, hsl(217, 33%, 60%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   
   .text-gradient-accent {
-    background: linear-gradient(135deg, hsl(330, 95%, 67%) 0%, hsl(330, 80%, 52%) 100%);
+    background: linear-gradient(135deg, hsl(28, 45%, 60%) 0%, hsl(28, 45%, 70%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

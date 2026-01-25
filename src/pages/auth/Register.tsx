@@ -122,6 +122,11 @@ const Register: React.FC = () => {
           {step === 'role' && (
             <div>
               <div className="text-center mb-8">
+                <img 
+                  src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png" 
+                  alt="TalentoSpot" 
+                  className="h-12 w-auto mx-auto mb-6"
+                />
                 <h1 className="text-h2 font-heading text-foreground mb-2">Join TalentoSpot</h1>
                 <p className="text-body text-muted-foreground">Choose your account type</p>
               </div>

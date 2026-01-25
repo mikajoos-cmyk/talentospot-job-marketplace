@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2 } from 'lucide-react';
+import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2, Map } from 'lucide-react';
 import { mockJobs } from '@/data/mockJobs';
 import { mockCompanies } from '@/data/mockCompanies';
 import { useToast } from '@/contexts/ToastContext';
@@ -160,7 +160,21 @@ const JobDetailView: React.FC = () => {
             )}
           </div>
 
-          <div className="mt-8 pt-8 border-t border-border">
+          <div className="mt-8 pt-8 border-t border-border space-y-6">
+            <div>
+              <h3 className="text-h3 font-heading text-foreground mb-4 flex items-center">
+                <Map className="w-6 h-6 mr-2 text-primary" strokeWidth={1.5} />
+                Location
+              </h3>
+              <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center border border-border">
+                <div className="text-center">
+                  <MapPin className="w-12 h-12 mx-auto mb-2 text-primary" strokeWidth={1.5} />
+                  <p className="text-body font-medium text-foreground">{job.location}</p>
+                  <p className="text-caption text-muted-foreground">Interactive map view</p>
+                </div>
+              </div>
+            </div>
+
             <Button 
               onClick={() => setApplyDialogOpen(true)}
               className="w-full md:w-auto bg-primary text-primary-foreground hover:bg-primary-hover font-normal h-12 px-8"

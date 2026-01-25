@@ -1,17 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Users, Building2, Globe, ArrowLeft, Briefcase, DollarSign, Calendar } from 'lucide-react';
+import { MapPin, Users, Building2, Globe, ArrowLeft, Briefcase, DollarSign, Calendar, Map, Heart, Send } from 'lucide-react';
 import { mockCompanies } from '@/data/mockCompanies';
 import { mockJobs } from '@/data/mockJobs';
+import { useToast } from '@/contexts/ToastContext';
 
 const CompanyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const company = mockCompanies.find(c => c.id === id);
   const companyJobs = mockJobs.filter(job => job.company === company?.name);
+
+  const handleFollow = () => {
+    setIsFollowing(!isFollowing);
+    showToast({
+      title: isFollowing ? 'Unfollowed' : 'Following',
+      description: isFollowing 
+        ? `You unfollowed ${company?.name}` 
+        : `You are now following ${company?.name}`,
+    });
+  };
+
+  const handleMessage = () => {
+    navigate(`/messages?recipient=${company?.id}`);
+  };
 
   if (!company) {
     return (
@@ -61,6 +78,33 @@ const CompanyDetail: React.FC = () => {
                   )}
                 </div>
 
+                <div className="flex flex-wrap gap-3 mb-4">
+                  <Button
+                    onClick={handleFollow}
+                    variant={isFollowing ? 'default' : 'outline'}
+                    className={`font-normal ${
+                      isFollowing
+                        ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
+                        : 'bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    <Heart 
+                      className="w-4 h-4 mr-2" 
+                      strokeWidth={1.5} 
+                      fill={isFollowing ? 'currentColor' : 'none'}
+                    />
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </Button>
+                  <Button
+                    onClick={handleMessage}
+                    variant="outline"
+                    className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                  >
+                    <Send className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                    Send Message
+                  </Button>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="flex items-center text-body text-foreground">
                     <Building2 className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
@@ -94,9 +138,23 @@ const CompanyDetail: React.FC = () => {
 
           <Card className="p-8 border border-border bg-card">
             <h2 className="text-h2 font-heading text-foreground mb-6">About Us</h2>
-            <p className="text-body text-foreground leading-relaxed whitespace-pre-line">
+            <p className="text-body text-foreground leading-relaxed whitespace-pre-line mb-6">
               {company.description}
             </p>
+
+            <div className="mt-8">
+              <h3 className="text-h3 font-heading text-foreground mb-4 flex items-center">
+                <Map className="w-6 h-6 mr-2 text-primary" strokeWidth={1.5} />
+                Headquarters Location
+              </h3>
+              <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center border border-border">
+                <div className="text-center">
+                  <MapPin className="w-12 h-12 mx-auto mb-2 text-primary" strokeWidth={1.5} />
+                  <p className="text-body font-medium text-foreground">{company.location}</p>
+                  <p className="text-caption text-muted-foreground">Interactive map view</p>
+                </div>
+              </div>
+            </div>
           </Card>
 
           <Card className="p-8 border border-border bg-card">

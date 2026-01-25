@@ -9,14 +9,14 @@ module.exports = {
       colors: {
         border: "hsl(220, 15%, 90%)",
         input: "hsl(220, 15%, 90%)",
-        ring: "hsl(160, 84%, 39%)",
+        ring: "hsl(217, 33%, 50%)",
         background: "hsl(0, 0%, 99%)",
         foreground: "hsl(220, 15%, 20%)",
         primary: {
-          DEFAULT: "hsl(160, 84%, 39%)",
+          DEFAULT: "hsl(217, 33%, 50%)",
           foreground: "hsl(0, 0%, 100%)",
-          hover: "hsl(160, 84%, 34%)",
-          active: "hsl(160, 84%, 29%)",
+          hover: "hsl(217, 33%, 45%)",
+          active: "hsl(217, 33%, 40%)",
         },
         secondary: {
           DEFAULT: "hsl(220, 29%, 10%)",
@@ -29,11 +29,11 @@ module.exports = {
           foreground: "hsl(220, 15%, 20%)",
         },
         accent: {
-          DEFAULT: "hsl(330, 95%, 67%)",
+          DEFAULT: "hsl(28, 45%, 60%)",
           foreground: "hsl(0, 0%, 100%)",
         },
         success: {
-          DEFAULT: "hsl(160, 84%, 39%)",
+          DEFAULT: "hsl(217, 33%, 50%)",
           foreground: "hsl(0, 0%, 100%)",
         },
         warning: {
@@ -116,9 +116,9 @@ module.exports = {
         xl: '0 8px 24px hsla(220, 15%, 20%, 0.24)',
       },
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, hsl(160, 84%, 39%) 0%, hsl(155, 70%, 52%) 100%)',
+        'gradient-primary': 'linear-gradient(135deg, hsl(217, 33%, 50%) 0%, hsl(217, 33%, 60%) 100%)',
         'gradient-secondary': 'linear-gradient(135deg, hsl(220, 29%, 14%) 0%, hsl(220, 29%, 22%) 100%)',
-        'gradient-accent': 'linear-gradient(135deg, hsl(330, 95%, 67%) 0%, hsl(330, 80%, 52%) 100%)',
+        'gradient-accent': 'linear-gradient(135deg, hsl(28, 45%, 60%) 0%, hsl(28, 45%, 70%) 100%)',
       },
       transitionDuration: {
         fast: '150ms',

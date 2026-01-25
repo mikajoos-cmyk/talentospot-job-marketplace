@@ -67,6 +67,11 @@ const Login: React.FC = () => {
 
         <Card className="p-8 border border-border bg-card">
           <div className="text-center mb-8">
+            <img 
+              src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png" 
+              alt="TalentoSpot" 
+              className="h-12 w-auto mx-auto mb-6"
+            />
             <h1 className="text-h2 font-heading text-foreground mb-2">Welcome Back</h1>
             <p className="text-body text-muted-foreground">Sign in to your account</p>
           </div>

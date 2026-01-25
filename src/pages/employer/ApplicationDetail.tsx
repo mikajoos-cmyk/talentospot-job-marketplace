@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, DollarSign, Briefcase, ArrowLeft, Mail, Phone } from 'lucide-react';
+import { MapPin, DollarSign, Briefcase, ArrowLeft, Mail, Phone, MessageSquare } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { mockCandidates } from '@/data/mockCandidates';
 import { mockJobs } from '@/data/mockJobs';
@@ -16,7 +16,10 @@ const ApplicationDetail: React.FC = () => {
 
   const candidate = mockCandidates[0];
   const job = mockJobs[0];
+  const applicationStatus: 'pending' | 'interview' | 'rejected' | 'accepted' = 'interview';
   const coverLetter = "Dear Hiring Manager,\n\nI am writing to express my strong interest in the Senior Frontend Developer position at TechCorp. With over 5 years of experience in React and TypeScript development, I believe I would be a valuable addition to your team.\n\nMy expertise includes building scalable web applications, implementing modern UI/UX designs, and collaborating with cross-functional teams. I am particularly excited about the opportunity to work on cutting-edge projects and contribute to your company's growth.\n\nThank you for considering my application. I look forward to discussing how my skills and experience align with your needs.\n\nBest regards,\nSarah Johnson";
+
+  const canMessage = applicationStatus === 'accepted' || applicationStatus === 'interview';
 
   const handleAccept = () => {
     showToast({
@@ -142,6 +145,15 @@ const ApplicationDetail: React.FC = () => {
               </div>
 
               <div className="space-y-3">
+                {canMessage && (
+                  <Button 
+                    onClick={() => navigate(`/messages?recipient=${candidate.id}`)}
+                    className="w-full bg-info text-info-foreground hover:bg-info/90 font-normal"
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                    Send Message
+                  </Button>
+                )}
                 <Button 
                   onClick={handleAccept}
                   className="w-full bg-success text-success-foreground hover:bg-success/90 font-normal"

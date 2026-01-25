@@ -18,6 +18,10 @@ import CompanyProfile from './pages/employer/CompanyProfile';
 import ApplicationDetail from './pages/employer/ApplicationDetail';
 import SavedJobs from './pages/candidate/SavedJobs';
 import MyApplications from './pages/candidate/MyApplications';
+import MyInvitations from './pages/candidate/MyInvitations';
+import Following from './pages/candidate/Following';
+import Followers from './pages/candidate/Followers';
+import Network from './pages/shared/Network';
 import EditProfile from './pages/candidate/EditProfile';
 import Packages from './pages/shared/Packages';
 import Messages from './pages/shared/Messages';
@@ -86,10 +90,42 @@ function App() {
               } 
             />
             <Route 
+              path="/candidate/invitations" 
+              element={
+                <ProtectedRoute requiredRole="candidate">
+                  <MyInvitations />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/following" 
+              element={
+                <ProtectedRoute requiredRole="candidate">
+                  <Following />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/network" 
+              element={
+                <ProtectedRoute requiredRole="candidate">
+                  <Network />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/candidate/messages" 
               element={
                 <ProtectedRoute requiredRole="candidate">
                   <Messages />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/followers" 
+              element={
+                <ProtectedRoute requiredRole="candidate">
+                  <Followers />
                 </ProtectedRoute>
               } 
             />
@@ -187,6 +223,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="employer">
                   <Settings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/employer/network" 
+              element={
+                <ProtectedRoute requiredRole="employer">
+                  <Network />
                 </ProtectedRoute>
               } 
             />

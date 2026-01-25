@@ -27,7 +27,11 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-card border-b border-border">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-h3 font-heading text-foreground">TalentoSpot</h1>
+          <img 
+            src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png" 
+            alt="TalentoSpot" 
+            className="h-10 w-auto"
+          />
           <div className="flex items-center space-x-4">
             <Button 
               variant="ghost" 
@@ -319,7 +323,11 @@ const LandingPage: React.FC = () => {
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <h4 className="text-h4 font-heading text-secondary-foreground mb-4">TalentoSpot</h4>
+              <img 
+                src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png" 
+                alt="TalentoSpot" 
+                className="h-8 w-auto mb-4 brightness-0 invert"
+              />
               <p className="text-body-sm text-muted-foreground">
                 Connecting talented professionals with leading companies worldwide.
               </p>

@@ -2,8 +2,9 @@ import React from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, DollarSign, Calendar } from 'lucide-react';
+import { MapPin, DollarSign, Calendar, MessageSquare } from 'lucide-react';
 import { mockJobs } from '@/data/mockJobs';
+import { useNavigate } from 'react-router-dom';
 
 interface Application {
   id: string;
@@ -13,6 +14,7 @@ interface Application {
 }
 
 const MyApplications: React.FC = () => {
+  const navigate = useNavigate();
   const applications: Application[] = [
     {
       id: '1',
@@ -111,6 +113,16 @@ const MyApplications: React.FC = () => {
 
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     {getStatusBadge(application.status)}
+                    {(application.status === 'interview' || application.status === 'accepted') && (
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/messages?recipient=${application.job.company}`)}
+                        className="bg-info text-info-foreground hover:bg-info/90 font-normal"
+                      >
+                        <MessageSquare className="w-4 h-4 mr-1" strokeWidth={1.5} />
+                        Message
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
