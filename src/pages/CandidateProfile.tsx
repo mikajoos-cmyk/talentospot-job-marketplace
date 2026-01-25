@@ -5,42 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { useUser } from '@/contexts/UserContext';
-import { MapPin, Mail, Phone, Briefcase, GraduationCap, Award } from 'lucide-react';
+import { MapPin, Mail, Phone, Briefcase, GraduationCap, Award, Video, Image as ImageIcon, DollarSign, Home, Calendar, Plane } from 'lucide-react';
+import { mockCandidates } from '@/data/mockCandidates';
 
 const CandidateProfile: React.FC = () => {
   const { user } = useUser();
-  const profileCompletion = 75;
-
-  const experiences = [
-    {
-      id: '1',
-      title: 'Senior Frontend Developer',
-      company: 'TechCorp',
-      period: '2020 - Present',
-      description: 'Leading frontend development team, building scalable React applications.',
-    },
-    {
-      id: '2',
-      title: 'Frontend Developer',
-      company: 'StartupXYZ',
-      period: '2018 - 2020',
-      description: 'Developed user interfaces and improved application performance.',
-    },
-  ];
-
-  const education = [
-    {
-      id: '1',
-      degree: 'Bachelor of Computer Science',
-      institution: 'University of Technology',
-      period: '2014 - 2018',
-    },
-  ];
-
-  const skills = [
-    'React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker',
-    'GraphQL', 'MongoDB', 'PostgreSQL', 'Git', 'Agile', 'CI/CD'
-  ];
+  const profileCompletion = 85;
+  
+  const candidateData = mockCandidates[0];
 
   return (
     <AppLayout>
@@ -79,7 +51,7 @@ const CandidateProfile: React.FC = () => {
                 </div>
                 <div className="flex items-center text-body-sm text-foreground">
                   <MapPin className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>New York, NY</span>
+                  <span>Berlin, Germany</span>
                 </div>
               </div>
 
@@ -94,6 +66,107 @@ const CandidateProfile: React.FC = () => {
           </div>
         </Card>
 
+        <Card className="p-6 md:p-8 border border-border bg-card">
+          <div className="flex items-center space-x-3 mb-6">
+            <DollarSign className="w-6 h-6 text-primary" strokeWidth={1.5} />
+            <h3 className="text-h3 font-heading text-foreground">My Conditions</h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-caption text-muted-foreground mb-1">Salary Expectation</p>
+              <p className="text-h4 font-heading text-foreground">
+                ${candidateData.conditions.salaryExpectation.min.toLocaleString()} - ${candidateData.conditions.salaryExpectation.max.toLocaleString()}
+              </p>
+            </div>
+
+            {candidateData.conditions.entryBonus && (
+              <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
+                <p className="text-caption text-warning mb-1">Entry Bonus</p>
+                <p className="text-h4 font-heading text-warning">
+                  €{candidateData.conditions.entryBonus.toLocaleString()}
+                </p>
+              </div>
+            )}
+
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-caption text-muted-foreground mb-1">Work Radius</p>
+              <p className="text-h4 font-heading text-foreground">{candidateData.conditions.workRadius} km</p>
+            </div>
+
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-caption text-muted-foreground mb-1">Home Office</p>
+              <p className="text-h4 font-heading text-foreground capitalize">{candidateData.conditions.homeOfficePreference}</p>
+            </div>
+
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-caption text-muted-foreground mb-1">Vacation Days</p>
+              <p className="text-h4 font-heading text-foreground">{candidateData.conditions.vacationDays} days</p>
+            </div>
+
+            {candidateData.conditions.startDate && (
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-caption text-muted-foreground mb-1">Available From</p>
+                <p className="text-h4 font-heading text-foreground">
+                  {new Date(candidateData.conditions.startDate).toLocaleDateString()}
+                </p>
+              </div>
+            )}
+
+            {candidateData.conditions.noticePeriod && (
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-caption text-muted-foreground mb-1">Notice Period</p>
+                <p className="text-h4 font-heading text-foreground">{candidateData.conditions.noticePeriod}</p>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {candidateData.videoUrl && (
+          <Card className="p-6 md:p-8 border border-border bg-card">
+            <div className="flex items-center space-x-3 mb-6">
+              <Video className="w-6 h-6 text-primary" strokeWidth={1.5} />
+              <h3 className="text-h3 font-heading text-foreground">Video Introduction</h3>
+            </div>
+            <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+              <iframe
+                width="100%"
+                height="100%"
+                src={candidateData.videoUrl}
+                title="Video Introduction"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+              ></iframe>
+            </div>
+          </Card>
+        )}
+
+        {candidateData.portfolioImages && candidateData.portfolioImages.length > 0 && (
+          <Card className="p-6 md:p-8 border border-border bg-card">
+            <div className="flex items-center space-x-3 mb-6">
+              <ImageIcon className="w-6 h-6 text-primary" strokeWidth={1.5} />
+              <h3 className="text-h3 font-heading text-foreground">Portfolio</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {candidateData.portfolioImages.map((image, index) => (
+                <div 
+                  key={index} 
+                  className="aspect-square rounded-lg overflow-hidden bg-muted hover:shadow-lg transition-all duration-normal hover:-translate-y-1 cursor-pointer"
+                >
+                  <img
+                    src={image}
+                    alt={`Portfolio ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card className="p-6 border border-border bg-card">
@@ -103,7 +176,7 @@ const CandidateProfile: React.FC = () => {
               </div>
 
               <div className="space-y-6">
-                {experiences.map((exp, index) => (
+                {candidateData.experience.map((exp, index) => (
                   <div key={exp.id} className="relative pl-6 border-l-2 border-border">
                     <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary"></div>
                     <h4 className="text-h4 font-heading text-foreground mb-1">{exp.title}</h4>
@@ -123,7 +196,7 @@ const CandidateProfile: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                {education.map((edu) => (
+                {candidateData.education.map((edu) => (
                   <div key={edu.id} className="relative pl-6 border-l-2 border-border">
                     <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-accent"></div>
                     <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
@@ -136,20 +209,39 @@ const CandidateProfile: React.FC = () => {
             </Card>
           </div>
 
-          <div>
+          <div className="space-y-6">
             <Card className="p-6 border border-border bg-card">
               <div className="flex items-center space-x-3 mb-6">
                 <Award className="w-6 h-6 text-primary" strokeWidth={1.5} />
                 <h3 className="text-h3 font-heading text-foreground">Skills</h3>
               </div>
 
+              <div className="space-y-4">
+                {candidateData.skills.map((skill) => (
+                  <div key={skill.name}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-body-sm font-medium text-foreground">{skill.name}</span>
+                      <span className="text-body-sm text-muted-foreground">{skill.percentage}%</span>
+                    </div>
+                    <Progress value={skill.percentage} className="h-2" />
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="p-6 border border-border bg-card">
+              <div className="flex items-center space-x-3 mb-6">
+                <GraduationCap className="w-6 h-6 text-accent" strokeWidth={1.5} />
+                <h3 className="text-h3 font-heading text-foreground">Qualifications</h3>
+              </div>
+
               <div className="flex flex-wrap gap-2">
-                {skills.map((skill) => (
+                {candidateData.qualifications.map((qualification) => (
                   <span
-                    key={skill}
-                    className="px-3 py-2 bg-primary/10 text-primary text-body-sm rounded-lg"
+                    key={qualification}
+                    className="px-3 py-2 bg-accent/10 text-accent text-body-sm rounded-lg"
                   >
-                    {skill}
+                    {qualification}
                   </span>
                 ))}
               </div>

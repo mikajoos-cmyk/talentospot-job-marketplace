@@ -3,106 +3,60 @@ import AppLayout from '@/components/layout/AppLayout';
 import CandidateFilters from '@/components/employer/CandidateFilters';
 import CandidateCard from '@/components/employer/CandidateCard';
 import { useUser } from '@/contexts/UserContext';
-
-interface Candidate {
-  id: string;
-  name: string;
-  title: string;
-  location: string;
-  salary: { min: number; max: number };
-  skills: string[];
-  isRefugee: boolean;
-  country?: string;
-  avatar?: string;
-}
+import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
+import { mockCandidates } from '@/data/mockCandidates';
 
 const CandidateSearch: React.FC = () => {
   const { user } = useUser();
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<CandidateFiltersType>({
     salary: [30000, 120000],
     bonus: [0, 50000],
-    radius: 50,
+    workRadius: 50,
     isRefugee: false,
-    country: '',
-    skills: [] as string[],
+    originCountry: '',
+    skills: [],
+    qualifications: [],
+    location: {
+      continent: '',
+      country: '',
+      cities: [],
+    },
   });
 
-  const candidates: Candidate[] = [
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      title: 'Senior Frontend Developer',
-      location: 'New York, NY',
-      salary: { min: 80000, max: 120000 },
-      skills: ['React', 'TypeScript', 'Node.js'],
-      isRefugee: true,
-      country: 'Syria',
-      avatar: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_1.png',
-    },
-    {
-      id: '2',
-      name: 'Michael Chen',
-      title: 'Full Stack Engineer',
-      location: 'San Francisco, CA',
-      salary: { min: 90000, max: 140000 },
-      skills: ['Python', 'Django', 'React'],
-      isRefugee: false,
-      avatar: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_2.png',
-    },
-    {
-      id: '3',
-      name: 'Amira Hassan',
-      title: 'UX/UI Designer',
-      location: 'Austin, TX',
-      salary: { min: 70000, max: 100000 },
-      skills: ['Figma', 'Adobe XD', 'User Research'],
-      isRefugee: true,
-      country: 'Afghanistan',
-      avatar: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_3.png',
-    },
-    {
-      id: '4',
-      name: 'David Martinez',
-      title: 'DevOps Engineer',
-      location: 'Seattle, WA',
-      salary: { min: 95000, max: 130000 },
-      skills: ['AWS', 'Docker', 'Kubernetes'],
-      isRefugee: false,
-      avatar: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_4.png',
-    },
-    {
-      id: '5',
-      name: 'Fatima Al-Rashid',
-      title: 'Data Scientist',
-      location: 'Boston, MA',
-      salary: { min: 85000, max: 125000 },
-      skills: ['Python', 'Machine Learning', 'SQL'],
-      isRefugee: true,
-      country: 'Iraq',
-      avatar: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_5.png',
-    },
-    {
-      id: '6',
-      name: 'James Wilson',
-      title: 'Product Manager',
-      location: 'Chicago, IL',
-      salary: { min: 100000, max: 150000 },
-      skills: ['Agile', 'Product Strategy', 'Analytics'],
-      isRefugee: false,
-      avatar: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_1.png',
-    },
-  ];
-
-  const filteredCandidates = candidates.filter((candidate) => {
+  const filteredCandidates = mockCandidates.filter((candidate) => {
     if (filters.isRefugee && !candidate.isRefugee) return false;
-    if (filters.country && candidate.country !== filters.country) return false;
+    if (filters.originCountry && candidate.originCountry !== filters.originCountry) return false;
     if (candidate.salary.min < filters.salary[0] || candidate.salary.max > filters.salary[1]) return false;
+    
+    if (candidate.conditions.entryBonus) {
+      if (candidate.conditions.entryBonus < filters.bonus[0] || candidate.conditions.entryBonus > filters.bonus[1]) return false;
+    }
+    
+    if (filters.workRadius < candidate.conditions.workRadius) return false;
+    
     if (filters.skills.length > 0) {
       const hasSkills = filters.skills.some(skill => 
-        candidate.skills.some(cs => cs.toLowerCase().includes(skill.toLowerCase()))
+        candidate.skills.some(cs => cs.name.toLowerCase().includes(skill.toLowerCase()))
       );
       if (!hasSkills) return false;
     }
+    
+    if (filters.qualifications.length > 0) {
+      const hasQualifications = filters.qualifications.some(qual => 
+        candidate.qualifications.some(cq => cq.toLowerCase().includes(qual.toLowerCase()))
+      );
+      if (!hasQualifications) return false;
+    }
+    
+    if (filters.location.continent && candidate.locationPreference.continent !== filters.location.continent) return false;
+    if (filters.location.country && candidate.locationPreference.country !== filters.location.country) return false;
+    if (filters.location.cities.length > 0) {
+      const hasCity = filters.location.cities.some(city => 
+        candidate.locationPreference.cities.includes(city)
+      );
+      if (!hasCity) return false;
+    }
+    
     return true;
   });
 

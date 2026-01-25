@@ -6,11 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { useNavigate } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/contexts/ToastContext';
 
 const Settings: React.FC = () => {
-  const { user, switchRole } = useUser();
+  const navigate = useNavigate();
+  const { user, switchRole, logout } = useUser();
   const { showToast } = useToast();
 
   const handleSaveSettings = () => {
@@ -27,6 +29,15 @@ const Settings: React.FC = () => {
       title: 'Role Switched',
       description: `You are now viewing as ${newRole}`,
     });
+  };
+
+  const handleLogout = () => {
+    logout();
+    showToast({
+      title: 'Logged Out',
+      description: 'You have been successfully logged out',
+    });
+    navigate('/');
   };
 
   return (
@@ -157,6 +168,26 @@ const Settings: React.FC = () => {
                 Switch to {user.role === 'candidate' ? 'Employer' : 'Candidate'}
               </Button>
             </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 md:p-8 border border-error/20 bg-error/5">
+          <h2 className="text-h3 font-heading text-foreground mb-6">Danger Zone</h2>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-body-sm font-medium text-foreground">Logout</p>
+              <p className="text-caption text-muted-foreground">
+                Sign out of your account
+              </p>
+            </div>
+            <Button 
+              onClick={handleLogout}
+              variant="outline"
+              className="bg-transparent text-error border-error hover:bg-error hover:text-error-foreground font-normal"
+            >
+              Logout
+            </Button>
           </div>
         </Card>
 
