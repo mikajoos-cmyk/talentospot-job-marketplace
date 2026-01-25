@@ -9,8 +9,9 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
-import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, GraduationCap } from 'lucide-react';
+import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, GraduationCap, MapPin, Video, Car, Plane } from 'lucide-react';
 import { mockCandidates } from '@/data/mockCandidates';
+import { locationData } from '@/data/locationData';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,13 @@ interface PortfolioProject {
   title: string;
   description: string;
   image: string;
+}
+
+interface PreferredLocation {
+  id: string;
+  continent: string;
+  country: string;
+  city: string;
 }
 
 const EditProfile: React.FC = () => {
@@ -59,6 +67,7 @@ const EditProfile: React.FC = () => {
     gender: 'male',
     address: 'Hauptstraße 123, 10115 Berlin',
     location: 'Berlin, Germany',
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     
     // Professional
     title: 'Senior Frontend Developer',
@@ -69,6 +78,7 @@ const EditProfile: React.FC = () => {
     // Preferences
     jobTypes: ['full-time', 'remote'],
     noticePeriod: '3 months',
+    travelWillingness: '25',
     
     // Salary & Conditions
     salaryMin: candidateData.conditions.salaryExpectation.min,
@@ -86,6 +96,20 @@ const EditProfile: React.FC = () => {
 
   const [languages, setLanguages] = useState<string[]>(['English', 'German', 'Spanish']);
   const [languageInput, setLanguageInput] = useState('');
+
+  const [drivingLicenses, setDrivingLicenses] = useState<string[]>(['B', 'A']);
+  const [licenseInput, setLicenseInput] = useState('');
+
+  const [preferredLocations, setPreferredLocations] = useState<PreferredLocation[]>([
+    { id: '1', continent: 'Europe', country: 'Germany', city: 'Berlin' },
+    { id: '2', continent: 'Europe', country: 'Germany', city: 'Munich' },
+  ]);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [newLocation, setNewLocation] = useState({
+    continent: '',
+    country: '',
+    city: '',
+  });
 
   const [portfolioProjects, setPortfolioProjects] = useState<PortfolioProject[]>([
     {
@@ -108,6 +132,12 @@ const EditProfile: React.FC = () => {
     description: '',
     image: '',
   });
+
+  const continents = Object.keys(locationData);
+  const countries = newLocation.continent ? Object.keys(locationData[newLocation.continent] || {}) : [];
+  const cities = newLocation.country && newLocation.continent 
+    ? locationData[newLocation.continent]?.[newLocation.country] || [] 
+    : [];
 
   const handleAddSkill = () => {
     if (skillInput.trim() && !skills.some(s => s.name === skillInput.trim())) {
@@ -213,6 +243,51 @@ const EditProfile: React.FC = () => {
 
   const handleRemoveLanguage = (language: string) => {
     setLanguages(languages.filter(l => l !== language));
+  };
+
+  const handleAddLicense = () => {
+    if (licenseInput.trim() && !drivingLicenses.includes(licenseInput.trim().toUpperCase())) {
+      setDrivingLicenses([...drivingLicenses, licenseInput.trim().toUpperCase()]);
+      setLicenseInput('');
+    }
+  };
+
+  const handleRemoveLicense = (license: string) => {
+    setDrivingLicenses(drivingLicenses.filter(l => l !== license));
+  };
+
+  const handleAddLocation = () => {
+    if (!newLocation.continent || !newLocation.country || !newLocation.city) {
+      showToast({
+        title: 'Error',
+        description: 'Please select continent, country, and city',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const location: PreferredLocation = {
+      id: Date.now().toString(),
+      continent: newLocation.continent,
+      country: newLocation.country,
+      city: newLocation.city,
+    };
+
+    setPreferredLocations([...preferredLocations, location]);
+    setNewLocation({ continent: '', country: '', city: '' });
+    setLocationModalOpen(false);
+    showToast({
+      title: 'Location Added',
+      description: 'Preferred work location has been added successfully',
+    });
+  };
+
+  const handleDeleteLocation = (locationId: string) => {
+    setPreferredLocations(preferredLocations.filter(l => l.id !== locationId));
+    showToast({
+      title: 'Location Removed',
+      description: 'Preferred work location has been removed',
+    });
   };
 
   const handleJobTypeToggle = (type: string) => {
@@ -342,7 +417,7 @@ const EditProfile: React.FC = () => {
 
               <div>
                 <Label htmlFor="phone" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Phone Number
+                  WhatsApp / Phone Number
                 </Label>
                 <Input
                   id="phone"
@@ -421,6 +496,31 @@ const EditProfile: React.FC = () => {
                   className="bg-background text-foreground border-border"
                 />
               </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Media */}
+        <Card className="p-6 md:p-8 border border-border bg-card">
+          <h3 className="text-h3 font-heading text-foreground mb-6">Media & Presentation</h3>
+          
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="videoUrl" className="text-body-sm font-medium text-foreground mb-2 block">
+                <Video className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
+                Video Introduction (YouTube URL)
+              </Label>
+              <Input
+                id="videoUrl"
+                type="url"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={formData.videoUrl}
+                onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                className="bg-background text-foreground border-border"
+              />
+              <p className="text-caption text-muted-foreground mt-2">
+                Add a YouTube video to introduce yourself to potential employers
+              </p>
             </div>
           </div>
         </Card>
@@ -631,6 +731,47 @@ const EditProfile: React.FC = () => {
                 ))}
               </div>
             </div>
+
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                <Car className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
+                Driving Licenses
+              </Label>
+              <div className="flex space-x-2 mb-3">
+                <Input
+                  type="text"
+                  placeholder="Add license class (e.g., B, A, C1)..."
+                  value={licenseInput}
+                  onChange={(e) => setLicenseInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddLicense()}
+                  className="flex-1 bg-background text-foreground border-border"
+                />
+                <Button 
+                  size="icon" 
+                  onClick={handleAddLicense}
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                >
+                  <Plus className="w-5 h-5" strokeWidth={2} />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {drivingLicenses.map((license) => (
+                  <div
+                    key={license}
+                    className="flex items-center space-x-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-body-sm font-medium"
+                  >
+                    <span>Class {license}</span>
+                    <button
+                      onClick={() => handleRemoveLicense(license)}
+                      className="hover:text-primary-hover"
+                      aria-label={`Remove ${license}`}
+                    >
+                      <X className="w-4 h-4" strokeWidth={2} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </Card>
 
@@ -674,6 +815,81 @@ const EditProfile: React.FC = () => {
                   className="bg-background text-foreground border-border"
                 />
               </div>
+
+              <div>
+                <Label htmlFor="travelWillingness" className="text-body-sm font-medium text-foreground mb-2 block">
+                  <Plane className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
+                  Willingness to Travel
+                </Label>
+                <Select value={formData.travelWillingness} onValueChange={(value) => setFormData({ ...formData, travelWillingness: value })}>
+                  <SelectTrigger className="bg-background text-foreground border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">No Travel</SelectItem>
+                    <SelectItem value="25">Up to 25%</SelectItem>
+                    <SelectItem value="50">Up to 50%</SelectItem>
+                    <SelectItem value="75">Up to 75%</SelectItem>
+                    <SelectItem value="100">100% (Fully Mobile)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <Label className="text-body-sm font-medium text-foreground">
+                  <MapPin className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
+                  Preferred Work Locations
+                </Label>
+                <Button 
+                  onClick={() => setLocationModalOpen(true)}
+                  size="sm"
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                >
+                  <Plus className="w-4 h-4 mr-2" strokeWidth={2} />
+                  Add Location
+                </Button>
+              </div>
+
+              {preferredLocations.length === 0 ? (
+                <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
+                  <MapPin className="w-12 h-12 mx-auto mb-3 text-muted-foreground" strokeWidth={1.5} />
+                  <p className="text-body-sm text-muted-foreground mb-3">No preferred locations added yet</p>
+                  <Button 
+                    onClick={() => setLocationModalOpen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                  >
+                    Add Your First Location
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {preferredLocations.map((location) => (
+                    <div
+                      key={location.id}
+                      className="flex items-center justify-between p-3 border border-border rounded-lg bg-background hover:bg-muted transition-colors"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                        <span className="text-body-sm text-foreground">
+                          {location.city}, {location.country}, {location.continent}
+                        </span>
+                      </div>
+                      <Button
+                        onClick={() => handleDeleteLocation(location.id)}
+                        variant="ghost"
+                        size="icon"
+                        className="bg-transparent text-error hover:bg-error/10 hover:text-error h-8 w-8"
+                      >
+                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </Card>
@@ -1087,6 +1303,101 @@ const EditProfile: React.FC = () => {
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
               Add Education
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preferred Location Modal */}
+      <Dialog open={locationModalOpen} onOpenChange={setLocationModalOpen}>
+        <DialogContent className="bg-card border-border max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-h3 font-heading text-foreground">Add Preferred Work Location</DialogTitle>
+            <DialogDescription className="text-body text-muted-foreground">
+              Select a location where you would like to work
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            <div>
+              <Label htmlFor="locContinent" className="text-body-sm font-medium text-foreground mb-2 block">
+                Continent <span className="text-error">*</span>
+              </Label>
+              <Select 
+                value={newLocation.continent} 
+                onValueChange={(value) => setNewLocation({ continent: value, country: '', city: '' })}
+              >
+                <SelectTrigger className="bg-background text-foreground border-border">
+                  <SelectValue placeholder="Select continent" />
+                </SelectTrigger>
+                <SelectContent>
+                  {continents.map(continent => (
+                    <SelectItem key={continent} value={continent}>{continent}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {newLocation.continent && (
+              <div>
+                <Label htmlFor="locCountry" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Country <span className="text-error">*</span>
+                </Label>
+                <Select 
+                  value={newLocation.country} 
+                  onValueChange={(value) => setNewLocation({ ...newLocation, country: value, city: '' })}
+                >
+                  <SelectTrigger className="bg-background text-foreground border-border">
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map(country => (
+                      <SelectItem key={country} value={country}>{country}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {newLocation.country && (
+              <div>
+                <Label htmlFor="locCity" className="text-body-sm font-medium text-foreground mb-2 block">
+                  City <span className="text-error">*</span>
+                </Label>
+                <Select 
+                  value={newLocation.city} 
+                  onValueChange={(value) => setNewLocation({ ...newLocation, city: value })}
+                >
+                  <SelectTrigger className="bg-background text-foreground border-border">
+                    <SelectValue placeholder="Select city" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cities.map(city => (
+                      <SelectItem key={city} value={city}>{city}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setLocationModalOpen(false);
+                setNewLocation({ continent: '', country: '', city: '' });
+              }}
+              className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddLocation}
+              disabled={!newLocation.continent || !newLocation.country || !newLocation.city}
+              className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+            >
+              Add Location
             </Button>
           </div>
         </DialogContent>
