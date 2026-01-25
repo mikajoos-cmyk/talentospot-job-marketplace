@@ -11,6 +11,12 @@ import CandidateSearch from './pages/CandidateSearch';
 import JobSearch from './pages/JobSearch';
 import CandidateProfile from './pages/CandidateProfile';
 import EmployerJobs from './pages/EmployerJobs';
+import PostJob from './pages/employer/PostJob';
+import CompanyProfile from './pages/employer/CompanyProfile';
+import SavedJobs from './pages/candidate/SavedJobs';
+import MyApplications from './pages/candidate/MyApplications';
+import Packages from './pages/shared/Packages';
+import Messages from './pages/shared/Messages';
 import Settings from './pages/Settings';
 
 function App() {
@@ -48,6 +54,38 @@ function App() {
               } 
             />
             <Route 
+              path="/candidate/saved" 
+              element={
+                <ProtectedRoute requiredRole="candidate">
+                  <SavedJobs />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/applications" 
+              element={
+                <ProtectedRoute requiredRole="candidate">
+                  <MyApplications />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/messages" 
+              element={
+                <ProtectedRoute requiredRole="candidate">
+                  <Messages />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/packages" 
+              element={
+                <ProtectedRoute requiredRole="candidate">
+                  <Packages />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/candidate/settings" 
               element={
                 <ProtectedRoute requiredRole="candidate">
@@ -77,6 +115,38 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="employer">
                   <EmployerJobs />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/employer/post-job" 
+              element={
+                <ProtectedRoute requiredRole="employer">
+                  <PostJob />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/employer/profile" 
+              element={
+                <ProtectedRoute requiredRole="employer">
+                  <CompanyProfile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/employer/messages" 
+              element={
+                <ProtectedRoute requiredRole="employer">
+                  <Messages />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/employer/packages" 
+              element={
+                <ProtectedRoute requiredRole="employer">
+                  <Packages />
                 </ProtectedRoute>
               } 
             />

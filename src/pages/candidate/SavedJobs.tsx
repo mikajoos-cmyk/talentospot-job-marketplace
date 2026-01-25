@@ -1,25 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { MapPin, DollarSign, Briefcase, Search, Bookmark } from 'lucide-react';
+import { MapPin, DollarSign, Briefcase, Trash2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { mockJobs } from '@/data/mockJobs';
 
-const JobSearch: React.FC = () => {
+const SavedJobs: React.FC = () => {
   const { showToast } = useToast();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [savedJobs, setSavedJobs] = useState<string[]>([]);
+  const savedJobs = mockJobs.slice(0, 4);
 
-  const handleSaveJob = (jobId: string) => {
-    if (savedJobs.includes(jobId)) {
-      setSavedJobs(savedJobs.filter(id => id !== jobId));
-      showToast({ title: 'Job removed from saved' });
-    } else {
-      setSavedJobs([...savedJobs, jobId]);
-      showToast({ title: 'Job saved successfully' });
-    }
+  const handleRemove = (jobTitle: string) => {
+    showToast({
+      title: 'Job Removed',
+      description: `${jobTitle} has been removed from saved jobs`,
+    });
   };
 
   const handleApply = (jobTitle: string) => {
@@ -29,39 +24,23 @@ const JobSearch: React.FC = () => {
     });
   };
 
-  const filteredJobs = mockJobs.filter(job =>
-    job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.company.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <AppLayout>
       <div className="space-y-8">
         <div>
-          <h1 className="text-h1 font-heading text-foreground mb-2">Find Jobs</h1>
+          <h1 className="text-h1 font-heading text-foreground mb-2">Saved Jobs</h1>
           <p className="text-body text-muted-foreground">
-            Discover opportunities that match your skills and interests.
+            Jobs you've bookmarked for later review.
           </p>
-        </div>
-
-        <div className="relative max-w-2xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
-          <Input
-            type="search"
-            placeholder="Search by job title or company..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 h-12 bg-background text-foreground border-border"
-          />
         </div>
 
         <div>
           <p className="text-body text-foreground mb-6">
-            <span className="font-medium">{filteredJobs.length}</span> jobs found
+            <span className="font-medium">{savedJobs.length}</span> saved jobs
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredJobs.map((job) => (
+            {savedJobs.map((job) => (
               <Card key={job.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
@@ -74,13 +53,11 @@ const JobSearch: React.FC = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleSaveJob(job.id)}
-                      className={`bg-transparent hover:bg-muted ${
-                        savedJobs.includes(job.id) ? 'text-accent' : 'text-muted-foreground'
-                      } hover:text-foreground`}
-                      aria-label={savedJobs.includes(job.id) ? 'Remove from saved' : 'Save job'}
+                      onClick={() => handleRemove(job.title)}
+                      className="bg-transparent text-error hover:bg-error/10 hover:text-error"
+                      aria-label="Remove from saved"
                     >
-                      <Bookmark className="w-5 h-5" strokeWidth={1.5} fill={savedJobs.includes(job.id) ? 'currentColor' : 'none'} />
+                      <Trash2 className="w-5 h-5" strokeWidth={1.5} />
                     </Button>
                   </div>
 
@@ -106,14 +83,6 @@ const JobSearch: React.FC = () => {
                     </div>
                   </div>
 
-                  {job.attributes?.entryBonus && (
-                    <div className="bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
-                      <span className="text-body-sm font-medium text-warning">
-                        Entry Bonus: €{job.attributes.entryBonus.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-
                   <Button 
                     onClick={() => handleApply(job.title)}
                     className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
@@ -130,4 +99,4 @@ const JobSearch: React.FC = () => {
   );
 };
 
-export default JobSearch;
+export default SavedJobs;

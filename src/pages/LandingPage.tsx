@@ -3,15 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, DollarSign, ArrowRight, Users, Briefcase, TrendingUp } from 'lucide-react';
+import { MapPin, DollarSign, ArrowRight, Users, Briefcase, TrendingUp, Building2, Calendar } from 'lucide-react';
 import { mockCandidates } from '@/data/mockCandidates';
+import { mockJobs } from '@/data/mockJobs';
+import { mockCompanies } from '@/data/mockCompanies';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
   const previewCandidates = mockCandidates.slice(0, 6);
+  const featuredJobs = mockJobs.filter(job => job.featured).slice(0, 6);
+  const topCompanies = mockCompanies.slice(0, 6);
 
   const handleViewProfile = () => {
+    navigate('/login');
+  };
+
+  const handleViewJob = () => {
     navigate('/login');
   };
 
@@ -87,6 +95,131 @@ const LandingPage: React.FC = () => {
               <h3 className="text-h4 font-heading text-foreground mb-2">95% Success Rate</h3>
               <p className="text-body-sm text-muted-foreground">Successful placements and satisfied clients</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 md:py-24 bg-background">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-12">
+            <h3 className="text-h2 font-heading text-foreground mb-4">Latest Opportunities</h3>
+            <p className="text-body text-muted-foreground">
+              Explore exciting job openings from top companies
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+            {featuredJobs.map((job) => (
+              <Card 
+                key={job.id} 
+                className="p-5 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1"
+              >
+                <div className="flex flex-col space-y-3">
+                  <div className="flex items-start justify-between">
+                    <img
+                      src={job.image}
+                      alt={job.company}
+                      className="w-12 h-12 rounded-lg object-cover"
+                      loading="lazy"
+                    />
+                    <span className="px-2 py-1 bg-primary/10 text-primary text-caption rounded-md">
+                      Featured
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="text-h4 font-heading text-foreground mb-1">{job.title}</h4>
+                    <p className="text-body-sm text-muted-foreground">{job.company}</p>
+                  </div>
+
+                  <p className="text-body-sm text-foreground line-clamp-2">{job.description}</p>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center text-body-sm text-muted-foreground">
+                      <MapPin className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
+                      <span>{job.location}</span>
+                    </div>
+                    <div className="flex items-center text-body-sm text-muted-foreground">
+                      <DollarSign className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
+                      <span>{job.salary}</span>
+                    </div>
+                    <div className="flex items-center text-body-sm text-muted-foreground">
+                      <Calendar className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
+                      <span>{new Date(job.datePosted).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  {job.attributes?.entryBonus && (
+                    <div className="bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
+                      <span className="text-body-sm font-medium text-warning">
+                        Entry Bonus: €{job.attributes.entryBonus.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+
+                  <Button 
+                    onClick={handleViewJob}
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-medium text-body-sm h-9"
+                  >
+                    View Job
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Button 
+              size="lg"
+              onClick={() => navigate('/register')}
+              className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+            >
+              View All Jobs <ArrowRight className="ml-2 w-5 h-5" strokeWidth={2} />
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 md:py-24 bg-muted/30">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-12">
+            <h3 className="text-h2 font-heading text-foreground mb-4">Top Employers</h3>
+            <p className="text-body text-muted-foreground">
+              Join leading companies hiring on TalentoSpot
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 max-w-7xl mx-auto">
+            {topCompanies.map((company) => (
+              <Card 
+                key={company.id} 
+                className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 text-center"
+              >
+                <img
+                  src={company.logo}
+                  alt={company.name}
+                  className="w-16 h-16 mx-auto mb-3 rounded-lg object-cover"
+                  loading="lazy"
+                />
+                <h4 className="text-body font-medium text-foreground mb-1">{company.name}</h4>
+                <p className="text-caption text-muted-foreground mb-2">{company.activeJobs} jobs</p>
+                {company.openForRefugees && (
+                  <span className="inline-block px-2 py-1 bg-accent/10 text-accent text-caption rounded-md">
+                    Open for Refugees
+                  </span>
+                )}
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Button 
+              size="lg"
+              onClick={() => navigate('/register')}
+              className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+            >
+              View All Companies <ArrowRight className="ml-2 w-5 h-5" strokeWidth={2} />
+            </Button>
           </div>
         </div>
       </section>
