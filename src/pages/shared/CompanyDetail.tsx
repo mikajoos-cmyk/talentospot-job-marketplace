@@ -27,7 +27,7 @@ const CompanyDetail: React.FC = () => {
   };
 
   const handleMessage = () => {
-    navigate(`/messages?recipient=${company?.id}`);
+    navigate(`/candidate/messages?conversationId=${company?.id}`);
   };
 
   if (!company) {

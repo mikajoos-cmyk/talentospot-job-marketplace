@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,6 +21,7 @@ interface CandidateCardProps {
 }
 
 const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier }) => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const isBlurred = packageTier === 'free';
   const canContact = packageTier === 'premium';
@@ -59,7 +61,10 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier })
     <>
       <Card className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
         <div className="flex flex-col space-y-4">
-          <div className="flex items-start space-x-4">
+          <div 
+            className="flex items-start space-x-4 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
+          >
             <div className="relative">
               <Avatar className={`w-16 h-16 ${isBlurred ? 'blur-md' : ''}`}>
                 <AvatarImage src={candidate.avatar} alt={candidate.name} />
@@ -77,7 +82,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier })
                   Refugee/Immigrant
                 </span>
               )}
-              <h4 className="text-h4 font-heading text-foreground truncate">
+              <h4 className="text-h4 font-heading text-foreground truncate hover:text-primary transition-colors">
                 {displayName}
               </h4>
               <p className="text-body-sm text-muted-foreground">{candidate.title}</p>

@@ -101,7 +101,8 @@ const JobSearch: React.FC = () => {
                       alt={job.company}
                       className="w-12 h-12 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
                       loading="lazy"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         const company = mockCompanies.find(c => c.name === job.company);
                         if (company) navigate(`/companies/${company.id}`);
                       }}
@@ -123,7 +124,8 @@ const JobSearch: React.FC = () => {
                     <h3 className="text-h4 font-heading text-foreground mb-1">{job.title}</h3>
                     <p 
                       className="text-body-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         const company = mockCompanies.find(c => c.name === job.company);
                         if (company) navigate(`/companies/${company.id}`);
                       }}

@@ -147,7 +147,7 @@ const ApplicationDetail: React.FC = () => {
               <div className="space-y-3">
                 {canMessage && (
                   <Button 
-                    onClick={() => navigate(`/messages?recipient=${candidate.id}`)}
+                    onClick={() => navigate(`/employer/messages?conversationId=${id}`)}
                     className="w-full bg-info text-info-foreground hover:bg-info/90 font-normal"
                   >
                     <MessageSquare className="w-4 h-4 mr-2" strokeWidth={1.5} />

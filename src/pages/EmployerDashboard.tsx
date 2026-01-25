@@ -125,7 +125,12 @@ const EmployerDashboard: React.FC = () => {
                     <p className="text-body-sm font-medium text-foreground">Senior Frontend Developer</p>
                     <p className="text-caption text-muted-foreground">24 applications</p>
                   </div>
-                  <Button variant="outline" size="sm" className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal">
+                  <Button 
+                    onClick={() => navigate(`/employer/jobs/${i}/edit`)}
+                    variant="outline" 
+                    size="sm" 
+                    className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                  >
                     Manage
                   </Button>
                 </div>

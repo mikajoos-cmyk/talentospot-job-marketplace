@@ -116,7 +116,7 @@ const MyApplications: React.FC = () => {
                     {(application.status === 'interview' || application.status === 'accepted') && (
                       <Button
                         size="sm"
-                        onClick={() => navigate(`/messages?recipient=${application.job.company}`)}
+                        onClick={() => navigate(`/candidate/messages?conversationId=${application.id}`)}
                         className="bg-info text-info-foreground hover:bg-info/90 font-normal"
                       >
                         <MessageSquare className="w-4 h-4 mr-1" strokeWidth={1.5} />

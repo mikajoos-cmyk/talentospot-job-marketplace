@@ -16,6 +16,7 @@ import PostJob from './pages/employer/PostJob';
 import EditJob from './pages/employer/EditJob';
 import CompanyProfile from './pages/employer/CompanyProfile';
 import ApplicationDetail from './pages/employer/ApplicationDetail';
+import CandidateDetailView from './pages/employer/CandidateDetailView';
 import SavedJobs from './pages/candidate/SavedJobs';
 import MyApplications from './pages/candidate/MyApplications';
 import MyInvitations from './pages/candidate/MyInvitations';
@@ -191,6 +192,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="employer">
                   <ApplicationDetail />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/employer/candidates/:id" 
+              element={
+                <ProtectedRoute requiredRole="employer">
+                  <CandidateDetailView />
                 </ProtectedRoute>
               } 
             />

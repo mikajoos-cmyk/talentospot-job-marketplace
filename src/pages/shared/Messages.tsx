@@ -114,7 +114,7 @@ const Messages: React.FC = () => {
     if (user.role === 'candidate') {
       navigate(`/companies/${conversation.partnerId}`);
     } else {
-      navigate(`/employer/candidates`);
+      navigate(`/employer/candidates/${conversation.partnerId}`);
     }
   };
 
