@@ -3,6 +3,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, Star } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
 
 type UserType = 'employer' | 'candidate';
 
@@ -15,7 +16,8 @@ interface Package {
 }
 
 const Packages: React.FC = () => {
-  const [userType, setUserType] = useState<UserType>('employer');
+  const { user } = useUser();
+  const [userType, setUserType] = useState<UserType>(user.role === 'candidate' ? 'candidate' : 'employer');
 
   const employerPackages: Package[] = [
     {
@@ -23,9 +25,9 @@ const Packages: React.FC = () => {
       price: '€0',
       period: 'Forever',
       features: [
-        '1 Active Job Posting',
-        'Limited Candidate Access',
-        'Blurred Candidate Profiles',
+        '1 Contact Request',
+        '1 Job Posting',
+        '30 Days Active',
         'Basic Search Filters',
         'Email Support',
       ],
@@ -35,12 +37,12 @@ const Packages: React.FC = () => {
       price: '€499',
       period: 'per year',
       features: [
-        '10 Active Job Postings',
-        'Full Candidate Access',
+        '10 Contact Requests',
+        '10 Job Postings',
+        '1 Featured Job',
         'Advanced Search Filters',
         'Application Tracking',
         'Priority Support',
-        'Company Profile Page',
       ],
     },
     {
@@ -48,15 +50,28 @@ const Packages: React.FC = () => {
       price: '€899',
       period: 'per year',
       features: [
-        'Unlimited Job Postings',
-        'Full Candidate Access',
+        'Unlimited Contact Requests',
+        '25 Job Postings',
+        '5 Featured Jobs',
         'Advanced Analytics',
-        'Featured Job Listings',
+        'Dedicated Account Manager',
+        'Company Profile Page',
+      ],
+      highlighted: true,
+    },
+    {
+      name: 'Premium Plus',
+      price: '€1,690',
+      period: 'per year',
+      features: [
+        'Unlimited Contact Requests',
+        '100 Job Postings',
+        '25 Featured Jobs',
+        'Advanced Analytics',
         'Dedicated Account Manager',
         'API Access',
         'Custom Branding',
       ],
-      highlighted: true,
     },
   ];
 
@@ -64,11 +79,11 @@ const Packages: React.FC = () => {
     {
       name: 'Free',
       price: '€0',
-      period: 'Forever',
+      period: 'Invitation Only',
       features: [
+        'By Employer Invitation',
         'Basic Profile',
         'Job Search',
-        'Apply to Jobs',
         'Email Notifications',
         'Standard Support',
       ],
@@ -78,28 +93,27 @@ const Packages: React.FC = () => {
       price: '€59',
       period: 'per year',
       features: [
+        '5 Initiated Applications',
+        'Unlimited Job Search',
         'Enhanced Profile',
         'Priority in Search Results',
         'Application Tracking',
+        'Priority Support',
+      ],
+      highlighted: true,
+    },
+    {
+      name: 'Standard',
+      price: '€89',
+      period: 'per year',
+      features: [
+        '10 Initiated Applications',
+        'Unlimited Job Search',
+        'Featured Profile',
         'Resume Builder',
         'Career Advice',
         'Priority Support',
       ],
-    },
-    {
-      name: 'Premium',
-      price: '€299',
-      period: 'per year',
-      features: [
-        'Featured Profile',
-        'Top Search Placement',
-        'Video Introduction',
-        'Portfolio Showcase',
-        'Direct Employer Contact',
-        'Career Coaching',
-        'Interview Preparation',
-      ],
-      highlighted: true,
     },
   ];
 
@@ -109,38 +123,15 @@ const Packages: React.FC = () => {
     <AppLayout>
       <div className="space-y-8">
         <div className="text-center">
-          <h1 className="text-h1 font-heading text-foreground mb-2">Choose Your Plan</h1>
+          <h1 className="text-h1 font-heading text-foreground mb-2">
+            {user.role === 'candidate' ? 'Candidate Packages' : 'Employer Packages'}
+          </h1>
           <p className="text-body text-muted-foreground mb-8">
             Select the perfect package for your needs
           </p>
-
-          <div className="inline-flex rounded-lg border border-border bg-muted p-1">
-            <Button
-              variant={userType === 'employer' ? 'default' : 'ghost'}
-              onClick={() => setUserType('employer')}
-              className={`font-normal ${
-                userType === 'employer'
-                  ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
-                  : 'bg-transparent text-foreground hover:bg-background hover:text-foreground'
-              }`}
-            >
-              For Employers
-            </Button>
-            <Button
-              variant={userType === 'candidate' ? 'default' : 'ghost'}
-              onClick={() => setUserType('candidate')}
-              className={`font-normal ${
-                userType === 'candidate'
-                  ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
-                  : 'bg-transparent text-foreground hover:bg-background hover:text-foreground'
-              }`}
-            >
-              For Candidates
-            </Button>
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${userType === 'employer' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-8 max-w-7xl mx-auto`}>
           {packages.map((pkg) => (
             <Card
               key={pkg.name}

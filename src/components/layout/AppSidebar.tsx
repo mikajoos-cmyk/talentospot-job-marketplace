@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
-import { LayoutDashboard, User, Briefcase, Bookmark, Settings, Users, Building2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, User, Briefcase, Bookmark, Settings, Users, Building2, ChevronLeft, ChevronRight, Shield, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
@@ -19,6 +19,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
     { icon: User, label: 'My Profile', path: '/candidate/profile' },
     { icon: Briefcase, label: 'Find Jobs', path: '/candidate/jobs' },
     { icon: Bookmark, label: 'Saved Jobs', path: '/candidate/saved' },
+    { icon: CreditCard, label: 'Packages', path: '/candidate/packages' },
     { icon: Settings, label: 'Settings', path: '/candidate/settings' },
   ];
 
@@ -27,10 +28,21 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
     { icon: Users, label: 'Find Candidates', path: '/employer/candidates' },
     { icon: Briefcase, label: 'My Jobs', path: '/employer/jobs' },
     { icon: Building2, label: 'Company Profile', path: '/employer/profile' },
+    { icon: CreditCard, label: 'Packages', path: '/employer/packages' },
     { icon: Settings, label: 'Settings', path: '/employer/settings' },
   ];
 
-  const menuItems = user.role === 'candidate' ? candidateMenuItems : employerMenuItems;
+  const adminMenuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+    { icon: Users, label: 'Users', path: '/admin/users' },
+    { icon: Settings, label: 'Settings', path: '/admin/settings' },
+  ];
+
+  const menuItems = user.role === 'candidate' 
+    ? candidateMenuItems 
+    : user.role === 'admin'
+    ? adminMenuItems
+    : employerMenuItems;
 
   return (
     <aside 

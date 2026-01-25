@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ interface Job {
 }
 
 const EmployerJobs: React.FC = () => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
 
   const jobs: Job[] = [
@@ -62,11 +64,12 @@ const EmployerJobs: React.FC = () => {
   const draftJobs = jobs.filter(job => job.status === 'draft');
   const closedJobs = jobs.filter(job => job.status === 'closed');
 
-  const handleManageJob = (jobTitle: string) => {
-    showToast({
-      title: 'Opening Job Management',
-      description: `Managing ${jobTitle}`,
-    });
+  const handleManageJob = (jobId: string) => {
+    navigate(`/employer/jobs/${jobId}/edit`);
+  };
+
+  const handleViewJob = (jobId: string) => {
+    navigate(`/jobs/${jobId}`);
   };
 
   const JobCard: React.FC<{ job: Job }> = ({ job }) => (
@@ -101,18 +104,19 @@ const EmployerJobs: React.FC = () => {
       </div>
 
       <div className="flex items-center space-x-2">
-        <Button 
-          onClick={() => handleManageJob(job.title)}
-          className="flex-1 bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-        >
-          Manage
-        </Button>
-        <Button 
-          variant="outline"
-          className="flex-1 bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-        >
-          View
-        </Button>
+            <Button 
+              onClick={() => handleManageJob(job.id)}
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+            >
+              Manage
+            </Button>
+            <Button 
+              onClick={() => handleViewJob(job.id)}
+              variant="outline"
+              className="flex-1 bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+            >
+              View
+            </Button>
       </div>
     </Card>
   );

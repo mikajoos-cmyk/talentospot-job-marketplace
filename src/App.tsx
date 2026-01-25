@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { UserProvider } from './contexts/UserContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/auth/Login';
@@ -12,19 +13,26 @@ import JobSearch from './pages/JobSearch';
 import CandidateProfile from './pages/CandidateProfile';
 import EmployerJobs from './pages/EmployerJobs';
 import PostJob from './pages/employer/PostJob';
+import EditJob from './pages/employer/EditJob';
 import CompanyProfile from './pages/employer/CompanyProfile';
+import ApplicationDetail from './pages/employer/ApplicationDetail';
 import SavedJobs from './pages/candidate/SavedJobs';
 import MyApplications from './pages/candidate/MyApplications';
+import EditProfile from './pages/candidate/EditProfile';
 import Packages from './pages/shared/Packages';
 import Messages from './pages/shared/Messages';
+import JobDetailView from './pages/shared/JobDetailView';
+import CompanyDetail from './pages/shared/CompanyDetail';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import Settings from './pages/Settings';
 
 function App() {
   return (
     <Router>
       <UserProvider>
-        <ToastProvider>
-          <Routes>
+        <LanguageProvider>
+          <ToastProvider>
+            <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -42,6 +50,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="candidate">
                   <CandidateProfile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/profile/edit" 
+              element={
+                <ProtectedRoute requiredRole="candidate">
+                  <EditProfile />
                 </ProtectedRoute>
               } 
             />
@@ -119,10 +135,26 @@ function App() {
               } 
             />
             <Route 
+              path="/employer/jobs/:id/edit" 
+              element={
+                <ProtectedRoute requiredRole="employer">
+                  <EditJob />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/employer/post-job" 
               element={
                 <ProtectedRoute requiredRole="employer">
                   <PostJob />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/employer/applications/:id" 
+              element={
+                <ProtectedRoute requiredRole="employer">
+                  <ApplicationDetail />
                 </ProtectedRoute>
               } 
             />
@@ -159,9 +191,22 @@ function App() {
               } 
             />
 
+            <Route 
+              path="/admin/dashboard" 
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+
+            <Route path="/jobs/:id" element={<JobDetailView />} />
+            <Route path="/companies/:id" element={<CompanyDetail />} />
+
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </ToastProvider>
+            </Routes>
+          </ToastProvider>
+        </LanguageProvider>
       </UserProvider>
     </Router>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { MapPin, Mail, Phone, Briefcase, GraduationCap, Award, Video, Image as I
 import { mockCandidates } from '@/data/mockCandidates';
 
 const CandidateProfile: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useUser();
   const profileCompletion = 85;
   
@@ -22,7 +24,10 @@ const CandidateProfile: React.FC = () => {
             <h1 className="text-h1 font-heading text-foreground mb-2">My Profile</h1>
             <p className="text-body text-muted-foreground">Manage your professional information.</p>
           </div>
-          <Button className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal">
+          <Button 
+            onClick={() => navigate('/candidate/profile/edit')}
+            className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+          >
             Edit Profile
           </Button>
         </div>

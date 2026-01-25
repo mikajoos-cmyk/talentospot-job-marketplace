@@ -13,7 +13,7 @@ export interface Company {
 
 export const mockCompanies: Company[] = [
   {
-    id: '1',
+    id: 'techcorp',
     name: 'TechCorp',
     logo: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_1.png',
     description: 'Leading technology company building innovative solutions for the future.',
@@ -25,7 +25,7 @@ export const mockCompanies: Company[] = [
     activeJobs: 24,
   },
   {
-    id: '2',
+    id: 'startupxyz',
     name: 'StartupXYZ',
     logo: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_2.png',
     description: 'Fast-growing startup revolutionizing the e-commerce industry.',
@@ -37,7 +37,7 @@ export const mockCompanies: Company[] = [
     activeJobs: 12,
   },
   {
-    id: '3',
+    id: 'designhub',
     name: 'DesignHub',
     logo: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_3.png',
     description: 'Creative agency specializing in digital design and branding.',
@@ -49,7 +49,7 @@ export const mockCompanies: Company[] = [
     activeJobs: 8,
   },
   {
-    id: '4',
+    id: 'dataco',
     name: 'DataCo',
     logo: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_4.png',
     description: 'Data analytics platform helping businesses make data-driven decisions.',
@@ -61,7 +61,7 @@ export const mockCompanies: Company[] = [
     activeJobs: 18,
   },
   {
-    id: '5',
+    id: 'cloudtech',
     name: 'CloudTech',
     logo: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_5.png',
     description: 'Cloud infrastructure provider with global reach and reliability.',
@@ -73,7 +73,7 @@ export const mockCompanies: Company[] = [
     activeJobs: 32,
   },
   {
-    id: '6',
+    id: 'aisolutions',
     name: 'AI Solutions',
     logo: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_1.png',
     description: 'Artificial intelligence company developing cutting-edge ML solutions.',

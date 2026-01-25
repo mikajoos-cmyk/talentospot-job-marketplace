@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import DashboardStatsCard from '@/components/candidate/DashboardStatsCard';
 import { Users, Briefcase, Eye, CheckCircle } from 'lucide-react';
@@ -6,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 const EmployerDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalCandidates: 0,
     activeJobs: 0,
@@ -101,7 +103,12 @@ const EmployerDashboard: React.FC = () => {
                       <p className="text-caption text-muted-foreground">Senior Developer</p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal">
+                  <Button 
+                    onClick={() => navigate(`/employer/applications/${i}`)}
+                    variant="outline" 
+                    size="sm" 
+                    className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                  >
                     View
                   </Button>
                 </div>
