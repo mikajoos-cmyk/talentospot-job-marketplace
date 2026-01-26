@@ -1,36 +1,54 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { MapPin, Users, Building2, Globe, ArrowLeft, Briefcase, DollarSign, Calendar, Map, Heart, Send, Star } from 'lucide-react';
-import { mockCompanies } from '@/data/mockCompanies';
-import { mockJobs } from '@/data/mockJobs';
-import { mockReviews } from '@/data/mockReviews';
-import ReviewCard from '@/components/shared/ReviewCard';
-import ReviewModal from '@/components/shared/ReviewModal';
-import { useToast } from '@/contexts/ToastContext';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { MapPin, Users, Building2, Globe, ArrowLeft, Briefcase, DollarSign, Calendar, Map, Heart, Send, Star, Loader2 } from 'lucide-react';
+import { employerService } from '../../services/employer.service';
+import { jobsService } from '../../services/jobs.service';
+import { useToast } from '../../contexts/ToastContext';
+import ReviewCard from '../../components/shared/ReviewCard';
+import ReviewModal from '../../components/shared/ReviewModal';
 
 const CompanyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [company, setCompany] = useState<any>(null);
+  const [companyJobs, setCompanyJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
 
-  const company = mockCompanies.find(c => c.id === id);
-  const companyJobs = mockJobs.filter(job => job.company === company?.name);
-  
-  const companyReviews = mockReviews.filter(r => r.targetId === id && r.targetRole === 'employer');
-  const averageRating = companyReviews.length > 0
-    ? companyReviews.reduce((sum, r) => sum + r.rating, 0) / companyReviews.length
-    : 0;
+  React.useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+      setLoading(true);
+      try {
+        const [companyData, jobsData] = await Promise.all([
+          employerService.getEmployerById(id),
+          jobsService.getJobsByEmployer(id)
+        ]);
+        setCompany(companyData);
+        setCompanyJobs(jobsData);
+      } catch (error) {
+        console.error('Error fetching company data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
+
+  // Use empty reviews/rating for now as they are not in the current DB schema per survey
+  const companyReviews: any[] = [];
+  const averageRating = 0;
 
   const handleFollow = () => {
     setIsFollowing(!isFollowing);
     showToast({
       title: isFollowing ? 'Unfollowed' : 'Following',
-      description: isFollowing 
-        ? `You unfollowed ${company?.name}` 
+      description: isFollowing
+        ? `You unfollowed ${company?.name}`
         : `You are now following ${company?.name}`,
     });
   };
@@ -45,6 +63,14 @@ const CompanyDetail: React.FC = () => {
       description: `Your review for ${company?.name} has been submitted`,
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   if (!company) {
     return (
@@ -79,15 +105,15 @@ const CompanyDetail: React.FC = () => {
           <Card className="p-8 md:p-12 border border-border bg-card">
             <div className="flex flex-col md:flex-row items-start md:items-center space-y-6 md:space-y-0 md:space-x-8">
               <img
-                src={company.logo}
-                alt={company.name}
+                src={company.logo_url || "https://via.placeholder.com/128"}
+                alt={company.company_name}
                 className="w-32 h-32 rounded-lg object-cover shadow-md"
                 loading="lazy"
               />
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-3 mb-4">
-                  <h1 className="text-h1 font-heading text-foreground">{company.name}</h1>
-                  {company.openForRefugees && (
+                  <h1 className="text-h1 font-heading text-foreground">{company.company_name}</h1>
+                  {company.open_for_refugees && (
                     <span className="px-3 py-1 bg-accent/10 text-accent text-body-sm rounded-full border border-accent/30">
                       Open for Refugees
                     </span>
@@ -98,15 +124,14 @@ const CompanyDetail: React.FC = () => {
                   <Button
                     onClick={handleFollow}
                     variant={isFollowing ? 'default' : 'outline'}
-                    className={`font-normal ${
-                      isFollowing
-                        ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
-                        : 'bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground'
-                    }`}
+                    className={`font-normal ${isFollowing
+                      ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
+                      : 'bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground'
+                      }`}
                   >
-                    <Heart 
-                      className="w-4 h-4 mr-2" 
-                      strokeWidth={1.5} 
+                    <Heart
+                      className="w-4 h-4 mr-2"
+                      strokeWidth={1.5}
                       fill={isFollowing ? 'currentColor' : 'none'}
                     />
                     {isFollowing ? 'Following' : 'Follow'}
@@ -136,18 +161,18 @@ const CompanyDetail: React.FC = () => {
                   </div>
                   <div className="flex items-center text-body text-foreground">
                     <Users className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                    <span>{company.size} employees</span>
+                    <span>{company.company_size} employees</span>
                   </div>
                   <div className="flex items-center text-body text-foreground">
                     <MapPin className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                    <span>{company.location}</span>
+                    <span>{company.headquarters_city}, {company.headquarters_country}</span>
                   </div>
                   {company.website && (
                     <div className="flex items-center text-body text-foreground">
                       <Globe className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                      <a 
-                        href={company.website} 
-                        target="_blank" 
+                      <a
+                        href={company.website}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary hover:text-primary-hover hover:underline"
                       >
@@ -162,7 +187,7 @@ const CompanyDetail: React.FC = () => {
 
           <Card className="p-8 border border-border bg-card">
             <h2 className="text-h2 font-heading text-foreground mb-6">About Us</h2>
-            <div 
+            <div
               className="text-body text-foreground leading-relaxed prose prose-sm max-w-none [&>ul]:list-disc [&>ul]:ml-6 [&>ul]:my-2 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol]:my-2 [&>p]:my-2 [&>strong]:font-semibold [&>em]:italic mb-6"
               dangerouslySetInnerHTML={{ __html: company.description }}
             />
@@ -175,7 +200,7 @@ const CompanyDetail: React.FC = () => {
               <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center border border-border">
                 <div className="text-center">
                   <MapPin className="w-12 h-12 mx-auto mb-2 text-primary" strokeWidth={1.5} />
-                  <p className="text-body font-medium text-foreground">{company.location}</p>
+                  <p className="text-body font-medium text-foreground">{company.headquarters_city}, {company.headquarters_country}</p>
                   <p className="text-caption text-muted-foreground">Interactive map view</p>
                 </div>
               </div>
@@ -208,30 +233,29 @@ const CompanyDetail: React.FC = () => {
                       <div className="flex-1">
                         <h3 className="text-h4 font-heading text-foreground mb-2">{job.title}</h3>
                         <p className="text-body-sm text-foreground mb-3 line-clamp-2">{job.description}</p>
-                        
                         <div className="flex flex-wrap gap-4">
                           <div className="flex items-center text-body-sm text-muted-foreground">
                             <MapPin className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                            <span>{job.location}</span>
+                            <span>{job.city}, {job.country}</span>
                           </div>
                           <div className="flex items-center text-body-sm text-muted-foreground">
                             <DollarSign className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                            <span>{job.salary}</span>
+                            <span>{job.salary_min && job.salary_max ? `${job.salary_min} - ${job.salary_max} ${job.salary_currency || 'EUR'}` : 'Competitive'}</span>
                           </div>
                           <div className="flex items-center text-body-sm text-muted-foreground">
                             <Calendar className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                            <span>Posted {new Date(job.datePosted).toLocaleDateString()}</span>
+                            <span>Posted {new Date(job.posted_at).toLocaleDateString()}</span>
                           </div>
                         </div>
 
-                        {job.attributes?.entryBonus && (
+                        {job.entry_bonus && (
                           <div className="mt-3 inline-block px-3 py-1 bg-warning/10 text-warning text-caption rounded-md border border-warning/30">
-                            Entry Bonus: €{job.attributes.entryBonus.toLocaleString()}
+                            Entry Bonus: €{job.entry_bonus.toLocaleString()}
                           </div>
                         )}
                       </div>
 
-                      <Button 
+                      <Button
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/jobs/${job.id}`);
@@ -259,11 +283,10 @@ const CompanyDetail: React.FC = () => {
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-5 h-5 ${
-                          i < Math.round(averageRating)
-                            ? 'text-accent fill-accent'
-                            : 'text-muted-foreground'
-                        }`}
+                        className={`w-5 h-5 ${i < Math.round(averageRating)
+                          ? 'text-accent fill-accent'
+                          : 'text-muted-foreground'
+                          }`}
                         strokeWidth={1.5}
                       />
                     ))}
@@ -282,7 +305,7 @@ const CompanyDetail: React.FC = () => {
               <div className="text-center py-12">
                 <Star className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
                 <p className="text-body text-muted-foreground mb-6">No reviews yet</p>
-                <Button 
+                <Button
                   onClick={() => setReviewModalOpen(true)}
                   variant="outline"
                   className="bg-transparent text-accent border-accent hover:bg-accent hover:text-accent-foreground font-normal"
@@ -301,13 +324,14 @@ const CompanyDetail: React.FC = () => {
         </div>
       </div>
 
-      <ReviewModal
+      {/* Reviews are temporarily disabled as they are not in the current DB schema */}
+      {/* <ReviewModal
         open={reviewModalOpen}
         onOpenChange={setReviewModalOpen}
-        targetName={company.name}
+        targetName={company.company_name}
         targetRole="employer"
         onSubmit={handleSubmitReview}
-      />
+      /> */}
     </div>
   );
 };

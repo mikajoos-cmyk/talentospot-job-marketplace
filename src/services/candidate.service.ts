@@ -245,4 +245,20 @@ export const candidateService = {
     if (error) throw error;
     return data;
   },
+
+  async getFeaturedTalent(limit: number = 6) {
+    const { data, error } = await supabase
+      .from('candidate_profiles')
+      .select(`
+        *,
+        profiles!inner(full_name, avatar_url),
+        candidate_skills(
+          skills(name)
+        )
+      `)
+      .limit(limit);
+
+    if (error) throw error;
+    return data;
+  },
 };

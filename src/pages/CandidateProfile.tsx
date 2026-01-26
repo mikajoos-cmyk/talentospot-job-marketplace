@@ -1,29 +1,57 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AppLayout from '@/components/layout/AppLayout';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { useUser } from '@/contexts/UserContext';
-import { 
-  MapPin, Mail, Phone, Briefcase, GraduationCap, Award, Video, 
-  Image as ImageIcon, DollarSign, Home, Calendar, Plane, Globe, Car, Star 
+import AppLayout from '../components/layout/AppLayout';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { Progress } from '../components/ui/progress';
+import { useUser } from '../contexts/UserContext';
+import { candidateService } from '../services/candidate.service';
+import { Loader2 } from 'lucide-react';
+import {
+  MapPin, Mail, Phone, Briefcase, GraduationCap, Award, Video,
+  Image as ImageIcon, DollarSign, Plane, Globe, Car, Star
 } from 'lucide-react';
-import { mockCandidates } from '@/data/mockCandidates';
-import { mockReviews } from '@/data/mockReviews';
-import ReviewCard from '@/components/shared/ReviewCard';
+import ReviewCard from '../components/shared/ReviewCard';
 
 const CandidateProfile: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useUser();
+  const [candidateData, setCandidateData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const profileCompletion = 85;
-  
-  const candidateData = mockCandidates[0];
-  const candidateReviews = mockReviews.filter(r => r.targetId === '1' && r.targetRole === 'candidate');
-  const averageRating = candidateReviews.length > 0
-    ? candidateReviews.reduce((sum, r) => sum + r.rating, 0) / candidateReviews.length
-    : 0;
+
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+      setLoading(true);
+      try {
+        const data = await candidateService.getCandidateProfile(user.id);
+        setCandidateData(data);
+      } catch (error) {
+        console.error('Error fetching candidate profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [user?.id]);
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!candidateData) return null;
+
+  // Reviews placeholder for now
+  const candidateReviews: any[] = [];
+  const averageRating = 0;
 
   return (
     <AppLayout>
@@ -33,7 +61,7 @@ const CandidateProfile: React.FC = () => {
             <h1 className="text-h1 font-heading text-foreground mb-2">My Profile</h1>
             <p className="text-body text-muted-foreground">Manage your professional information.</p>
           </div>
-          <Button 
+          <Button
             onClick={() => navigate('/candidate/profile/edit')}
             className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
           >
@@ -51,14 +79,14 @@ const CandidateProfile: React.FC = () => {
             </Avatar>
 
             <div className="flex-1">
-              {candidateData.isRefugee && (
+              {candidateData.is_refugee && (
                 <span className="inline-block px-3 py-1 bg-accent/10 text-accent text-caption rounded-md mb-2">
                   Refugee/Immigrant
-                  {candidateData.originCountry && ` from ${candidateData.originCountry}`}
+                  {candidateData.origin_country && ` from ${candidateData.origin_country}`}
                 </span>
               )}
               <h2 className="text-h2 font-heading text-foreground mb-2">{user.name}</h2>
-              <p className="text-body text-muted-foreground mb-4">{candidateData.title}</p>
+              <p className="text-body text-muted-foreground mb-4">{candidateData.job_title}</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
                 <div className="flex items-center text-body-sm text-foreground">
@@ -67,15 +95,15 @@ const CandidateProfile: React.FC = () => {
                 </div>
                 <div className="flex items-center text-body-sm text-foreground">
                   <Phone className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>+49 123 456 7890</span>
+                  <span>{candidateData.profiles?.phone || 'N/A'}</span>
                 </div>
                 <div className="flex items-center text-body-sm text-foreground">
                   <MapPin className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{candidateData.location}</span>
+                  <span>{candidateData.city}, {candidateData.country}</span>
                 </div>
                 <div className="flex items-center text-body-sm text-foreground">
                   <Globe className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{candidateData.locationPreference.country}</span>
+                  <span>{candidateData.nationality}</span>
                 </div>
               </div>
 
@@ -100,47 +128,47 @@ const CandidateProfile: React.FC = () => {
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-caption text-muted-foreground mb-1">Salary Expectation</p>
               <p className="text-h4 font-heading text-foreground">
-                ${candidateData.conditions.salaryExpectation.min.toLocaleString()} - ${candidateData.conditions.salaryExpectation.max.toLocaleString()}
+                {candidateData.salary_expectation_min?.toLocaleString()} - {candidateData.salary_expectation_max?.toLocaleString()} {candidateData.currency || 'EUR'}
               </p>
             </div>
 
-            {candidateData.conditions.entryBonus && (
+            {candidateData.desired_entry_bonus && (
               <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
                 <p className="text-caption text-warning mb-1">Entry Bonus</p>
                 <p className="text-h4 font-heading text-warning">
-                  €{candidateData.conditions.entryBonus.toLocaleString()}
+                  €{candidateData.desired_entry_bonus.toLocaleString()}
                 </p>
               </div>
             )}
 
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-caption text-muted-foreground mb-1">Work Radius</p>
-              <p className="text-h4 font-heading text-foreground">{candidateData.conditions.workRadius} km</p>
+              <p className="text-h4 font-heading text-foreground">{candidateData.work_radius_km} km</p>
             </div>
 
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-caption text-muted-foreground mb-1">Home Office</p>
-              <p className="text-h4 font-heading text-foreground capitalize">{candidateData.conditions.homeOfficePreference}</p>
+              <p className="text-h4 font-heading text-foreground capitalize">{candidateData.home_office_preference}</p>
             </div>
 
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-caption text-muted-foreground mb-1">Vacation Days</p>
-              <p className="text-h4 font-heading text-foreground">{candidateData.conditions.vacationDays} days</p>
+              <p className="text-h4 font-heading text-foreground">{candidateData.vacation_days} days</p>
             </div>
 
-            {candidateData.conditions.startDate && (
+            {candidateData.available_from && (
               <div className="p-4 bg-muted rounded-lg">
                 <p className="text-caption text-muted-foreground mb-1">Available From</p>
                 <p className="text-h4 font-heading text-foreground">
-                  {new Date(candidateData.conditions.startDate).toLocaleDateString()}
+                  {new Date(candidateData.available_from).toLocaleDateString()}
                 </p>
               </div>
             )}
 
-            {candidateData.conditions.noticePeriod && (
+            {candidateData.notice_period && (
               <div className="p-4 bg-muted rounded-lg">
                 <p className="text-caption text-muted-foreground mb-1">Notice Period</p>
-                <p className="text-h4 font-heading text-foreground">{candidateData.conditions.noticePeriod}</p>
+                <p className="text-h4 font-heading text-foreground">{candidateData.notice_period}</p>
               </div>
             )}
 
@@ -148,13 +176,13 @@ const CandidateProfile: React.FC = () => {
               <p className="text-caption text-muted-foreground mb-1">Travel Willingness</p>
               <div className="flex items-center">
                 <Plane className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                <span className="text-body-sm text-foreground">Up to 25%</span>
+                <span className="text-body-sm text-foreground">Up to {candidateData.travel_willingness}%</span>
               </div>
             </div>
           </div>
         </Card>
 
-        {candidateData.videoUrl && (
+        {candidateData.video_url && (
           <Card className="p-6 md:p-8 border border-border bg-card">
             <div className="flex items-center space-x-3 mb-6">
               <Video className="w-6 h-6 text-primary" strokeWidth={1.5} />
@@ -164,7 +192,7 @@ const CandidateProfile: React.FC = () => {
               <iframe
                 width="100%"
                 height="100%"
-                src={candidateData.videoUrl}
+                src={candidateData.video_url}
                 title="Video Introduction"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -175,16 +203,16 @@ const CandidateProfile: React.FC = () => {
           </Card>
         )}
 
-        {candidateData.portfolioImages && candidateData.portfolioImages.length > 0 && (
+        {candidateData.portfolio_images && candidateData.portfolio_images.length > 0 && (
           <Card className="p-6 md:p-8 border border-border bg-card">
             <div className="flex items-center space-x-3 mb-6">
               <ImageIcon className="w-6 h-6 text-primary" strokeWidth={1.5} />
               <h3 className="text-h3 font-heading text-foreground">Portfolio</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {candidateData.portfolioImages.map((image, index) => (
-                <div 
-                  key={index} 
+              {candidateData.portfolio_images.map((image: string, index: number) => (
+                <div
+                  key={index}
                   className="aspect-square rounded-lg overflow-hidden bg-muted hover:shadow-lg transition-all duration-normal hover:-translate-y-1 cursor-pointer"
                 >
                   <img
@@ -207,11 +235,11 @@ const CandidateProfile: React.FC = () => {
                 <h3 className="text-h3 font-heading text-foreground">Work Experience</h3>
               </div>
 
-              {candidateData.experience.length === 0 ? (
+              {!candidateData.candidate_experience || candidateData.candidate_experience.length === 0 ? (
                 <div className="text-center py-8">
                   <Briefcase className="w-12 h-12 mx-auto mb-3 text-muted-foreground" strokeWidth={1.5} />
                   <p className="text-body text-muted-foreground mb-4">No work experience added yet</p>
-                  <Button 
+                  <Button
                     onClick={() => navigate('/candidate/profile/edit')}
                     variant="outline"
                     size="sm"
@@ -222,12 +250,12 @@ const CandidateProfile: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {candidateData.experience.map((exp) => (
+                  {candidateData.candidate_experience.map((exp: any) => (
                     <div key={exp.id} className="relative pl-6 border-l-2 border-border">
                       <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary"></div>
                       <h4 className="text-h4 font-heading text-foreground mb-1">{exp.title}</h4>
                       <p className="text-body-sm text-muted-foreground mb-2">
-                        {exp.company} • {exp.period}
+                        {exp.company} • {new Date(exp.start_date).toLocaleDateString()} - {exp.end_date ? new Date(exp.end_date).toLocaleDateString() : 'Present'}
                       </p>
                       <p className="text-body-sm text-foreground">{exp.description}</p>
                     </div>
@@ -242,11 +270,11 @@ const CandidateProfile: React.FC = () => {
                 <h3 className="text-h3 font-heading text-foreground">Education</h3>
               </div>
 
-              {candidateData.education.length === 0 ? (
+              {!candidateData.candidate_education || candidateData.candidate_education.length === 0 ? (
                 <div className="text-center py-8">
                   <GraduationCap className="w-12 h-12 mx-auto mb-3 text-muted-foreground" strokeWidth={1.5} />
                   <p className="text-body text-muted-foreground mb-4">No education added yet</p>
-                  <Button 
+                  <Button
                     onClick={() => navigate('/candidate/profile/edit')}
                     variant="outline"
                     size="sm"
@@ -257,12 +285,12 @@ const CandidateProfile: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {candidateData.education.map((edu) => (
+                  {candidateData.candidate_education.map((edu: any) => (
                     <div key={edu.id} className="relative pl-6 border-l-2 border-border">
                       <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-accent"></div>
                       <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
                       <p className="text-body-sm text-muted-foreground">
-                        {edu.institution} • {edu.period}
+                        {edu.institution} • {new Date(edu.start_date).toLocaleDateString()} - {edu.end_date ? new Date(edu.end_date).toLocaleDateString() : 'Present'}
                       </p>
                     </div>
                   ))}
@@ -273,18 +301,16 @@ const CandidateProfile: React.FC = () => {
             <Card className="p-6 border border-border bg-card">
               <div className="flex items-center space-x-3 mb-6">
                 <MapPin className="w-6 h-6 text-primary" strokeWidth={1.5} />
-                <h3 className="text-h3 font-heading text-foreground">Preferred Work Locations</h3>
+                <h3 className="text-h3 font-heading text-foreground">Work Location</h3>
               </div>
 
               <div className="space-y-2">
-                {candidateData.locationPreference.cities.map((city, index) => (
-                  <div key={index} className="flex items-center p-3 bg-muted rounded-lg">
-                    <MapPin className="w-4 h-4 mr-2 text-primary" strokeWidth={1.5} />
-                    <span className="text-body-sm text-foreground">
-                      {city}, {candidateData.locationPreference.country}, {candidateData.locationPreference.continent}
-                    </span>
-                  </div>
-                ))}
+                <div className="flex items-center p-3 bg-muted rounded-lg">
+                  <MapPin className="w-4 h-4 mr-2 text-primary" strokeWidth={1.5} />
+                  <span className="text-body-sm text-foreground">
+                    {candidateData.city}, {candidateData.country}
+                  </span>
+                </div>
               </div>
             </Card>
           </div>
@@ -297,13 +323,13 @@ const CandidateProfile: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                {candidateData.skills.map((skill) => (
-                  <div key={skill.name}>
+                {candidateData.candidate_skills?.map((cs: any) => (
+                  <div key={cs.id}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-body-sm font-medium text-foreground">{skill.name}</span>
-                      <span className="text-body-sm text-muted-foreground">{skill.percentage}%</span>
+                      <span className="text-body-sm font-medium text-foreground">{cs.skills?.name}</span>
+                      <span className="text-body-sm text-muted-foreground">{cs.proficiency_percentage}%</span>
                     </div>
-                    <Progress value={skill.percentage} className="h-2" />
+                    <Progress value={cs.proficiency_percentage} className="h-2" />
                   </div>
                 ))}
               </div>
@@ -316,12 +342,12 @@ const CandidateProfile: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {candidateData.qualifications.map((qualification) => (
+                {candidateData.candidate_qualifications?.map((cq: any) => (
                   <span
-                    key={qualification}
+                    key={cq.id}
                     className="px-3 py-2 bg-accent/10 text-accent text-body-sm rounded-lg"
                   >
-                    {qualification}
+                    {cq.qualifications?.name}
                   </span>
                 ))}
               </div>
@@ -346,8 +372,9 @@ const CandidateProfile: React.FC = () => {
                 <div>
                   <p className="text-caption text-muted-foreground mb-2">Driving Licenses</p>
                   <div className="flex flex-wrap gap-2">
-                    <span className="px-2 py-1 bg-primary/10 text-primary text-caption rounded-md">Class B</span>
-                    <span className="px-2 py-1 bg-primary/10 text-primary text-caption rounded-md">Class A</span>
+                    {candidateData.driving_licenses?.map((license: string) => (
+                      <span key={license} className="px-2 py-1 bg-primary/10 text-primary text-caption rounded-md">{license}</span>
+                    ))}
                   </div>
                 </div>
 
@@ -373,11 +400,10 @@ const CandidateProfile: React.FC = () => {
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`w-5 h-5 ${
-                            i < Math.round(averageRating)
-                              ? 'text-accent fill-accent'
-                              : 'text-muted-foreground'
-                          }`}
+                          className={`w-5 h-5 ${i < Math.round(averageRating)
+                            ? 'text-accent fill-accent'
+                            : 'text-muted-foreground'
+                            }`}
                           strokeWidth={1.5}
                         />
                       ))}

@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from '@/contexts/UserContext';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, DollarSign, ArrowRight, Users, Briefcase, TrendingUp, Building2, Calendar } from 'lucide-react';
-import { mockCandidates } from '@/data/mockCandidates';
-import { mockJobs } from '@/data/mockJobs';
-import { mockCompanies } from '@/data/mockCompanies';
+import { useUser } from '../contexts/UserContext';
+import { Button } from '../components/ui/button';
+import { Card } from '../components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { MapPin, DollarSign, ArrowRight, Users, Briefcase, TrendingUp, Calendar, Loader2 } from 'lucide-react';
+import { jobsService } from '../services/jobs.service';
+import { employerService } from '../services/employer.service';
+import { candidateService } from '../services/candidate.service';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,9 +20,32 @@ const LandingPage: React.FC = () => {
     }
   }, [isAuthenticated, user.role, navigate]);
 
-  const previewCandidates = mockCandidates.slice(0, 6);
-  const featuredJobs = mockJobs.filter(job => job.featured).slice(0, 6);
-  const topCompanies = mockCompanies.slice(0, 6);
+  const [featuredJobs, setFeaturedJobs] = useState<any[]>([]);
+  const [topCompanies, setTopCompanies] = useState<any[]>([]);
+  const [previewCandidates, setPreviewCandidates] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [jobs, companies, candidates] = await Promise.all([
+          jobsService.getFeaturedJobs(6),
+          employerService.getTopCompanies(6),
+          candidateService.getFeaturedTalent(6)
+        ]);
+        setFeaturedJobs(jobs);
+        setTopCompanies(companies);
+        setPreviewCandidates(candidates);
+      } catch (error) {
+        console.error('Error fetching landing page data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleViewProfile = () => {
     navigate('/login');
@@ -31,6 +54,14 @@ const LandingPage: React.FC = () => {
   const handleViewJob = () => {
     navigate('/login');
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -154,8 +185,8 @@ const LandingPage: React.FC = () => {
                 <div className="flex flex-col space-y-3">
                   <div className="flex items-start justify-between">
                     <img
-                      src={job.image}
-                      alt={job.company}
+                      src={job.employer_profiles?.logo_url || "https://via.placeholder.com/48"}
+                      alt={job.employer_profiles?.company_name}
                       className="w-12 h-12 rounded-lg object-cover"
                       loading="lazy"
                     />
@@ -166,7 +197,7 @@ const LandingPage: React.FC = () => {
 
                   <div>
                     <h4 className="text-h4 font-heading text-foreground mb-1">{job.title}</h4>
-                    <p className="text-body-sm text-muted-foreground">{job.company}</p>
+                    <p className="text-body-sm text-muted-foreground">{job.employer_profiles?.company_name}</p>
                   </div>
 
                   <p className="text-body-sm text-foreground line-clamp-2">{job.description}</p>
@@ -174,22 +205,22 @@ const LandingPage: React.FC = () => {
                   <div className="space-y-1.5">
                     <div className="flex items-center text-body-sm text-muted-foreground">
                       <MapPin className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
-                      <span>{job.location}</span>
+                      <span>{job.city}, {job.country}</span>
                     </div>
                     <div className="flex items-center text-body-sm text-muted-foreground">
                       <DollarSign className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
-                      <span>{job.salary}</span>
+                      <span>{job.salary_min && job.salary_max ? `${job.salary_min} - ${job.salary_max} ${job.salary_currency || 'EUR'}` : 'Competitive'}</span>
                     </div>
                     <div className="flex items-center text-body-sm text-muted-foreground">
                       <Calendar className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
-                      <span>{new Date(job.datePosted).toLocaleDateString()}</span>
+                      <span>{new Date(job.posted_at).toLocaleDateString()}</span>
                     </div>
                   </div>
 
-                  {job.attributes?.entryBonus && (
+                  {job.entry_bonus && (
                     <div className="bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
                       <span className="text-body-sm font-medium text-warning">
-                        Entry Bonus: €{job.attributes.entryBonus.toLocaleString()}
+                        Entry Bonus: €{job.entry_bonus.toLocaleString()}
                       </span>
                     </div>
                   )}
@@ -233,14 +264,14 @@ const LandingPage: React.FC = () => {
                 className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 text-center"
               >
                 <img
-                  src={company.logo}
-                  alt={company.name}
+                  src={company.logo_url || "https://via.placeholder.com/64"}
+                  alt={company.company_name}
                   className="w-16 h-16 mx-auto mb-3 rounded-lg object-cover"
                   loading="lazy"
                 />
-                <h4 className="text-body font-medium text-foreground mb-1">{company.name}</h4>
-                <p className="text-caption text-muted-foreground mb-2">{company.activeJobs} jobs</p>
-                {company.openForRefugees && (
+                <h4 className="text-body font-medium text-foreground mb-1 truncate">{company.company_name}</h4>
+                <p className="text-caption text-muted-foreground mb-2">{company.industry}</p>
+                {company.open_for_refugees && (
                   <span className="inline-block px-2 py-1 bg-accent/10 text-accent text-caption rounded-md">
                     Open for Refugees
                   </span>
@@ -280,51 +311,51 @@ const LandingPage: React.FC = () => {
                   <div className="flex items-start space-x-3">
                     <div className="relative">
                       <Avatar className="w-14 h-14 blur-md">
-                        <AvatarImage src={candidate.avatar} alt={candidate.name} />
+                        <AvatarImage src={candidate.profiles?.avatar_url || ""} alt={candidate.profiles?.full_name} />
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          {candidate.name.split(' ').map(n => n[0]).join('')}
+                          {candidate.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="absolute inset-0 bg-white/30 backdrop-blur-sm rounded-full"></div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      {candidate.isRefugee && (
+                      {candidate.is_refugee && (
                         <span className="inline-block px-2 py-0.5 bg-accent/10 text-accent text-caption rounded-md mb-1">
                           Refugee/Immigrant
                         </span>
                       )}
                       <h4 className="text-h4 font-heading text-foreground truncate">
-                        Candidate #{candidate.id.padStart(3, '0')}
+                        Candidate #{candidate.id.substring(0, 4)}
                       </h4>
-                      <p className="text-body-sm text-muted-foreground">{candidate.title}</p>
+                      <p className="text-body-sm text-muted-foreground">{candidate.job_title}</p>
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex items-center text-body-sm text-muted-foreground">
                       <MapPin className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
-                      <span>{candidate.location}</span>
+                      <span>{candidate.city}, {candidate.country}</span>
                     </div>
                     <div className="flex items-center text-body-sm text-muted-foreground">
                       <DollarSign className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
                       <span>
-                        ${candidate.salary.min.toLocaleString()} - ${candidate.salary.max.toLocaleString()}
+                        {candidate.salary_expectation_min?.toLocaleString()} - {candidate.salary_expectation_max?.toLocaleString()} {candidate.currency || 'EUR'}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-1.5">
-                    {candidate.skills.slice(0, 3).map((skill) => (
+                    {candidate.candidate_skills?.slice(0, 3).map((cs: any) => (
                       <span
-                        key={skill.name}
+                        key={cs.skills?.name}
                         className="px-2 py-0.5 bg-muted text-foreground text-caption rounded-md"
                       >
-                        {skill.name}
+                        {cs.skills?.name}
                       </span>
                     ))}
-                    {candidate.skills.length > 3 && (
+                    {candidate.candidate_skills?.length > 3 && (
                       <span className="px-2 py-0.5 bg-muted text-foreground text-caption rounded-md">
-                        +{candidate.skills.length - 3}
+                        +{candidate.candidate_skills.length - 3}
                       </span>
                     )}
                   </div>

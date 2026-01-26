@@ -1,24 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AppLayout from '@/components/layout/AppLayout';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/contexts/ToastContext';
-import { useUser } from '@/contexts/UserContext';
-import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, GraduationCap, MapPin, Video, Car, Plane } from 'lucide-react';
-import { mockCandidates } from '@/data/mockCandidates';
-import { locationData } from '@/data/locationData';
+import AppLayout from '../../components/layout/AppLayout';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Slider } from '../../components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { useToast } from '../../contexts/ToastContext';
+import { useUser } from '../../contexts/UserContext';
+import { candidateService } from '../../services/candidate.service';
+import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, GraduationCap, MapPin, Video, Car, Plane, Loader2 } from 'lucide-react';
+import { locationData } from '../../data/locationData';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '../../components/ui/dialog';
 
 interface PortfolioProject {
   id: string;
@@ -38,11 +38,57 @@ const EditProfile: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { user } = useUser();
+  const [loading, setLoading] = useState(true);
 
-  const candidateData = mockCandidates[0];
+  const [experience, setExperience] = useState<any[]>([]);
+  const [education, setEducation] = useState<any[]>([]);
+  const [skills, setSkills] = useState<any[]>([]);
+  const [qualifications, setQualifications] = useState<any[]>([]);
+  const [formData, setFormData] = useState<any>(null);
 
-  const [experience, setExperience] = useState(candidateData.experience);
-  const [education, setEducation] = useState(candidateData.education);
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+      setLoading(true);
+      try {
+        const profile = await candidateService.getCandidateProfile(user.id);
+        if (profile) {
+          setFormData({
+            name: user.name,
+            email: user.email,
+            phone: profile.profiles?.phone || '',
+            dateOfBirth: profile.date_of_birth || '',
+            nationality: profile.nationality || '',
+            gender: profile.gender || '',
+            address: profile.address || '',
+            location: `${profile.city || ''}, ${profile.country || ''}`,
+            videoUrl: profile.video_url || '',
+            title: profile.job_title || '',
+            sector: profile.sector || '',
+            careerLevel: profile.career_level || '',
+            status: profile.employment_status || '',
+            jobTypes: profile.preferred_job_types || [],
+            noticePeriod: profile.notice_period || '',
+            travelWillingness: profile.travel_willingness?.toString() || '0',
+            salaryMin: profile.salary_expectation_min || 0,
+            salaryMax: profile.salary_expectation_max || 0,
+            entryBonus: profile.desired_entry_bonus || 0,
+            vacationDays: profile.vacation_days || 0,
+            workRadius: profile.work_radius_km || 0,
+          });
+          setExperience(profile.candidate_experience || []);
+          setEducation(profile.candidate_education || []);
+          setSkills(profile.candidate_skills?.map((s: any) => ({ name: s.skills?.name, percentage: s.proficiency_percentage })) || []);
+          setQualifications(profile.candidate_qualifications?.map((q: any) => q.qualifications?.name) || []);
+        }
+      } catch (error) {
+        console.error('Error fetching profile for editing:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [user?.id, user.name, user.email]);
   const [experienceModalOpen, setExperienceModalOpen] = useState(false);
   const [educationModalOpen, setEducationModalOpen] = useState(false);
   const [newExperience, setNewExperience] = useState({
@@ -57,46 +103,10 @@ const EditProfile: React.FC = () => {
     period: '',
   });
 
-  const [formData, setFormData] = useState({
-    // Personal
-    name: user.name,
-    email: user.email,
-    phone: '+49 123 456 7890',
-    dateOfBirth: '1990-05-15',
-    nationality: 'German',
-    gender: 'male',
-    address: 'Hauptstraße 123, 10115 Berlin',
-    location: 'Berlin, Germany',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    
-    // Professional
-    title: 'Senior Frontend Developer',
-    sector: 'Technology',
-    careerLevel: 'senior',
-    status: 'employed',
-    
-    // Preferences
-    jobTypes: ['full-time', 'remote'],
-    noticePeriod: '3 months',
-    travelWillingness: '25',
-    
-    // Salary & Conditions
-    salaryMin: candidateData.conditions.salaryExpectation.min,
-    salaryMax: candidateData.conditions.salaryExpectation.max,
-    entryBonus: candidateData.conditions.entryBonus || 0,
-    vacationDays: candidateData.conditions.vacationDays,
-    workRadius: candidateData.conditions.workRadius,
-  });
-
-  const [skills, setSkills] = useState<Array<{ name: string; percentage: number }>>(candidateData.skills);
   const [skillInput, setSkillInput] = useState('');
-
-  const [qualifications, setQualifications] = useState<string[]>(candidateData.qualifications);
   const [qualificationInput, setQualificationInput] = useState('');
-
   const [languages, setLanguages] = useState<string[]>(['English', 'German', 'Spanish']);
   const [languageInput, setLanguageInput] = useState('');
-
   const [drivingLicenses, setDrivingLicenses] = useState<string[]>(['B', 'A']);
   const [licenseInput, setLicenseInput] = useState('');
 
@@ -135,8 +145,8 @@ const EditProfile: React.FC = () => {
 
   const continents = Object.keys(locationData);
   const countries = newLocation.continent ? Object.keys(locationData[newLocation.continent] || {}) : [];
-  const cities = newLocation.country && newLocation.continent 
-    ? locationData[newLocation.continent]?.[newLocation.country] || [] 
+  const cities = newLocation.country && newLocation.continent
+    ? locationData[newLocation.continent]?.[newLocation.country] || []
     : [];
 
   const handleAddSkill = () => {
@@ -294,7 +304,7 @@ const EditProfile: React.FC = () => {
     if (formData.jobTypes.includes(type)) {
       setFormData({
         ...formData,
-        jobTypes: formData.jobTypes.filter(t => t !== type),
+        jobTypes: formData.jobTypes.filter((t: string) => t !== type),
       });
     } else {
       setFormData({
@@ -338,13 +348,59 @@ const EditProfile: React.FC = () => {
     });
   };
 
-  const handleSave = () => {
-    showToast({
-      title: 'Profile Updated',
-      description: 'Your profile has been updated successfully',
-    });
-    navigate('/candidate/profile');
+  const handleSave = async () => {
+    try {
+      if (!user?.id) return;
+
+      const updates = {
+        date_of_birth: formData.dateOfBirth,
+        gender: formData.gender,
+        nationality: formData.nationality,
+        address: formData.address,
+        city: formData.location.split(', ')[0] || '',
+        country: formData.location.split(', ')[1]?.trim() || '',
+        job_title: formData.title,
+        sector: formData.sector,
+        career_level: formData.careerLevel,
+        employment_status: formData.status,
+        notice_period: formData.noticePeriod,
+        salary_expectation_min: formData.salaryMin,
+        salary_expectation_max: formData.salaryMax,
+        desired_entry_bonus: formData.entryBonus,
+        vacation_days: formData.vacationDays,
+        work_radius_km: formData.workRadius,
+        travel_willingness: parseInt(formData.travelWillingness),
+        video_url: formData.videoUrl,
+        preferred_job_types: formData.jobTypes,
+      };
+
+      await candidateService.updateCandidateProfile(user.id, updates);
+
+      showToast({
+        title: 'Profile Updated',
+        description: 'Your profile has been updated successfully',
+      });
+      navigate('/candidate/profile');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      showToast({
+        title: 'Update Failed',
+        description: 'An error occurred while saving your profile',
+        variant: 'destructive',
+      });
+    }
   };
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!formData) return null;
 
   return (
     <AppLayout>
@@ -352,7 +408,6 @@ const EditProfile: React.FC = () => {
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
-            size="icon"
             onClick={() => navigate('/candidate/profile')}
             className="bg-transparent text-foreground hover:bg-muted hover:text-foreground"
           >
@@ -367,7 +422,7 @@ const EditProfile: React.FC = () => {
         {/* Personal Information */}
         <Card className="p-6 md:p-8 border border-border bg-card">
           <h3 className="text-h3 font-heading text-foreground mb-6">Personal Information</h3>
-          
+
           <div className="space-y-6">
             <div className="flex items-center space-x-6">
               <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center text-h2 font-heading text-primary">
@@ -377,7 +432,7 @@ const EditProfile: React.FC = () => {
                 <Label className="text-body-sm font-medium text-foreground mb-2 block">
                   Profile Picture
                 </Label>
-                <Button 
+                <Button
                   variant="outline"
                   className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
                 >
@@ -503,7 +558,7 @@ const EditProfile: React.FC = () => {
         {/* Media */}
         <Card className="p-6 md:p-8 border border-border bg-card">
           <h3 className="text-h3 font-heading text-foreground mb-6">Media & Presentation</h3>
-          
+
           <div className="space-y-6">
             <div>
               <Label htmlFor="videoUrl" className="text-body-sm font-medium text-foreground mb-2 block">
@@ -528,7 +583,7 @@ const EditProfile: React.FC = () => {
         {/* Professional Information */}
         <Card className="p-6 md:p-8 border border-border bg-card">
           <h3 className="text-h3 font-heading text-foreground mb-6">Professional Information</h3>
-          
+
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -616,8 +671,8 @@ const EditProfile: React.FC = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
-                <Button 
-                  size="icon" 
+                <Button
+                  size="icon"
                   onClick={handleAddSkill}
                   className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                 >
@@ -665,8 +720,8 @@ const EditProfile: React.FC = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleAddQualification()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
-                <Button 
-                  size="icon" 
+                <Button
+                  size="icon"
                   onClick={handleAddQualification}
                   className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                 >
@@ -705,8 +760,8 @@ const EditProfile: React.FC = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleAddLanguage()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
-                <Button 
-                  size="icon" 
+                <Button
+                  size="icon"
                   onClick={handleAddLanguage}
                   className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                 >
@@ -746,8 +801,8 @@ const EditProfile: React.FC = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleAddLicense()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
-                <Button 
-                  size="icon" 
+                <Button
+                  size="icon"
                   onClick={handleAddLicense}
                   className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                 >
@@ -778,7 +833,7 @@ const EditProfile: React.FC = () => {
         {/* Job Preferences */}
         <Card className="p-6 md:p-8 border border-border bg-card">
           <h3 className="text-h3 font-heading text-foreground mb-6">Job Preferences</h3>
-          
+
           <div className="space-y-6">
             <div>
               <Label className="text-body-sm font-medium text-foreground mb-3 block">
@@ -789,11 +844,10 @@ const EditProfile: React.FC = () => {
                   <button
                     key={type}
                     onClick={() => handleJobTypeToggle(type)}
-                    className={`px-4 py-2 rounded-lg text-body-sm font-medium transition-all ${
-                      formData.jobTypes.includes(type)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-foreground hover:bg-muted/80'
-                    }`}
+                    className={`px-4 py-2 rounded-lg text-body-sm font-medium transition-all ${formData.jobTypes.includes(type)
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-foreground hover:bg-muted/80'
+                      }`}
                   >
                     {type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                   </button>
@@ -842,7 +896,7 @@ const EditProfile: React.FC = () => {
                   <MapPin className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
                   Preferred Work Locations
                 </Label>
-                <Button 
+                <Button
                   onClick={() => setLocationModalOpen(true)}
                   size="sm"
                   className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
@@ -856,7 +910,7 @@ const EditProfile: React.FC = () => {
                 <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
                   <MapPin className="w-12 h-12 mx-auto mb-3 text-muted-foreground" strokeWidth={1.5} />
                   <p className="text-body-sm text-muted-foreground mb-3">No preferred locations added yet</p>
-                  <Button 
+                  <Button
                     onClick={() => setLocationModalOpen(true)}
                     variant="outline"
                     size="sm"
@@ -897,7 +951,7 @@ const EditProfile: React.FC = () => {
         {/* Salary & Conditions */}
         <Card className="p-6 md:p-8 border border-border bg-card">
           <h3 className="text-h3 font-heading text-foreground mb-6">Salary & Conditions</h3>
-          
+
           <div className="space-y-6">
             <div>
               <Label className="text-body-sm font-medium text-foreground mb-3 block">
@@ -974,7 +1028,7 @@ const EditProfile: React.FC = () => {
         <Card className="p-6 md:p-8 border border-border bg-card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-h3 font-heading text-foreground">Work Experience</h3>
-            <Button 
+            <Button
               onClick={() => setExperienceModalOpen(true)}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
@@ -987,7 +1041,7 @@ const EditProfile: React.FC = () => {
             <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
               <Briefcase className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
               <p className="text-body text-muted-foreground mb-4">No work experience added yet</p>
-              <Button 
+              <Button
                 onClick={() => setExperienceModalOpen(true)}
                 variant="outline"
                 className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
@@ -1024,7 +1078,7 @@ const EditProfile: React.FC = () => {
         <Card className="p-6 md:p-8 border border-border bg-card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-h3 font-heading text-foreground">Education</h3>
-            <Button 
+            <Button
               onClick={() => setEducationModalOpen(true)}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
@@ -1037,7 +1091,7 @@ const EditProfile: React.FC = () => {
             <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
               <GraduationCap className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
               <p className="text-body text-muted-foreground mb-4">No education added yet</p>
-              <Button 
+              <Button
                 onClick={() => setEducationModalOpen(true)}
                 variant="outline"
                 className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
@@ -1073,7 +1127,7 @@ const EditProfile: React.FC = () => {
         <Card className="p-6 md:p-8 border border-border bg-card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-h3 font-heading text-foreground">My Portfolio</h3>
-            <Button 
+            <Button
               onClick={() => setPortfolioModalOpen(true)}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
@@ -1086,7 +1140,7 @@ const EditProfile: React.FC = () => {
             <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
               <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
               <p className="text-body text-muted-foreground mb-4">No portfolio projects yet</p>
-              <Button 
+              <Button
                 onClick={() => setPortfolioModalOpen(true)}
                 variant="outline"
                 className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
@@ -1127,14 +1181,14 @@ const EditProfile: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
-          <Button 
+          <Button
             variant="outline"
             onClick={() => navigate('/candidate/profile')}
             className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleSave}
             className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
           >
@@ -1323,8 +1377,8 @@ const EditProfile: React.FC = () => {
               <Label htmlFor="locContinent" className="text-body-sm font-medium text-foreground mb-2 block">
                 Continent <span className="text-error">*</span>
               </Label>
-              <Select 
-                value={newLocation.continent} 
+              <Select
+                value={newLocation.continent}
                 onValueChange={(value) => setNewLocation({ continent: value, country: '', city: '' })}
               >
                 <SelectTrigger className="bg-background text-foreground border-border">
@@ -1343,8 +1397,8 @@ const EditProfile: React.FC = () => {
                 <Label htmlFor="locCountry" className="text-body-sm font-medium text-foreground mb-2 block">
                   Country <span className="text-error">*</span>
                 </Label>
-                <Select 
-                  value={newLocation.country} 
+                <Select
+                  value={newLocation.country}
                   onValueChange={(value) => setNewLocation({ ...newLocation, country: value, city: '' })}
                 >
                   <SelectTrigger className="bg-background text-foreground border-border">
@@ -1364,8 +1418,8 @@ const EditProfile: React.FC = () => {
                 <Label htmlFor="locCity" className="text-body-sm font-medium text-foreground mb-2 block">
                   City <span className="text-error">*</span>
                 </Label>
-                <Select 
-                  value={newLocation.city} 
+                <Select
+                  value={newLocation.city}
                   onValueChange={(value) => setNewLocation({ ...newLocation, city: value })}
                 >
                   <SelectTrigger className="bg-background text-foreground border-border">

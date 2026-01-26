@@ -1,33 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AppLayout from '@/components/layout/AppLayout';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import RichTextEditor from '@/components/ui/rich-text-editor';
-import { Calendar, Building2, Briefcase, Check, X } from 'lucide-react';
-import { useToast } from '@/contexts/ToastContext';
-import { mockInvitations } from '@/data/mockInvitations';
+import AppLayout from '../../components/layout/AppLayout';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Label } from '../../components/ui/label';
+import RichTextEditor from '../../components/ui/rich-text-editor';
+import { Calendar, Building2, Briefcase, Check, X, Loader2 } from 'lucide-react';
+import { useToast } from '../../contexts/ToastContext';
+import { useUser } from '../../contexts/UserContext';
+import { invitationsService } from '../../services/invitations.service';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '../../components/ui/dialog';
 
 const MyInvitations: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [invitations, setInvitations] = useState(mockInvitations.filter(inv => inv.status === 'pending'));
+  const { user } = useUser();
+  const [invitations, setInvitations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
-  const [selectedInvitation, setSelectedInvitation] = useState<typeof mockInvitations[0] | null>(null);
+  const [selectedInvitation, setSelectedInvitation] = useState<any | null>(null);
   const [coverLetter, setCoverLetter] = useState('');
 
-  const handleAccept = (invitation: typeof mockInvitations[0]) => {
+  React.useEffect(() => {
+    const fetchInvitations = async () => {
+      if (!user?.id) return;
+      setLoading(true);
+      try {
+        const data = await invitationsService.getInvitationsByCandidate(user.id);
+        setInvitations(data.filter((inv: any) => inv.status === 'pending'));
+      } catch (error) {
+        console.error('Error fetching invitations:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInvitations();
+  }, [user?.id]);
+
+  const handleAccept = (invitation: any) => {
     setSelectedInvitation(invitation);
     setApplyDialogOpen(true);
   };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   const handleDecline = (invitationId: string, jobTitle: string) => {
     setInvitations(invitations.filter(inv => inv.id !== invitationId));
@@ -49,13 +78,13 @@ const MyInvitations: React.FC = () => {
 
     showToast({
       title: 'Application Submitted',
-      description: `Your application for ${selectedInvitation?.jobTitle} has been submitted`,
+      description: `Your application for ${selectedInvitation?.jobs?.title} has been submitted`,
     });
-    
+
     if (selectedInvitation) {
       setInvitations(invitations.filter(inv => inv.id !== selectedInvitation.id));
     }
-    
+
     setApplyDialogOpen(false);
     setCoverLetter('');
     setSelectedInvitation(null);
@@ -78,7 +107,7 @@ const MyInvitations: React.FC = () => {
             <p className="text-body text-muted-foreground mb-6">
               When companies invite you to apply, they'll appear here.
             </p>
-            <Button 
+            <Button
               onClick={() => navigate('/candidate/jobs')}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
@@ -97,8 +126,8 @@ const MyInvitations: React.FC = () => {
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex items-start space-x-4 flex-1">
                       <img
-                        src={invitation.companyLogo}
-                        alt={invitation.companyName}
+                        src={invitation.employer_profiles?.logo_url || "https://via.placeholder.com/64"}
+                        alt={invitation.employer_profiles?.company_name}
                         className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                         loading="lazy"
                       />
@@ -108,14 +137,14 @@ const MyInvitations: React.FC = () => {
                             Invitation
                           </span>
                         </div>
-                        <h3 
+                        <h3
                           className="text-h4 font-heading text-foreground mb-1 cursor-pointer hover:text-primary transition-colors"
-                          onClick={() => navigate(`/jobs/${invitation.jobId}`)}
+                          onClick={() => navigate(`/jobs/${invitation.job_id}`)}
                         >
-                          {invitation.jobTitle}
+                          {invitation.jobs?.title}
                         </h3>
-                        <p className="text-body-sm text-muted-foreground mb-3">{invitation.companyName}</p>
-                        
+                        <p className="text-body-sm text-muted-foreground mb-3">{invitation.employer_profiles?.company_name}</p>
+
                         {invitation.message && (
                           <p className="text-body-sm text-foreground mb-3 italic">
                             "{invitation.message}"
@@ -124,7 +153,7 @@ const MyInvitations: React.FC = () => {
 
                         <div className="flex items-center text-caption text-muted-foreground">
                           <Calendar className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                          <span>Invited {new Date(invitation.sentDate).toLocaleDateString()}</span>
+                          <span>Invited {new Date(invitation.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>
@@ -138,7 +167,7 @@ const MyInvitations: React.FC = () => {
                         Accept & Apply
                       </Button>
                       <Button
-                        onClick={() => handleDecline(invitation.id, invitation.jobTitle)}
+                        onClick={() => handleDecline(invitation.id, invitation.jobs?.title)}
                         variant="outline"
                         className="bg-transparent text-error border-error hover:bg-error hover:text-error-foreground font-normal"
                       >
@@ -157,9 +186,9 @@ const MyInvitations: React.FC = () => {
       <Dialog open={applyDialogOpen} onOpenChange={setApplyDialogOpen}>
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-h3 font-heading text-foreground">Apply for {selectedInvitation?.jobTitle}</DialogTitle>
+            <DialogTitle className="text-h3 font-heading text-foreground">Apply for {selectedInvitation?.jobs?.title}</DialogTitle>
             <DialogDescription className="text-body text-muted-foreground">
-              Submit your application to {selectedInvitation?.companyName}
+              Submit your application to {selectedInvitation?.employer_profiles?.company_name}
             </DialogDescription>
           </DialogHeader>
 

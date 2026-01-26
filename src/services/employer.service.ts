@@ -96,4 +96,15 @@ export const employerService = {
     if (error) throw error;
     return data;
   },
+
+  async getTopCompanies(limit: number = 6) {
+    const { data, error } = await supabase
+      .from('employer_profiles')
+      .select('*')
+      .order('company_name', { ascending: true }) // Placeholder logic for "Top"
+      .limit(limit);
+
+    if (error) throw error;
+    return data;
+  },
 };

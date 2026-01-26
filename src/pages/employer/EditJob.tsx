@@ -1,47 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import AppLayout from '@/components/layout/AppLayout';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import RichTextEditor from '@/components/ui/rich-text-editor';
-import { useToast } from '@/contexts/ToastContext';
-import { locationData } from '@/data/locationData';
-import { mockJobs } from '@/data/mockJobs';
+import AppLayout from '../../components/layout/AppLayout';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import RichTextEditor from '../../components/ui/rich-text-editor';
+import { useToast } from '../../contexts/ToastContext';
+import { locationData } from '../../data/locationData';
+import { jobsService } from '../../services/jobs.service';
+import { Loader2 } from 'lucide-react';
 import { X, Plus, ArrowLeft } from 'lucide-react';
 
 const EditJob: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState<any>(null);
 
-  const job = mockJobs.find(j => j.id === id);
-
-  const [formData, setFormData] = useState({
-    title: job?.title || '',
-    description: job?.description || '',
-    salary: job?.salary || '',
-    type: job?.type || 'Full-time',
-    entryBonus: job?.attributes?.entryBonus?.toString() || '',
-    contractDuration: job?.attributes?.contractDuration || '',
-    location: {
-      continent: 'North America',
-      country: 'United States',
-      city: job?.location.split(', ')[0] || '',
-    },
-  });
-
-  const [languages, setLanguages] = useState<string[]>(job?.attributes?.languages || []);
+  const [languages, setLanguages] = useState<string[]>([]);
   const [languageInput, setLanguageInput] = useState('');
-  const [qualifications, setQualifications] = useState<string[]>(job?.qualifications || []);
+  const [qualifications, setQualifications] = useState<string[]>([]);
   const [qualificationInput, setQualificationInput] = useState('');
+
+  useEffect(() => {
+    const fetchJob = async () => {
+      if (!id) return;
+      setLoading(true);
+      try {
+        const job = await jobsService.getJobById(id);
+        if (job) {
+          setFormData({
+            title: job.title || '',
+            description: job.description || '',
+            salary: job.salary_min && job.salary_max ? `${job.salary_min} - ${job.salary_max}` : '',
+            type: job.employment_type || 'Full-time',
+            entryBonus: job.entry_bonus?.toString() || '',
+            contractDuration: job.contract_duration || '',
+            location: {
+              continent: 'Europe', // Default for now
+              country: job.country || '',
+              city: job.city || '',
+            },
+          });
+          setLanguages(job.required_languages || []);
+          setQualifications(job.required_qualifications || []);
+        }
+      } catch (error) {
+        console.error('Error fetching job to edit:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJob();
+  }, [id]);
 
   const continents = Object.keys(locationData);
   const countries = formData.location.continent ? Object.keys(locationData[formData.location.continent] || {}) : [];
-  const cities = formData.location.country && formData.location.continent 
-    ? locationData[formData.location.continent]?.[formData.location.country] || [] 
+  const cities = formData.location.country && formData.location.continent
+    ? locationData[formData.location.continent]?.[formData.location.country] || []
     : [];
 
   const handleAddLanguage = () => {
@@ -83,7 +102,17 @@ const EditJob: React.FC = () => {
     navigate('/employer/jobs');
   };
 
-  if (!job) {
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!formData) {
     return (
       <AppLayout>
         <div className="text-center py-12">
@@ -135,11 +164,11 @@ const EditJob: React.FC = () => {
                 Location <span className="text-error">*</span>
               </Label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Select 
-                  value={formData.location.continent} 
-                  onValueChange={(value) => setFormData({ 
-                    ...formData, 
-                    location: { continent: value, country: '', city: '' } 
+                <Select
+                  value={formData.location.continent}
+                  onValueChange={(value) => setFormData({
+                    ...formData,
+                    location: { continent: value, country: '', city: '' }
                   })}
                 >
                   <SelectTrigger className="bg-background text-foreground border-border">
@@ -153,11 +182,11 @@ const EditJob: React.FC = () => {
                 </Select>
 
                 {formData.location.continent && (
-                  <Select 
-                    value={formData.location.country} 
-                    onValueChange={(value) => setFormData({ 
-                      ...formData, 
-                      location: { ...formData.location, country: value, city: '' } 
+                  <Select
+                    value={formData.location.country}
+                    onValueChange={(value) => setFormData({
+                      ...formData,
+                      location: { ...formData.location, country: value, city: '' }
                     })}
                   >
                     <SelectTrigger className="bg-background text-foreground border-border">
@@ -172,11 +201,11 @@ const EditJob: React.FC = () => {
                 )}
 
                 {formData.location.country && (
-                  <Select 
-                    value={formData.location.city} 
-                    onValueChange={(value) => setFormData({ 
-                      ...formData, 
-                      location: { ...formData.location, city: value } 
+                  <Select
+                    value={formData.location.city}
+                    onValueChange={(value) => setFormData({
+                      ...formData,
+                      location: { ...formData.location, city: value }
                     })}
                   >
                     <SelectTrigger className="bg-background text-foreground border-border">
@@ -280,8 +309,8 @@ const EditJob: React.FC = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleAddLanguage()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
-                <Button 
-                  size="icon" 
+                <Button
+                  size="icon"
                   onClick={handleAddLanguage}
                   className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                 >
@@ -320,8 +349,8 @@ const EditJob: React.FC = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleAddQualification()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
-                <Button 
-                  size="icon" 
+                <Button
+                  size="icon"
                   onClick={handleAddQualification}
                   className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                 >
@@ -350,14 +379,14 @@ const EditJob: React.FC = () => {
         </Card>
 
         <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
-          <Button 
+          <Button
             variant="outline"
             onClick={() => navigate('/employer/jobs')}
             className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleSave}
             className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
           >

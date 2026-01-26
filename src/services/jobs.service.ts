@@ -161,7 +161,7 @@ export const jobsService = {
     return data;
   },
 
-  async getFeaturedJobs() {
+  async getFeaturedJobs(limit: number = 6) {
     const { data, error } = await supabase
       .from('jobs')
       .select(`
@@ -174,7 +174,8 @@ export const jobsService = {
       `)
       .eq('status', 'active')
       .eq('is_featured', true)
-      .order('posted_at', { ascending: false });
+      .order('posted_at', { ascending: false })
+      .limit(limit);
 
     if (error) throw error;
     return data;

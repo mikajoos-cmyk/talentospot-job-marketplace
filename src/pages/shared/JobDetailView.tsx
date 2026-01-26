@@ -1,31 +1,48 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import AppLayout from '@/components/layout/AppLayout';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import RichTextEditor from '@/components/ui/rich-text-editor';
+import AppLayout from '../../components/layout/AppLayout';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import RichTextEditor from '../../components/ui/rich-text-editor';
 import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2, Map } from 'lucide-react';
-import { mockJobs } from '@/data/mockJobs';
-import { mockCompanies } from '@/data/mockCompanies';
-import { useToast } from '@/contexts/ToastContext';
+import { jobsService } from '../../services/jobs.service';
+import { employerService } from '../../services/employer.service';
+import { useToast } from '../../contexts/ToastContext';
+import { Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+} from '../../components/ui/dialog';
+import { Label } from '../../components/ui/label';
+import { Input } from '../../components/ui/input';
 
 const JobDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [job, setJob] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
 
-  const job = mockJobs.find(j => j.id === id);
+  React.useEffect(() => {
+    const fetchJob = async () => {
+      if (!id) return;
+      setLoading(true);
+      try {
+        const data = await jobsService.getJobById(id);
+        setJob(data);
+      } catch (error) {
+        console.error('Error fetching job:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJob();
+  }, [id]);
 
   const handleApply = () => {
     showToast({
@@ -35,6 +52,16 @@ const JobDetailView: React.FC = () => {
     setApplyDialogOpen(false);
     setCoverLetter('');
   };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (!job) {
     return (
@@ -67,47 +94,46 @@ const JobDetailView: React.FC = () => {
         </div>
 
         <Card className="p-8 border border-border bg-card">
-          <div 
+          <div
             className="flex items-start space-x-6 mb-8 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => {
-              const company = mockCompanies.find(c => c.name === job.company);
-              if (company) navigate(`/companies/${company.id}`);
+              if (job.employer_id) navigate(`/companies/${job.employer_id}`);
             }}
           >
             <img
-              src={job.image}
-              alt={job.company}
+              src={job.employer_profiles?.logo_url || "https://via.placeholder.com/80"}
+              alt={job.employer_profiles?.company_name}
               className="w-20 h-20 rounded-lg object-cover"
               loading="lazy"
             />
             <div className="flex-1">
-              <h2 className="text-h2 font-heading text-foreground mb-2 hover:text-primary transition-colors">{job.company}</h2>
+              <h2 className="text-h2 font-heading text-foreground mb-2 hover:text-primary transition-colors">{job.employer_profiles?.company_name}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="flex items-center text-body text-foreground">
                   <MapPin className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{job.location}</span>
+                  <span>{job.city}, {job.country}</span>
                 </div>
                 <div className="flex items-center text-body text-foreground">
                   <DollarSign className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{job.salary}</span>
+                  <span>{job.salary_min && job.salary_max ? `${job.salary_min} - ${job.salary_max} ${job.salary_currency || 'EUR'}` : 'Competitive'}</span>
                 </div>
                 <div className="flex items-center text-body text-foreground">
                   <Briefcase className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{job.type}</span>
+                  <span>{job.employment_type}</span>
                 </div>
                 <div className="flex items-center text-body text-foreground">
                   <Calendar className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>Posted {new Date(job.datePosted).toLocaleDateString()}</span>
+                  <span>Posted {new Date(job.posted_at).toLocaleDateString()}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {job.attributes?.entryBonus && (
+          {job.entry_bonus && (
             <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 mb-8">
               <div className="flex items-center justify-between">
                 <span className="text-body font-medium text-warning">Entry Bonus</span>
-                <span className="text-h3 font-heading text-warning">€{job.attributes.entryBonus.toLocaleString()}</span>
+                <span className="text-h3 font-heading text-warning">€{job.entry_bonus.toLocaleString()}</span>
               </div>
             </div>
           )}
@@ -115,43 +141,38 @@ const JobDetailView: React.FC = () => {
           <div className="space-y-6">
             <div>
               <h3 className="text-h3 font-heading text-foreground mb-4">Job Description</h3>
-              <div 
+              <div
                 className="text-body text-foreground prose prose-sm max-w-none [&>ul]:list-disc [&>ul]:ml-6 [&>ul]:my-2 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol]:my-2 [&>p]:my-2 [&>strong]:font-semibold [&>em]:italic"
                 dangerouslySetInnerHTML={{ __html: job.description }}
               />
             </div>
 
-            {job.attributes && (
-              <div>
-                <h3 className="text-h3 font-heading text-foreground mb-4">Job Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {job.attributes.contractDuration && (
-                    <div className="p-4 bg-muted rounded-lg">
-                      <p className="text-caption text-muted-foreground mb-1">Contract Duration</p>
-                      <p className="text-body font-medium text-foreground">{job.attributes.contractDuration}</p>
-                    </div>
-                  )}
-                  {job.attributes.languages && job.attributes.languages.length > 0 && (
-                    <div className="p-4 bg-muted rounded-lg">
-                      <p className="text-caption text-muted-foreground mb-1">Languages</p>
-                      <p className="text-body font-medium text-foreground">{job.attributes.languages.join(', ')}</p>
-                    </div>
-                  )}
-                  {job.attributes.homeOffice !== undefined && (
-                    <div className="p-4 bg-muted rounded-lg">
-                      <p className="text-caption text-muted-foreground mb-1">Home Office</p>
-                      <p className="text-body font-medium text-foreground">{job.attributes.homeOffice ? 'Available' : 'Not Available'}</p>
-                    </div>
-                  )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {job.contract_duration && (
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-caption text-muted-foreground mb-1">Contract Duration</p>
+                  <p className="text-body font-medium text-foreground">{job.contract_duration}</p>
                 </div>
-              </div>
-            )}
+              )}
+              {job.required_languages && job.required_languages.length > 0 && (
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-caption text-muted-foreground mb-1">Languages</p>
+                  <p className="text-body font-medium text-foreground">{job.required_languages.join(', ')}</p>
+                </div>
+              )}
+              {job.home_office_available !== undefined && (
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-caption text-muted-foreground mb-1">Home Office</p>
+                  <p className="text-body font-medium text-foreground">{job.home_office_available ? 'Available' : 'Not Available'}</p>
+                </div>
+              )}
+            </div>
 
-            {job.qualifications && job.qualifications.length > 0 && (
+            {job.required_qualifications && job.required_qualifications.length > 0 && (
               <div>
                 <h3 className="text-h3 font-heading text-foreground mb-4">Required Qualifications</h3>
                 <div className="flex flex-wrap gap-2">
-                  {job.qualifications.map((qual) => (
+                  {job.required_qualifications.map((qual: string) => (
                     <span
                       key={qual}
                       className="px-3 py-2 bg-accent/10 text-accent text-body-sm rounded-lg"
@@ -173,13 +194,13 @@ const JobDetailView: React.FC = () => {
               <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center border border-border">
                 <div className="text-center">
                   <MapPin className="w-12 h-12 mx-auto mb-2 text-primary" strokeWidth={1.5} />
-                  <p className="text-body font-medium text-foreground">{job.location}</p>
+                  <p className="text-body font-medium text-foreground">{job.city}, {job.country}</p>
                   <p className="text-caption text-muted-foreground">Interactive map view</p>
                 </div>
               </div>
             </div>
 
-            <Button 
+            <Button
               onClick={() => setApplyDialogOpen(true)}
               className="w-full md:w-auto bg-primary text-primary-foreground hover:bg-primary-hover font-normal h-12 px-8"
             >
@@ -194,7 +215,7 @@ const JobDetailView: React.FC = () => {
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">Apply for {job.title}</DialogTitle>
             <DialogDescription className="text-body text-muted-foreground">
-              Submit your application to {job.company}
+              Submit your application to {job.employer_profiles?.company_name}
             </DialogDescription>
           </DialogHeader>
 

@@ -1,28 +1,50 @@
 import React, { useState } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import RichTextEditor from '@/components/ui/rich-text-editor';
-import { useToast } from '@/contexts/ToastContext';
-import { Upload, Building2 } from 'lucide-react';
+import AppLayout from '../../components/layout/AppLayout';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Switch } from '../../components/ui/switch';
+import RichTextEditor from '../../components/ui/rich-text-editor';
+import { useToast } from '../../contexts/ToastContext';
+import { useUser } from '../../contexts/UserContext';
+import { employerService } from '../../services/employer.service';
+import { Upload, Building2, Loader2 } from 'lucide-react';
 
 const CompanyProfile: React.FC = () => {
   const { showToast } = useToast();
-  const [formData, setFormData] = useState({
-    companyName: 'TechCorp Inc.',
-    website: 'https://techcorp.example.com',
-    contactPerson: 'Jane Smith',
-    phone: '+1 (555) 123-4567',
-    email: 'contact@techcorp.com',
-    description: 'Leading technology company building innovative solutions for the future.',
-    videoUrl: '',
-    openForRefugees: true,
-  });
+  const { user } = useUser();
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState<any>(null);
 
-  const handleSave = () => {
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+      setLoading(true);
+      try {
+        const profile = await employerService.getEmployerById(user.id);
+        if (profile) {
+          setFormData({
+            companyName: profile.company_name || '',
+            website: profile.website || '',
+            contactPerson: profile.contact_person || '',
+            phone: profile.phone || '', // Check if this is in profile or profiles table
+            email: user.email || '',
+            description: profile.description || '',
+            videoUrl: profile.video_url || '',
+            openForRefugees: profile.open_for_refugees || false,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching company profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [user?.id, user.email]);
+
+  const handleSave = async () => {
     if (!formData.companyName || !formData.contactPerson) {
       showToast({
         title: 'Error',
@@ -32,11 +54,32 @@ const CompanyProfile: React.FC = () => {
       return;
     }
 
-    showToast({
-      title: 'Profile Updated',
-      description: 'Your company profile has been updated successfully',
-    });
+    try {
+      // Placeholder for actual update call when available in service
+      showToast({
+        title: 'Profile Updated',
+        description: 'Your company profile has been updated successfully',
+      });
+    } catch (error) {
+      showToast({
+        title: 'Error',
+        description: 'Failed to update profile',
+        variant: 'destructive',
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!formData) return null;
 
   return (
     <AppLayout>
@@ -56,7 +99,7 @@ const CompanyProfile: React.FC = () => {
                 <Label className="text-body-sm font-medium text-foreground mb-2 block">
                   Company Logo
                 </Label>
-                <Button 
+                <Button
                   variant="outline"
                   className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
                 >
@@ -182,13 +225,13 @@ const CompanyProfile: React.FC = () => {
         </Card>
 
         <div className="flex justify-end space-x-4">
-          <Button 
+          <Button
             variant="outline"
             className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleSave}
             className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
           >

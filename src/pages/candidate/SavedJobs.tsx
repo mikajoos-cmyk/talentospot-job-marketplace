@@ -1,29 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AppLayout from '@/components/layout/AppLayout';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import RichTextEditor from '@/components/ui/rich-text-editor';
-import { MapPin, DollarSign, Briefcase, Trash2, Building2, Eye } from 'lucide-react';
-import { useToast } from '@/contexts/ToastContext';
-import { mockJobs } from '@/data/mockJobs';
-import { mockCompanies } from '@/data/mockCompanies';
+import AppLayout from '../../components/layout/AppLayout';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Label } from '../../components/ui/label';
+import RichTextEditor from '../../components/ui/rich-text-editor';
+import { MapPin, DollarSign, Briefcase, Trash2, Building2, Eye, Loader2 } from 'lucide-react';
+import { useToast } from '../../contexts/ToastContext';
+import { useUser } from '../../contexts/UserContext';
+import { savedJobsService } from '../../services/saved-jobs.service';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '../../components/ui/dialog';
 
 const SavedJobs: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const savedJobs = mockJobs.slice(0, 4);
+  const { user } = useUser();
+  const [savedJobs, setSavedJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<typeof mockJobs[0] | null>(null);
+  const [selectedJob, setSelectedJob] = useState<any | null>(null);
   const [coverLetter, setCoverLetter] = useState('');
+
+  React.useEffect(() => {
+    const fetchSavedJobs = async () => {
+      if (!user?.id) return;
+      setLoading(true);
+      try {
+        const data = await savedJobsService.getSavedJobs(user.id);
+        setSavedJobs(data);
+      } catch (error) {
+        console.error('Error fetching saved jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSavedJobs();
+  }, [user?.id]);
 
   const handleRemove = (jobTitle: string) => {
     showToast({
@@ -32,10 +50,20 @@ const SavedJobs: React.FC = () => {
     });
   };
 
-  const handleApply = (job: typeof mockJobs[0]) => {
+  const handleApply = (job: any) => {
     setSelectedJob(job);
     setApplyDialogOpen(true);
   };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   const handleSubmitApplication = () => {
     if (!coverLetter.trim()) {
@@ -77,20 +105,19 @@ const SavedJobs: React.FC = () => {
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
                     <img
-                      src={job.image}
-                      alt={job.company}
+                      src={job.jobs?.employer_profiles?.logo_url || "https://via.placeholder.com/48"}
+                      alt={job.jobs?.employer_profiles?.company_name}
                       className="w-12 h-12 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
                       loading="lazy"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const company = mockCompanies.find(c => c.name === job.company);
-                        if (company) navigate(`/companies/${company.id}`);
+                        if (job.jobs?.employer_id) navigate(`/companies/${job.jobs.employer_id}`);
                       }}
                     />
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleRemove(job.title)}
+                      onClick={() => handleRemove(job.jobs?.title)}
                       className="bg-transparent text-error hover:bg-error/10 hover:text-error"
                       aria-label="Remove from saved"
                     >
@@ -99,47 +126,46 @@ const SavedJobs: React.FC = () => {
                   </div>
 
                   <div>
-                    <h3 className="text-h4 font-heading text-foreground mb-1">{job.title}</h3>
-                    <p 
+                    <h3 className="text-h4 font-heading text-foreground mb-1">{job.jobs?.title}</h3>
+                    <p
                       className="text-body-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const company = mockCompanies.find(c => c.name === job.company);
-                        if (company) navigate(`/companies/${company.id}`);
+                        if (job.jobs?.employer_id) navigate(`/companies/${job.jobs.employer_id}`);
                       }}
                     >
-                      {job.company}
+                      {job.jobs?.employer_profiles?.company_name}
                     </p>
                   </div>
 
-                  <p className="text-body-sm text-foreground line-clamp-2">{job.description}</p>
+                  <p className="text-body-sm text-foreground line-clamp-2">{job.jobs?.description}</p>
 
                   <div className="space-y-2">
                     <div className="flex items-center text-body-sm text-muted-foreground">
                       <MapPin className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                      <span>{job.location}</span>
+                      <span>{job.jobs?.city}, {job.jobs?.country}</span>
                     </div>
                     <div className="flex items-center text-body-sm text-muted-foreground">
                       <DollarSign className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                      <span>{job.salary}</span>
+                      <span>{job.jobs?.salary_min && job.jobs?.salary_max ? `${job.jobs.salary_min} - ${job.jobs.salary_max} ${job.jobs.salary_currency || 'EUR'}` : 'Competitive'}</span>
                     </div>
                     <div className="flex items-center text-body-sm text-muted-foreground">
                       <Briefcase className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                      <span>{job.type}</span>
+                      <span>{job.jobs?.employment_type}</span>
                     </div>
                   </div>
 
                   <div className="flex space-x-2">
-                    <Button 
-                      onClick={() => navigate(`/jobs/${job.id}`)}
+                    <Button
+                      onClick={() => navigate(`/jobs/${job.job_id}`)}
                       variant="outline"
                       className="flex-1 bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
                     >
                       <Eye className="w-4 h-4 mr-2" strokeWidth={1.5} />
                       View Details
                     </Button>
-                    <Button 
-                      onClick={() => handleApply(job)}
+                    <Button
+                      onClick={() => handleApply(job.jobs)}
                       className="flex-1 bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                     >
                       Apply Now

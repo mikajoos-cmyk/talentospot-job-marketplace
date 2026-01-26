@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AppLayout from '@/components/layout/AppLayout';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import RichTextEditor from '@/components/ui/rich-text-editor';
-import { useToast } from '@/contexts/ToastContext';
-import { locationData } from '@/data/locationData';
+import AppLayout from '../../components/layout/AppLayout';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import RichTextEditor from '../../components/ui/rich-text-editor';
+import { useToast } from '../../contexts/ToastContext';
+import { locationData } from '../../data/locationData';
 import { X, Plus, ArrowLeft } from 'lucide-react';
 
 const PostJob: React.FC = () => {
@@ -35,8 +35,8 @@ const PostJob: React.FC = () => {
 
   const continents = Object.keys(locationData);
   const countries = formData.location.continent ? Object.keys(locationData[formData.location.continent] || {}) : [];
-  const cities = formData.location.country && formData.location.continent 
-    ? locationData[formData.location.continent]?.[formData.location.country] || [] 
+  const cities = formData.location.country && formData.location.continent
+    ? locationData[formData.location.continent]?.[formData.location.country] || []
     : [];
 
   const handleAddLanguage = () => {
@@ -125,11 +125,11 @@ const PostJob: React.FC = () => {
                 Location <span className="text-error">*</span>
               </Label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Select 
-                  value={formData.location.continent} 
-                  onValueChange={(value) => setFormData({ 
-                    ...formData, 
-                    location: { continent: value, country: '', city: '' } 
+                <Select
+                  value={formData.location.continent}
+                  onValueChange={(value) => setFormData({
+                    ...formData,
+                    location: { continent: value, country: '', city: '' }
                   })}
                 >
                   <SelectTrigger className="bg-background text-foreground border-border">
@@ -143,11 +143,11 @@ const PostJob: React.FC = () => {
                 </Select>
 
                 {formData.location.continent && (
-                  <Select 
-                    value={formData.location.country} 
-                    onValueChange={(value) => setFormData({ 
-                      ...formData, 
-                      location: { ...formData.location, country: value, city: '' } 
+                  <Select
+                    value={formData.location.country}
+                    onValueChange={(value) => setFormData({
+                      ...formData,
+                      location: { ...formData.location, country: value, city: '' }
                     })}
                   >
                     <SelectTrigger className="bg-background text-foreground border-border">
@@ -162,11 +162,11 @@ const PostJob: React.FC = () => {
                 )}
 
                 {formData.location.country && (
-                  <Select 
-                    value={formData.location.city} 
-                    onValueChange={(value) => setFormData({ 
-                      ...formData, 
-                      location: { ...formData.location, city: value } 
+                  <Select
+                    value={formData.location.city}
+                    onValueChange={(value) => setFormData({
+                      ...formData,
+                      location: { ...formData.location, city: value }
                     })}
                   >
                     <SelectTrigger className="bg-background text-foreground border-border">
@@ -270,8 +270,8 @@ const PostJob: React.FC = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleAddLanguage()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
-                <Button 
-                  size="icon" 
+                <Button
+                  size="icon"
                   onClick={handleAddLanguage}
                   className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                 >
@@ -310,8 +310,8 @@ const PostJob: React.FC = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleAddQualification()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
-                <Button 
-                  size="icon" 
+                <Button
+                  size="icon"
                   onClick={handleAddQualification}
                   className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                 >
@@ -340,14 +340,14 @@ const PostJob: React.FC = () => {
         </Card>
 
         <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
-          <Button 
+          <Button
             variant="outline"
             onClick={handleSaveDraft}
             className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
           >
             Save Draft
           </Button>
-          <Button 
+          <Button
             onClick={handlePublish}
             className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
           >

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useUser } from '@/contexts/UserContext';
-import { useToast } from '@/contexts/ToastContext';
-import { authService } from '@/services/auth.service';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
+import { useUser } from '../../contexts/UserContext';
+import { useToast } from '../../contexts/ToastContext';
+import { authService } from '../../services/auth.service';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Card } from '../../components/ui/card';
 import { ArrowLeft, User, Building2, Upload } from 'lucide-react';
 
 type RegistrationStep = 'role' | 'details';
@@ -80,7 +80,7 @@ const Register: React.FC = () => {
       });
 
       // After successful signup, log the user in
-      const loggedInUser = await login(formData.email, formData.password);
+      await login(formData.email, formData.password);
 
       // Redirect to the appropriate dashboard based on the selected role
       const dashboardPath = role === 'employer' ? '/employer/dashboard' : '/candidate/dashboard';
