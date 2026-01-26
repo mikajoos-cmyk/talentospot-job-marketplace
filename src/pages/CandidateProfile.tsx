@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
 import { Card } from '../components/ui/card';
@@ -19,15 +19,44 @@ const CandidateProfile: React.FC = () => {
   const { user } = useUser();
   const [candidateData, setCandidateData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const profileCompletion = 85;
+  const [profileCompletion, setProfileCompletion] = useState(0);
 
-  React.useEffect(() => {
+  // Funktion zur dynamischen Berechnung des Fortschritts
+  const calculateCompletion = (data: any, userProfile: any) => {
+    let score = 0;
+
+    // Basisdaten (User Context + Profile)
+    if (userProfile.name) score += 10;
+    if (userProfile.email) score += 5;
+    if (data.job_title) score += 10;
+    if (data.city || data.country) score += 5;
+    if (data.phone) score += 5;
+
+    // Konditionen
+    if (data.salary_expectation_min || data.salary_expectation_max) score += 10;
+
+    // Qualifikationen & Skills
+    if (data.skills && data.skills.length > 0) score += 15;
+    if (data.languages && data.languages.length > 0) score += 10;
+
+    // Erfahrung & Bildung
+    if (data.experience && data.experience.length > 0) score += 15;
+    if (data.education && data.education.length > 0) score += 15;
+
+    return Math.min(score, 100);
+  };
+
+  useEffect(() => {
     const fetchProfile = async () => {
       if (!user?.id) return;
       setLoading(true);
       try {
         const data = await candidateService.getCandidateProfile(user.id);
         setCandidateData(data);
+
+        if (data) {
+          setProfileCompletion(calculateCompletion(data, user));
+        }
       } catch (error) {
         console.error('Error fetching candidate profile:', error);
       } finally {
@@ -35,7 +64,7 @@ const CandidateProfile: React.FC = () => {
       }
     };
     fetchProfile();
-  }, [user?.id]);
+  }, [user?.id, user]);
 
   if (loading) {
     return (
@@ -49,7 +78,18 @@ const CandidateProfile: React.FC = () => {
 
   if (!candidateData) return null;
 
-  // Reviews placeholder for now
+  // Hilfsvariablen für leere Zustände
+  const hasSkills = candidateData.skills && candidateData.skills.length > 0;
+  const hasLanguages = candidateData.languages && candidateData.languages.length > 0;
+  const hasLicenses = candidateData.driving_licenses && candidateData.driving_licenses.length > 0;
+  const hasQualifications = candidateData.qualifications && candidateData.qualifications.length > 0;
+  const hasExperience = candidateData.experience && candidateData.experience.length > 0;
+  const hasEducation = candidateData.education && candidateData.education.length > 0;
+
+  // Formatierung der Location (filtert leere/null Werte heraus)
+  const locationString = [candidateData.city, candidateData.country].filter(Boolean).join(', ');
+
+  // Placeholder für Reviews (da Tabelle noch leer/nicht implementiert)
   const candidateReviews: any[] = [];
   const averageRating = 0;
 
@@ -74,7 +114,7 @@ const CandidateProfile: React.FC = () => {
             <Avatar className="w-24 h-24">
               <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback className="bg-primary text-primary-foreground text-h3">
-                {user.name.charAt(0)}
+                {user.name?.charAt(0) || 'U'}
               </AvatarFallback>
             </Avatar>
 
@@ -86,7 +126,9 @@ const CandidateProfile: React.FC = () => {
                 </span>
               )}
               <h2 className="text-h2 font-heading text-foreground mb-2">{user.name}</h2>
-              <p className="text-body text-muted-foreground mb-4">{candidateData.job_title}</p>
+              <p className="text-body text-muted-foreground mb-4">
+                {candidateData.job_title || 'No job title specified'}
+              </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
                 <div className="flex items-center text-body-sm text-foreground">
@@ -95,15 +137,15 @@ const CandidateProfile: React.FC = () => {
                 </div>
                 <div className="flex items-center text-body-sm text-foreground">
                   <Phone className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{candidateData.profiles?.phone || 'N/A'}</span>
+                  <span>{candidateData.phone || 'Not specified'}</span>
                 </div>
                 <div className="flex items-center text-body-sm text-foreground">
                   <MapPin className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{candidateData.city}, {candidateData.country}</span>
+                  <span>{locationString || 'Location not specified'}</span>
                 </div>
                 <div className="flex items-center text-body-sm text-foreground">
                   <Globe className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{candidateData.nationality}</span>
+                  <span>{candidateData.nationality || 'Not specified'}</span>
                 </div>
               </div>
 
@@ -128,11 +170,14 @@ const CandidateProfile: React.FC = () => {
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-caption text-muted-foreground mb-1">Salary Expectation</p>
               <p className="text-h4 font-heading text-foreground">
-                {candidateData.salary_expectation_min?.toLocaleString()} - {candidateData.salary_expectation_max?.toLocaleString()} {candidateData.currency || 'EUR'}
+                {(candidateData.salary_expectation_min || candidateData.salary_expectation_max)
+                  ? `€${candidateData.salary_expectation_min?.toLocaleString() || '0'} - €${candidateData.salary_expectation_max?.toLocaleString() || '0'}`
+                  : 'Not specified'}
               </p>
             </div>
 
-            {candidateData.desired_entry_bonus && (
+            {/* Nur anzeigen, wenn Bonus > 0 */}
+            {candidateData.desired_entry_bonus > 0 && (
               <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
                 <p className="text-caption text-warning mb-1">Entry Bonus</p>
                 <p className="text-h4 font-heading text-warning">
@@ -143,17 +188,23 @@ const CandidateProfile: React.FC = () => {
 
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-caption text-muted-foreground mb-1">Work Radius</p>
-              <p className="text-h4 font-heading text-foreground">{candidateData.work_radius_km} km</p>
+              <p className="text-h4 font-heading text-foreground">
+                {candidateData.work_radius_km ? `${candidateData.work_radius_km} km` : 'Not specified'}
+              </p>
             </div>
 
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-caption text-muted-foreground mb-1">Home Office</p>
-              <p className="text-h4 font-heading text-foreground capitalize">{candidateData.home_office_preference}</p>
+              <p className="text-h4 font-heading text-foreground capitalize">
+                {candidateData.home_office_preference || 'Not specified'}
+              </p>
             </div>
 
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-caption text-muted-foreground mb-1">Vacation Days</p>
-              <p className="text-h4 font-heading text-foreground">{candidateData.vacation_days} days</p>
+              <p className="text-h4 font-heading text-foreground">
+                {candidateData.vacation_days ? `${candidateData.vacation_days} days` : 'Not specified'}
+              </p>
             </div>
 
             {candidateData.available_from && (
@@ -165,23 +216,28 @@ const CandidateProfile: React.FC = () => {
               </div>
             )}
 
-            {candidateData.notice_period && (
-              <div className="p-4 bg-muted rounded-lg">
-                <p className="text-caption text-muted-foreground mb-1">Notice Period</p>
-                <p className="text-h4 font-heading text-foreground">{candidateData.notice_period}</p>
-              </div>
-            )}
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-caption text-muted-foreground mb-1">Notice Period</p>
+              <p className="text-h4 font-heading text-foreground">
+                {candidateData.notice_period || 'Not specified'}
+              </p>
+            </div>
 
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-caption text-muted-foreground mb-1">Travel Willingness</p>
               <div className="flex items-center">
                 <Plane className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                <span className="text-body-sm text-foreground">Up to {candidateData.travel_willingness}%</span>
+                <span className="text-body-sm text-foreground">
+                  {candidateData.travel_willingness > 0
+                    ? `Up to ${candidateData.travel_willingness}%`
+                    : 'Not specified'}
+                </span>
               </div>
             </div>
           </div>
         </Card>
 
+        {/* Video Introduction - Nur anzeigen wenn vorhanden */}
         {candidateData.video_url && (
           <Card className="p-6 md:p-8 border border-border bg-card">
             <div className="flex items-center space-x-3 mb-6">
@@ -203,6 +259,7 @@ const CandidateProfile: React.FC = () => {
           </Card>
         )}
 
+        {/* Portfolio - Nur anzeigen wenn vorhanden */}
         {candidateData.portfolio_images && candidateData.portfolio_images.length > 0 && (
           <Card className="p-6 md:p-8 border border-border bg-card">
             <div className="flex items-center space-x-3 mb-6">
@@ -235,7 +292,7 @@ const CandidateProfile: React.FC = () => {
                 <h3 className="text-h3 font-heading text-foreground">Work Experience</h3>
               </div>
 
-              {!candidateData.candidate_experience || candidateData.candidate_experience.length === 0 ? (
+              {!hasExperience ? (
                 <div className="text-center py-8">
                   <Briefcase className="w-12 h-12 mx-auto mb-3 text-muted-foreground" strokeWidth={1.5} />
                   <p className="text-body text-muted-foreground mb-4">No work experience added yet</p>
@@ -250,12 +307,13 @@ const CandidateProfile: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {candidateData.candidate_experience.map((exp: any) => (
+                  {candidateData.experience.map((exp: any) => (
                     <div key={exp.id} className="relative pl-6 border-l-2 border-border">
                       <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary"></div>
-                      <h4 className="text-h4 font-heading text-foreground mb-1">{exp.title}</h4>
+                      <h4 className="text-h4 font-heading text-foreground mb-1">{exp.job_title || exp.title}</h4>
                       <p className="text-body-sm text-muted-foreground mb-2">
-                        {exp.company} • {new Date(exp.start_date).toLocaleDateString()} - {exp.end_date ? new Date(exp.end_date).toLocaleDateString() : 'Present'}
+                        {exp.company_name || exp.company} • {new Date(exp.start_date).toLocaleDateString()}
+                        {exp.end_date ? ` - ${new Date(exp.end_date).toLocaleDateString()}` : ' - Present'}
                       </p>
                       <p className="text-body-sm text-foreground">{exp.description}</p>
                     </div>
@@ -270,7 +328,7 @@ const CandidateProfile: React.FC = () => {
                 <h3 className="text-h3 font-heading text-foreground">Education</h3>
               </div>
 
-              {!candidateData.candidate_education || candidateData.candidate_education.length === 0 ? (
+              {!hasEducation ? (
                 <div className="text-center py-8">
                   <GraduationCap className="w-12 h-12 mx-auto mb-3 text-muted-foreground" strokeWidth={1.5} />
                   <p className="text-body text-muted-foreground mb-4">No education added yet</p>
@@ -285,12 +343,13 @@ const CandidateProfile: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {candidateData.candidate_education.map((edu: any) => (
+                  {candidateData.education.map((edu: any) => (
                     <div key={edu.id} className="relative pl-6 border-l-2 border-border">
                       <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-accent"></div>
                       <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
                       <p className="text-body-sm text-muted-foreground">
-                        {edu.institution} • {new Date(edu.start_date).toLocaleDateString()} - {edu.end_date ? new Date(edu.end_date).toLocaleDateString() : 'Present'}
+                        {edu.institution} • {new Date(edu.start_date).toLocaleDateString()}
+                        {edu.end_date ? ` - ${new Date(edu.end_date).toLocaleDateString()}` : ' - Present'}
                       </p>
                     </div>
                   ))}
@@ -298,21 +357,21 @@ const CandidateProfile: React.FC = () => {
               )}
             </Card>
 
-            <Card className="p-6 border border-border bg-card">
-              <div className="flex items-center space-x-3 mb-6">
-                <MapPin className="w-6 h-6 text-primary" strokeWidth={1.5} />
-                <h3 className="text-h3 font-heading text-foreground">Work Location</h3>
-              </div>
-
-              <div className="space-y-2">
+            {/* Optional: Preferred Locations anzeigen wenn nicht leer */}
+            {(candidateData.city || candidateData.country) && (
+              <Card className="p-6 border border-border bg-card">
+                <div className="flex items-center space-x-3 mb-6">
+                  <MapPin className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                  <h3 className="text-h3 font-heading text-foreground">Primary Location</h3>
+                </div>
                 <div className="flex items-center p-3 bg-muted rounded-lg">
                   <MapPin className="w-4 h-4 mr-2 text-primary" strokeWidth={1.5} />
                   <span className="text-body-sm text-foreground">
-                    {candidateData.city}, {candidateData.country}
+                    {locationString}
                   </span>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -322,17 +381,31 @@ const CandidateProfile: React.FC = () => {
                 <h3 className="text-h3 font-heading text-foreground">Skills</h3>
               </div>
 
-              <div className="space-y-4">
-                {candidateData.candidate_skills?.map((cs: any) => (
-                  <div key={cs.id}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-body-sm font-medium text-foreground">{cs.skills?.name}</span>
-                      <span className="text-body-sm text-muted-foreground">{cs.proficiency_percentage}%</span>
+              {!hasSkills ? (
+                <div className="text-center py-4">
+                  <p className="text-body text-muted-foreground mb-3">No skills added yet</p>
+                  <Button
+                    onClick={() => navigate('/candidate/profile/edit')}
+                    variant="outline"
+                    size="sm"
+                    className="bg-transparent text-primary border-primary/30 hover:bg-primary/10"
+                  >
+                    Add Skills
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {candidateData.skills.map((cs: any) => (
+                    <div key={cs.id || cs.name}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-body-sm font-medium text-foreground">{cs.name}</span>
+                        <span className="text-body-sm text-muted-foreground">{cs.percentage}%</span>
+                      </div>
+                      <Progress value={cs.percentage} className="h-2" />
                     </div>
-                    <Progress value={cs.proficiency_percentage} className="h-2" />
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </Card>
 
             <Card className="p-6 border border-border bg-card">
@@ -341,16 +414,20 @@ const CandidateProfile: React.FC = () => {
                 <h3 className="text-h3 font-heading text-foreground">Qualifications</h3>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                {candidateData.candidate_qualifications?.map((cq: any) => (
-                  <span
-                    key={cq.id}
-                    className="px-3 py-2 bg-accent/10 text-accent text-body-sm rounded-lg"
-                  >
-                    {cq.qualifications?.name}
-                  </span>
-                ))}
-              </div>
+              {!hasQualifications ? (
+                <p className="text-body text-muted-foreground text-center py-4">No qualifications added</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {candidateData.qualifications.map((q: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-2 bg-accent/10 text-accent text-body-sm rounded-lg"
+                    >
+                      {q}
+                    </span>
+                  ))}
+                </div>
+              )}
             </Card>
 
             <Card className="p-6 border border-border bg-card">
@@ -362,28 +439,32 @@ const CandidateProfile: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <p className="text-caption text-muted-foreground mb-2">Languages</p>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-2 py-1 bg-info/10 text-info text-caption rounded-md">English</span>
-                    <span className="px-2 py-1 bg-info/10 text-info text-caption rounded-md">German</span>
-                    <span className="px-2 py-1 bg-info/10 text-info text-caption rounded-md">Spanish</span>
-                  </div>
+                  {!hasLanguages ? (
+                    <p className="text-body-sm text-muted-foreground">Not specified</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {candidateData.languages.map((lang: any, idx: number) => (
+                        <span key={idx} className="px-2 py-1 bg-info/10 text-info text-caption rounded-md">
+                          {lang.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <p className="text-caption text-muted-foreground mb-2">Driving Licenses</p>
-                  <div className="flex flex-wrap gap-2">
-                    {candidateData.driving_licenses?.map((license: string) => (
-                      <span key={license} className="px-2 py-1 bg-primary/10 text-primary text-caption rounded-md">{license}</span>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-caption text-muted-foreground mb-1">Travel Willingness</p>
-                  <div className="flex items-center">
-                    <Plane className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                    <span className="text-body-sm text-foreground">Up to 25%</span>
-                  </div>
+                  {!hasLicenses ? (
+                    <p className="text-body-sm text-muted-foreground">Not specified</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {candidateData.driving_licenses.map((license: string, idx: number) => (
+                        <span key={idx} className="px-2 py-1 bg-primary/10 text-primary text-caption rounded-md">
+                          {license}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
@@ -410,9 +491,6 @@ const CandidateProfile: React.FC = () => {
                     </div>
                     <span className="text-h4 font-heading text-foreground">
                       {averageRating.toFixed(1)}
-                    </span>
-                    <span className="text-caption text-muted-foreground">
-                      ({candidateReviews.length} {candidateReviews.length === 1 ? 'review' : 'reviews'})
                     </span>
                   </div>
                 )}

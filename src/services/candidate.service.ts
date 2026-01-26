@@ -42,25 +42,109 @@ export const candidateService = {
       .from('candidate_profiles')
       .select(`
         *,
-        profiles!inner(*)
+        profiles!inner(
+          full_name,
+          email,
+          phone,
+          avatar_url
+        ),
+        candidate_skills(
+          proficiency_percentage,
+          skills(id, name)
+        ),
+        candidate_languages(
+          proficiency_level,
+          languages(id, name)
+        ),
+        candidate_experience(*),
+        candidate_education(*),
+        candidate_qualifications(
+          qualifications(id, name)
+        )
       `)
       .eq('id', userId)
-      .maybeSingle();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async updateCandidateProfile(userId: string, updates: Partial<CandidateProfile>) {
-    const { data, error } = await supabase
-      .from('candidate_profiles')
-      .update(updates)
-      .eq('id', userId)
-      .select()
       .single();
 
     if (error) throw error;
-    return data;
+    if (!data) return null;
+
+    // Transformation der Daten für das Frontend
+    return {
+      ...data,
+      name: data.profiles?.full_name,
+      email: data.profiles?.email,
+      phone: data.profiles?.phone,
+      avatar: data.profiles?.avatar_url,
+      // Mapping der Nested Relations
+      skills: data.candidate_skills?.map((item: any) => ({
+        id: item.skills?.id,
+        name: item.skills?.name,
+        percentage: item.proficiency_percentage
+      })) || [],
+      languages: data.candidate_languages?.map((item: any) => ({
+        id: item.languages?.id,
+        name: item.languages?.name,
+        level: item.proficiency_level
+      })) || [],
+      qualifications: data.candidate_qualifications?.map((q: any) => q.qualifications?.name) || [],
+      experience: data.candidate_experience || [],
+      education: data.candidate_education || [],
+      // Alias für Felder
+      salary: {
+        min: data.salary_expectation_min,
+        max: data.salary_expectation_max
+      }
+    };
+  },
+
+  // src/services/candidate.service.ts
+
+  async updateCandidateProfile(userId: string, updates: any) {
+    // 1. Trenne Profil-Updates von Relation-Updates
+    const {
+      name, email, phone, // Gehört in 'profiles'
+      skills, experience, education, // Gehört in Untertabellen
+      languages, qualifications, salary, // Helper Objekte
+      jobTypes, // <--- DAS HIER WAR DAS PROBLEM (hieß vorher oft preferred_job_types im Frontend)
+      ...candidateProfileUpdates
+    } = updates;
+
+    // HELPER: Leere Datums-Strings zu NULL konvertieren, um Fehler 22007 zu verhindern
+    const dateFields = ['date_of_birth', 'available_from'];
+    dateFields.forEach(field => {
+      if (candidateProfileUpdates[field] === '') {
+        candidateProfileUpdates[field] = null;
+      }
+    });
+
+    // Mapping: Frontend "salary" Objekt -> DB Spalten
+    if (salary) {
+      candidateProfileUpdates.salary_expectation_min = salary.min;
+      candidateProfileUpdates.salary_expectation_max = salary.max;
+    }
+
+    // Mapping: Frontend "jobTypes" -> DB Spalte "job_type"
+    if (jobTypes) {
+      candidateProfileUpdates.job_type = jobTypes; // Hier korrigiert!
+    }
+
+    // 2. Update Hauptprofil (profiles Tabelle)
+    if (name || phone) {
+      await supabase.from('profiles').update({
+        full_name: name,
+        phone: phone
+      }).eq('id', userId);
+    }
+
+    // 3. Update Kandidatenprofil (candidate_profiles Tabelle)
+    if (Object.keys(candidateProfileUpdates).length > 0) {
+      const { error } = await supabase
+        .from('candidate_profiles')
+        .update(candidateProfileUpdates)
+        .eq('id', userId);
+
+      if (error) throw error;
+    }
   },
 
   async searchCandidates(filters: any = {}) {
@@ -113,15 +197,12 @@ export const candidateService = {
     return data;
   },
 
+  // Helper Methoden für Relationen
   async getCandidateSkills(candidateId: string) {
     const { data, error } = await supabase
       .from('candidate_skills')
-      .select(`
-        *,
-        skills(*)
-      `)
+      .select(`*, skills(*)`)
       .eq('candidate_id', candidateId);
-
     if (error) throw error;
     return data;
   },
@@ -136,73 +217,6 @@ export const candidateService = {
       })
       .select()
       .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async getCandidateLanguages(candidateId: string) {
-    const { data, error } = await supabase
-      .from('candidate_languages')
-      .select(`
-        *,
-        languages(*)
-      `)
-      .eq('candidate_id', candidateId);
-
-    if (error) throw error;
-    return data;
-  },
-
-  async addCandidateLanguage(candidateId: string, languageId: string, level: string) {
-    const { data, error } = await supabase
-      .from('candidate_languages')
-      .insert({
-        candidate_id: candidateId,
-        language_id: languageId,
-        proficiency_level: level,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async getCandidateQualifications(candidateId: string) {
-    const { data, error } = await supabase
-      .from('candidate_qualifications')
-      .select(`
-        *,
-        qualifications(*)
-      `)
-      .eq('candidate_id', candidateId);
-
-    if (error) throw error;
-    return data;
-  },
-
-  async addCandidateQualification(candidateId: string, qualificationId: string) {
-    const { data, error } = await supabase
-      .from('candidate_qualifications')
-      .insert({
-        candidate_id: candidateId,
-        qualification_id: qualificationId,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async getCandidateExperience(candidateId: string) {
-    const { data, error } = await supabase
-      .from('candidate_experience')
-      .select('*')
-      .eq('candidate_id', candidateId)
-      .order('start_date', { ascending: false });
-
     if (error) throw error;
     return data;
   },
@@ -216,18 +230,6 @@ export const candidateService = {
       })
       .select()
       .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async getCandidateEducation(candidateId: string) {
-    const { data, error } = await supabase
-      .from('candidate_education')
-      .select('*')
-      .eq('candidate_id', candidateId)
-      .order('start_date', { ascending: false });
-
     if (error) throw error;
     return data;
   },
@@ -241,7 +243,6 @@ export const candidateService = {
       })
       .select()
       .single();
-
     if (error) throw error;
     return data;
   },

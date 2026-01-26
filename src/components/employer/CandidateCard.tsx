@@ -184,33 +184,33 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier })
             )}
           </div>
 
-          {candidate.candidate_skills?.length > 0 && (
+          {candidate.skills && candidate.skills.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {candidate.candidate_skills.slice(0, 3).map((cs: any) => (
+              {candidate.skills.slice(0, 3).map((skill: any) => (
                 <span
-                  key={cs.skills?.id || cs.id}
+                  key={skill.id || skill.name}
                   className="px-2 py-1 bg-muted text-foreground text-caption rounded-md"
                 >
-                  {cs.skills?.name || 'Skill'}
+                  {skill.name || 'Skill'}
                 </span>
               ))}
-              {candidate.candidate_skills.length > 3 && (
+              {candidate.skills.length > 3 && (
                 <span className="px-2 py-1 bg-muted text-foreground text-caption rounded-md">
-                  +{candidate.candidate_skills.length - 3}
+                  +{candidate.skills.length - 3}
                 </span>
               )}
             </div>
           )}
 
           <div className="flex space-x-2">
-            <Button 
+            <Button
               onClick={handleAction}
               disabled={requestPending}
               className="flex-1 bg-primary text-primary-foreground hover:bg-primary-hover font-normal disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {canContact ? 'Contact' : requestPending ? 'Request Pending' : 'Request Data'}
             </Button>
-            <Button 
+            <Button
               onClick={() => setInviteDialogOpen(true)}
               variant="outline"
               className="flex-1 bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"

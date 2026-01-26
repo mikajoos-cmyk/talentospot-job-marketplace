@@ -69,7 +69,14 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (profile.role === 'candidate') {
         try {
-          extendedProfile = await candidateService.getCandidateProfile(userId);
+          const candidateData = await candidateService.getCandidateProfile(userId);
+
+          if (candidateData) {
+            extendedProfile = candidateData;
+            // Falls name/avatar im extendedProfile liegen (durch unseren Mapper), nutzen wir sie
+            if (candidateData.name) profile.full_name = candidateData.name;
+            if (candidateData.avatar) profile.avatar_url = candidateData.avatar;
+          }
         } catch (error) {
           console.error('Error loading candidate profile:', error);
         }

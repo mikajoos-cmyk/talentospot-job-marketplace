@@ -65,8 +65,17 @@ export const jobsService = {
       .select(`
         *,
         employer_profiles!inner(
-          *,
-          profiles!inner(full_name, avatar_url)
+          id,
+          company_name,
+          logo_url,
+          industry,
+          company_size,
+          website,
+          headquarters_city,
+          headquarters_country,
+          profiles!inner (
+             email
+          )
         )
       `)
       .eq('id', jobId)
@@ -79,7 +88,19 @@ export const jobsService = {
       .update({ views: (data.views || 0) + 1 })
       .eq('id', jobId);
 
-    return data;
+    // Wenn das Frontend "company" als flaches Objekt erwartet:
+    return {
+      ...data,
+      company: {
+        name: data.employer_profiles?.company_name,
+        logo: data.employer_profiles?.logo_url,
+        location: `${data.employer_profiles?.headquarters_city || ''}, ${data.employer_profiles?.headquarters_country || ''}`.replace(/^, |, $/g, ''), // Clean up if parts missing
+        industry: data.employer_profiles?.industry,
+        size: data.employer_profiles?.company_size,
+        website: data.employer_profiles?.website,
+        email: data.employer_profiles?.profiles?.email
+      }
+    };
   },
 
   async searchJobs(filters: any = {}) {

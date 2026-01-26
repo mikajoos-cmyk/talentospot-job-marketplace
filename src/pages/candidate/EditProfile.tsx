@@ -67,7 +67,7 @@ const EditProfile: React.FC = () => {
             sector: profile.sector || '',
             careerLevel: profile.career_level || '',
             status: profile.employment_status || '',
-            jobTypes: profile.preferred_job_types || [],
+            jobTypes: profile.jobTypes || [],
             noticePeriod: profile.notice_period || '',
             travelWillingness: profile.travel_willingness?.toString() || '0',
             salaryMin: profile.salary_expectation_min || 0,
@@ -105,15 +105,12 @@ const EditProfile: React.FC = () => {
 
   const [skillInput, setSkillInput] = useState('');
   const [qualificationInput, setQualificationInput] = useState('');
-  const [languages, setLanguages] = useState<string[]>(['English', 'German', 'Spanish']);
+  const [languages, setLanguages] = useState<string[]>([]);
   const [languageInput, setLanguageInput] = useState('');
-  const [drivingLicenses, setDrivingLicenses] = useState<string[]>(['B', 'A']);
+  const [drivingLicenses, setDrivingLicenses] = useState<string[]>([]);
   const [licenseInput, setLicenseInput] = useState('');
 
-  const [preferredLocations, setPreferredLocations] = useState<PreferredLocation[]>([
-    { id: '1', continent: 'Europe', country: 'Germany', city: 'Berlin' },
-    { id: '2', continent: 'Europe', country: 'Germany', city: 'Munich' },
-  ]);
+  const [preferredLocations, setPreferredLocations] = useState<PreferredLocation[]>([]);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
   const [newLocation, setNewLocation] = useState({
     continent: '',
@@ -121,20 +118,7 @@ const EditProfile: React.FC = () => {
     city: '',
   });
 
-  const [portfolioProjects, setPortfolioProjects] = useState<PortfolioProject[]>([
-    {
-      id: '1',
-      title: 'E-Commerce Platform',
-      description: 'Built a full-stack e-commerce solution with React and Node.js',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400',
-    },
-    {
-      id: '2',
-      title: 'Mobile Banking App',
-      description: 'Designed and developed a mobile banking application',
-      image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400',
-    },
-  ]);
+  const [portfolioProjects, setPortfolioProjects] = useState<PortfolioProject[]>([]);
 
   const [portfolioModalOpen, setPortfolioModalOpen] = useState(false);
   const [newProject, setNewProject] = useState({
@@ -371,7 +355,7 @@ const EditProfile: React.FC = () => {
         work_radius_km: formData.workRadius,
         travel_willingness: parseInt(formData.travelWillingness),
         video_url: formData.videoUrl,
-        preferred_job_types: formData.jobTypes,
+        jobTypes: formData.jobTypes,
       };
 
       await candidateService.updateCandidateProfile(user.id, updates);
@@ -644,15 +628,16 @@ const EditProfile: React.FC = () => {
                 </Label>
                 <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
                   <SelectTrigger className="bg-background text-foreground border-border">
-                    <SelectValue />
+                    <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="employed">Employed</SelectItem>
+                    {/* Werte müssen exakt mit DB Constraints übereinstimmen */}
+                    <SelectItem value="employed_full_time">Employed (Full-time)</SelectItem>
+                    <SelectItem value="employed_part_time">Employed (Part-time)</SelectItem>
                     <SelectItem value="unemployed">Unemployed</SelectItem>
                     <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="freelance">Freelance</SelectItem>
+                    <SelectItem value="self_employed">Freelance / Self-Employed</SelectItem>
                     <SelectItem value="retired">Retired</SelectItem>
-                    <SelectItem value="refugee">Refugee/Immigrant</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

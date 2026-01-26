@@ -72,6 +72,7 @@ const Register: React.FC = () => {
         fullName: formData.name,
         role: role!,
         phone: formData.phone,
+        companyName: formData.companyName
       });
 
       showToast({

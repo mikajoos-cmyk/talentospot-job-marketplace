@@ -6,6 +6,7 @@ export interface SignUpData {
   fullName: string;
   role: 'candidate' | 'employer';
   phone?: string;
+  companyName?: string;
 }
 
 export interface SignInData {
@@ -22,6 +23,8 @@ export const authService = {
         data: {
           full_name: data.fullName,
           role: data.role,
+          phone: data.phone,
+          company_name: data.role === 'employer' ? data.companyName : undefined
         },
         emailRedirectTo: undefined,
       },
@@ -30,40 +33,6 @@ export const authService = {
     if (authError) {
       console.error('Signup error:', authError);
       throw authError;
-    }
-    if (!authData.user) throw new Error('No user returned from signup');
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        id: authData.user.id,
-        email: data.email,
-        full_name: data.fullName,
-        role: data.role,
-        phone: data.phone || null,
-        is_active: true,
-        is_verified: false,
-      });
-
-    if (profileError) throw profileError;
-
-    if (data.role === 'candidate') {
-      const { error: candidateError } = await supabase
-        .from('candidate_profiles')
-        .insert({
-          id: authData.user.id,
-        });
-      if (candidateError) throw candidateError;
-    } else if (data.role === 'employer') {
-      const { error: employerError } = await supabase
-        .from('employer_profiles')
-        .insert({
-          id: authData.user.id,
-          company_name: '',
-          contact_person: data.fullName,
-          contact_email: data.email,
-        });
-      if (employerError) throw employerError;
     }
 
     return authData;
