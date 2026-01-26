@@ -74,17 +74,10 @@ const Register: React.FC = () => {
         phone: formData.phone,
       });
 
-      if (role === 'employer' && formData.companyName) {
-        showToast({
-          title: 'Account Created!',
-          description: 'Please check your email to verify your account.',
-        });
-      } else {
-        showToast({
-          title: 'Account Created!',
-          description: 'Please check your email to verify your account.',
-        });
-      }
+      showToast({
+        title: 'Account Created!',
+        description: 'Logging you in...',
+      });
 
       await login(formData.email, formData.password);
 
@@ -92,9 +85,23 @@ const Register: React.FC = () => {
         window.location.href = '/';
       }, 1000);
     } catch (error: any) {
+      console.error('Registration error:', error);
+
+      let errorMessage = 'Registration failed. Please try again.';
+
+      if (error?.message?.includes('already registered') || error?.message?.includes('already exists')) {
+        errorMessage = 'This email is already registered. Please sign in instead.';
+      } else if (error?.message?.includes('invalid email')) {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error?.message?.includes('weak password') || error?.message?.includes('password')) {
+        errorMessage = 'Password must be at least 6 characters long.';
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
       showToast({
-        title: 'Error',
-        description: error?.message || 'Registration failed. Please try again.',
+        title: 'Registration Error',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {

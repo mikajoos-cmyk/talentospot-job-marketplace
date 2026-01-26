@@ -23,10 +23,14 @@ export const authService = {
           full_name: data.fullName,
           role: data.role,
         },
+        emailRedirectTo: undefined,
       },
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      console.error('Signup error:', authError);
+      throw authError;
+    }
     if (!authData.user) throw new Error('No user returned from signup');
 
     const { error: profileError } = await supabase
