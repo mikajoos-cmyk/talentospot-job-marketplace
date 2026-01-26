@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2, Map } from 'lucide-react';
 import { mockJobs } from '@/data/mockJobs';
 import { mockCompanies } from '@/data/mockCompanies';
@@ -114,7 +115,10 @@ const JobDetailView: React.FC = () => {
           <div className="space-y-6">
             <div>
               <h3 className="text-h3 font-heading text-foreground mb-4">Job Description</h3>
-              <p className="text-body text-foreground whitespace-pre-line">{job.description}</p>
+              <div 
+                className="text-body text-foreground prose prose-sm max-w-none [&>ul]:list-disc [&>ul]:ml-6 [&>ul]:my-2 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol]:my-2 [&>p]:my-2 [&>strong]:font-semibold [&>em]:italic"
+                dangerouslySetInnerHTML={{ __html: job.description }}
+              />
             </div>
 
             {job.attributes && (
@@ -199,12 +203,11 @@ const JobDetailView: React.FC = () => {
               <Label htmlFor="coverLetter" className="text-body-sm font-medium text-foreground mb-2 block">
                 Cover Letter <span className="text-error">*</span>
               </Label>
-              <textarea
-                id="coverLetter"
-                placeholder="Tell us why you're a great fit for this role..."
+              <RichTextEditor
                 value={coverLetter}
-                onChange={(e) => setCoverLetter(e.target.value)}
-                className="w-full min-h-[200px] px-3 py-2 rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                onChange={setCoverLetter}
+                placeholder="Tell us why you're a great fit for this role..."
+                minHeight="200px"
               />
             </div>
 

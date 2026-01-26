@@ -4,6 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 import { Calendar, Building2, Briefcase, Check, X } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { mockInvitations } from '@/data/mockInvitations';
@@ -167,12 +168,11 @@ const MyInvitations: React.FC = () => {
               <Label htmlFor="coverLetter" className="text-body-sm font-medium text-foreground mb-2 block">
                 Cover Letter <span className="text-error">*</span>
               </Label>
-              <textarea
-                id="coverLetter"
-                placeholder="Tell us why you're a great fit for this role..."
+              <RichTextEditor
                 value={coverLetter}
-                onChange={(e) => setCoverLetter(e.target.value)}
-                className="w-full min-h-[200px] px-3 py-2 rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                onChange={setCoverLetter}
+                placeholder="Tell us why you're a great fit for this role..."
+                minHeight="200px"
               />
             </div>
 

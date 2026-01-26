@@ -8,12 +8,15 @@ import { Progress } from '@/components/ui/progress';
 import { 
   MapPin, Mail, Phone, Briefcase, GraduationCap, Award, Video, 
   Image as ImageIcon, DollarSign, Home, Calendar, Plane, ArrowLeft,
-  MessageSquare, UserPlus, Globe, Car
+  MessageSquare, UserPlus, Globe, Car, Star
 } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/contexts/ToastContext';
 import { mockCandidates } from '@/data/mockCandidates';
 import { mockJobs } from '@/data/mockJobs';
+import { mockReviews } from '@/data/mockReviews';
+import ReviewCard from '@/components/shared/ReviewCard';
+import ReviewModal from '@/components/shared/ReviewModal';
 import {
   Dialog,
   DialogContent,
@@ -28,10 +31,16 @@ const CandidateDetailView: React.FC = () => {
   const { user } = useUser();
   const { showToast } = useToast();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
 
   const candidate = mockCandidates.find(c => c.id === id);
   const isBlurred = user.packageTier === 'free';
   const canContact = user.packageTier === 'premium';
+
+  const candidateReviews = mockReviews.filter(r => r.targetId === id && r.targetRole === 'candidate');
+  const averageRating = candidateReviews.length > 0
+    ? candidateReviews.reduce((sum, r) => sum + r.rating, 0) / candidateReviews.length
+    : 0;
 
   const handleInvite = (jobTitle: string) => {
     showToast({
@@ -49,6 +58,13 @@ const CandidateDetailView: React.FC = () => {
     showToast({
       title: 'Request Sent',
       description: `Personal data request sent to ${candidate?.name}`,
+    });
+  };
+
+  const handleSubmitReview = (rating: number, comment: string) => {
+    showToast({
+      title: 'Review Submitted',
+      description: `Your review for ${candidate?.name} has been submitted`,
     });
   };
 
@@ -153,6 +169,14 @@ const CandidateDetailView: React.FC = () => {
                     >
                       <UserPlus className="w-4 h-4 mr-2" strokeWidth={1.5} />
                       Invite to Job
+                    </Button>
+                    <Button 
+                      onClick={() => setReviewModalOpen(true)}
+                      variant="outline"
+                      className="bg-transparent text-accent border-accent hover:bg-accent hover:text-accent-foreground font-normal"
+                    >
+                      <Star className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                      Write Review
                     </Button>
                   </>
                 ) : (
@@ -403,6 +427,61 @@ const CandidateDetailView: React.FC = () => {
                 </div>
               </div>
             </Card>
+
+            <Card className="p-6 border border-border bg-card">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <Star className="w-6 h-6 text-accent" strokeWidth={1.5} />
+                  <h3 className="text-h3 font-heading text-foreground">Reviews</h3>
+                </div>
+                {candidateReviews.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-5 h-5 ${
+                            i < Math.round(averageRating)
+                              ? 'text-accent fill-accent'
+                              : 'text-muted-foreground'
+                          }`}
+                          strokeWidth={1.5}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-h4 font-heading text-foreground">
+                      {averageRating.toFixed(1)}
+                    </span>
+                    <span className="text-caption text-muted-foreground">
+                      ({candidateReviews.length})
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {candidateReviews.length === 0 ? (
+                <div className="text-center py-8">
+                  <Star className="w-12 h-12 mx-auto mb-3 text-muted-foreground" strokeWidth={1.5} />
+                  <p className="text-body text-muted-foreground mb-4">No reviews yet</p>
+                  {canContact && (
+                    <Button 
+                      onClick={() => setReviewModalOpen(true)}
+                      variant="outline"
+                      size="sm"
+                      className="bg-transparent text-accent border-accent hover:bg-accent hover:text-accent-foreground font-normal"
+                    >
+                      Write First Review
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {candidateReviews.map((review) => (
+                    <ReviewCard key={review.id} review={review} />
+                  ))}
+                </div>
+              )}
+            </Card>
           </div>
         </div>
       </div>
@@ -445,6 +524,14 @@ const CandidateDetailView: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ReviewModal
+        open={reviewModalOpen}
+        onOpenChange={setReviewModalOpen}
+        targetName={displayName}
+        targetRole="candidate"
+        onSubmit={handleSubmitReview}
+      />
     </AppLayout>
   );
 };

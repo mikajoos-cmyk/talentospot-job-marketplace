@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
@@ -8,9 +8,11 @@ import { Progress } from '@/components/ui/progress';
 import { useUser } from '@/contexts/UserContext';
 import { 
   MapPin, Mail, Phone, Briefcase, GraduationCap, Award, Video, 
-  Image as ImageIcon, DollarSign, Home, Calendar, Plane, Globe, Car 
+  Image as ImageIcon, DollarSign, Home, Calendar, Plane, Globe, Car, Star 
 } from 'lucide-react';
 import { mockCandidates } from '@/data/mockCandidates';
+import { mockReviews } from '@/data/mockReviews';
+import ReviewCard from '@/components/shared/ReviewCard';
 
 const CandidateProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +20,10 @@ const CandidateProfile: React.FC = () => {
   const profileCompletion = 85;
   
   const candidateData = mockCandidates[0];
+  const candidateReviews = mockReviews.filter(r => r.targetId === '1' && r.targetRole === 'candidate');
+  const averageRating = candidateReviews.length > 0
+    ? candidateReviews.reduce((sum, r) => sum + r.rating, 0) / candidateReviews.length
+    : 0;
 
   return (
     <AppLayout>
@@ -353,6 +359,51 @@ const CandidateProfile: React.FC = () => {
                   </div>
                 </div>
               </div>
+            </Card>
+
+            <Card className="p-6 border border-border bg-card">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <Star className="w-6 h-6 text-accent" strokeWidth={1.5} />
+                  <h3 className="text-h3 font-heading text-foreground">Reviews</h3>
+                </div>
+                {candidateReviews.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-5 h-5 ${
+                            i < Math.round(averageRating)
+                              ? 'text-accent fill-accent'
+                              : 'text-muted-foreground'
+                          }`}
+                          strokeWidth={1.5}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-h4 font-heading text-foreground">
+                      {averageRating.toFixed(1)}
+                    </span>
+                    <span className="text-caption text-muted-foreground">
+                      ({candidateReviews.length} {candidateReviews.length === 1 ? 'review' : 'reviews'})
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {candidateReviews.length === 0 ? (
+                <div className="text-center py-8">
+                  <Star className="w-12 h-12 mx-auto mb-3 text-muted-foreground" strokeWidth={1.5} />
+                  <p className="text-body text-muted-foreground">No reviews yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {candidateReviews.map((review) => (
+                    <ReviewCard key={review.id} review={review} />
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
         </div>

@@ -1,18 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, DollarSign, Briefcase, ArrowLeft, Mail, Phone, MessageSquare } from 'lucide-react';
+import { MapPin, DollarSign, Briefcase, ArrowLeft, Mail, Phone, MessageSquare, Star } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { mockCandidates } from '@/data/mockCandidates';
 import { mockJobs } from '@/data/mockJobs';
+import ReviewModal from '@/components/shared/ReviewModal';
 
 const ApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
 
   const candidate = mockCandidates[0];
   const job = mockJobs[0];
@@ -35,6 +37,13 @@ const ApplicationDetail: React.FC = () => {
       description: `${candidate.name}'s application has been rejected`,
     });
     navigate('/employer/dashboard');
+  };
+
+  const handleSubmitReview = (rating: number, comment: string) => {
+    showToast({
+      title: 'Review Submitted',
+      description: `Your review for ${candidate.name} has been submitted`,
+    });
   };
 
   return (
@@ -86,7 +95,10 @@ const ApplicationDetail: React.FC = () => {
             <Card className="p-6 border border-border bg-card">
               <h3 className="text-h3 font-heading text-foreground mb-4">Cover Letter</h3>
               <div className="bg-muted rounded-lg p-4">
-                <p className="text-body text-foreground whitespace-pre-line">{coverLetter}</p>
+                <div 
+                  className="text-body text-foreground prose prose-sm max-w-none [&>ul]:list-disc [&>ul]:ml-6 [&>ul]:my-2 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol]:my-2 [&>p]:my-2 [&>strong]:font-semibold [&>em]:italic"
+                  dangerouslySetInnerHTML={{ __html: coverLetter }}
+                />
               </div>
             </Card>
 
@@ -175,6 +187,14 @@ const ApplicationDetail: React.FC = () => {
                 >
                   Reject Application
                 </Button>
+                <Button 
+                  onClick={() => setReviewModalOpen(true)}
+                  variant="outline"
+                  className="w-full bg-transparent text-accent border-accent hover:bg-accent hover:text-accent-foreground font-normal"
+                >
+                  <Star className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  Write Review
+                </Button>
               </div>
             </Card>
 
@@ -196,6 +216,14 @@ const ApplicationDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ReviewModal
+        open={reviewModalOpen}
+        onOpenChange={setReviewModalOpen}
+        targetName={candidate.name}
+        targetRole="candidate"
+        onSubmit={handleSubmitReview}
+      />
     </AppLayout>
   );
 };

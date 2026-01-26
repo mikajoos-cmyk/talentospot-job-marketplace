@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Users, Building2, Globe, ArrowLeft, Briefcase, DollarSign, Calendar, Map, Heart, Send } from 'lucide-react';
+import { MapPin, Users, Building2, Globe, ArrowLeft, Briefcase, DollarSign, Calendar, Map, Heart, Send, Star } from 'lucide-react';
 import { mockCompanies } from '@/data/mockCompanies';
 import { mockJobs } from '@/data/mockJobs';
+import { mockReviews } from '@/data/mockReviews';
+import ReviewCard from '@/components/shared/ReviewCard';
+import ReviewModal from '@/components/shared/ReviewModal';
 import { useToast } from '@/contexts/ToastContext';
 
 const CompanyDetail: React.FC = () => {
@@ -12,9 +15,15 @@ const CompanyDetail: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [isFollowing, setIsFollowing] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
 
   const company = mockCompanies.find(c => c.id === id);
   const companyJobs = mockJobs.filter(job => job.company === company?.name);
+  
+  const companyReviews = mockReviews.filter(r => r.targetId === id && r.targetRole === 'employer');
+  const averageRating = companyReviews.length > 0
+    ? companyReviews.reduce((sum, r) => sum + r.rating, 0) / companyReviews.length
+    : 0;
 
   const handleFollow = () => {
     setIsFollowing(!isFollowing);
@@ -28,6 +37,13 @@ const CompanyDetail: React.FC = () => {
 
   const handleMessage = () => {
     navigate(`/candidate/messages?conversationId=${company?.id}`);
+  };
+
+  const handleSubmitReview = (rating: number, comment: string) => {
+    showToast({
+      title: 'Review Submitted',
+      description: `Your review for ${company?.name} has been submitted`,
+    });
   };
 
   if (!company) {
@@ -103,6 +119,14 @@ const CompanyDetail: React.FC = () => {
                     <Send className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     Send Message
                   </Button>
+                  <Button
+                    onClick={() => setReviewModalOpen(true)}
+                    variant="outline"
+                    className="bg-transparent text-accent border-accent hover:bg-accent hover:text-accent-foreground font-normal"
+                  >
+                    <Star className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                    Write Review
+                  </Button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -138,9 +162,10 @@ const CompanyDetail: React.FC = () => {
 
           <Card className="p-8 border border-border bg-card">
             <h2 className="text-h2 font-heading text-foreground mb-6">About Us</h2>
-            <p className="text-body text-foreground leading-relaxed whitespace-pre-line mb-6">
-              {company.description}
-            </p>
+            <div 
+              className="text-body text-foreground leading-relaxed prose prose-sm max-w-none [&>ul]:list-disc [&>ul]:ml-6 [&>ul]:my-2 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol]:my-2 [&>p]:my-2 [&>strong]:font-semibold [&>em]:italic mb-6"
+              dangerouslySetInnerHTML={{ __html: company.description }}
+            />
 
             <div className="mt-8">
               <h3 className="text-h3 font-heading text-foreground mb-4 flex items-center">
@@ -221,8 +246,68 @@ const CompanyDetail: React.FC = () => {
               </div>
             )}
           </Card>
+
+          <Card className="p-8 border border-border bg-card">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <Star className="w-6 h-6 text-accent" strokeWidth={1.5} />
+                <h2 className="text-h2 font-heading text-foreground">Reviews</h2>
+              </div>
+              {companyReviews.length > 0 && (
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-5 h-5 ${
+                          i < Math.round(averageRating)
+                            ? 'text-accent fill-accent'
+                            : 'text-muted-foreground'
+                        }`}
+                        strokeWidth={1.5}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-h4 font-heading text-foreground">
+                    {averageRating.toFixed(1)}
+                  </span>
+                  <span className="text-caption text-muted-foreground">
+                    ({companyReviews.length} {companyReviews.length === 1 ? 'review' : 'reviews'})
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {companyReviews.length === 0 ? (
+              <div className="text-center py-12">
+                <Star className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
+                <p className="text-body text-muted-foreground mb-6">No reviews yet</p>
+                <Button 
+                  onClick={() => setReviewModalOpen(true)}
+                  variant="outline"
+                  className="bg-transparent text-accent border-accent hover:bg-accent hover:text-accent-foreground font-normal"
+                >
+                  Write First Review
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {companyReviews.map((review) => (
+                  <ReviewCard key={review.id} review={review} />
+                ))}
+              </div>
+            )}
+          </Card>
         </div>
       </div>
+
+      <ReviewModal
+        open={reviewModalOpen}
+        onOpenChange={setReviewModalOpen}
+        targetName={company.name}
+        targetRole="employer"
+        onSubmit={handleSubmitReview}
+      />
     </div>
   );
 };

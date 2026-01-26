@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 import { useToast } from '@/contexts/ToastContext';
 import { Upload, Building2 } from 'lucide-react';
 
@@ -97,12 +98,11 @@ const CompanyProfile: React.FC = () => {
               <Label htmlFor="description" className="text-body-sm font-medium text-foreground mb-2 block">
                 Company Description
               </Label>
-              <textarea
-                id="description"
-                placeholder="Tell us about your company..."
+              <RichTextEditor
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full min-h-[120px] px-3 py-2 rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                onChange={(value) => setFormData({ ...formData, description: value })}
+                placeholder="Tell us about your company..."
+                minHeight="150px"
               />
             </div>
 

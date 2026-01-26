@@ -1,10 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, DollarSign, Calendar, MessageSquare } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import RichTextEditor from '@/components/ui/rich-text-editor';
+import { MapPin, DollarSign, Calendar, MessageSquare, Building2 } from 'lucide-react';
 import { mockJobs } from '@/data/mockJobs';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/contexts/ToastContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface Application {
   id: string;
@@ -15,6 +25,10 @@ interface Application {
 
 const MyApplications: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const [applyDialogOpen, setApplyDialogOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<typeof mockJobs[0] | null>(null);
+  const [coverLetter, setCoverLetter] = useState('');
   const applications: Application[] = [
     {
       id: '1',
@@ -123,19 +137,92 @@ const MyApplications: React.FC = () => {
                         Message
                       </Button>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-                    >
-                      View Details
-                    </Button>
+                      <Button
+                        onClick={() => navigate(`/jobs/${application.job.id}`)}
+                        variant="outline"
+                        size="sm"
+                        className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                      >
+                        View Details
+                      </Button>
                   </div>
                 </div>
               </Card>
             ))}
           </div>
         </div>
+
+        <Dialog open={applyDialogOpen} onOpenChange={setApplyDialogOpen}>
+          <DialogContent className="bg-card border-border max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-h3 font-heading text-foreground">Apply for {selectedJob?.title}</DialogTitle>
+              <DialogDescription className="text-body text-muted-foreground">
+                Submit your application to {selectedJob?.company}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 py-4">
+              <div>
+                <Label htmlFor="coverLetter" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Cover Letter <span className="text-error">*</span>
+                </Label>
+                <RichTextEditor
+                  value={coverLetter}
+                  onChange={setCoverLetter}
+                  placeholder="Tell us why you're a great fit for this role..."
+                  minHeight="200px"
+                />
+              </div>
+
+              <div>
+                <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                  Attach CV
+                </Label>
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+                  <Building2 className="w-8 h-8 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
+                  <p className="text-body-sm text-foreground">Click to upload your CV</p>
+                  <p className="text-caption text-muted-foreground">PDF, DOC up to 10MB</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setApplyDialogOpen(false);
+                  setCoverLetter('');
+                }}
+                className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!coverLetter.trim()) {
+                    showToast({
+                      title: 'Error',
+                      description: 'Please write a cover letter',
+                      variant: 'destructive',
+                    });
+                    return;
+                  }
+                  showToast({
+                    title: 'Application Submitted',
+                    description: `Your application for ${selectedJob?.title} has been submitted`,
+                  });
+                  setApplyDialogOpen(false);
+                  setCoverLetter('');
+                  setSelectedJob(null);
+                }}
+                disabled={!coverLetter.trim()}
+                className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+              >
+                Submit Application
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );

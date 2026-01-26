@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 import { useToast } from '@/contexts/ToastContext';
 import { locationData } from '@/data/locationData';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, ArrowLeft } from 'lucide-react';
 
 const PostJob: React.FC = () => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const [formData, setFormData] = useState({
     title: '',
@@ -63,6 +66,7 @@ const PostJob: React.FC = () => {
       title: 'Draft Saved',
       description: 'Your job posting has been saved as a draft',
     });
+    navigate('/employer/jobs');
   };
 
   const handlePublish = () => {
@@ -79,14 +83,25 @@ const PostJob: React.FC = () => {
       title: 'Job Published',
       description: 'Your job posting is now live',
     });
+    navigate('/employer/jobs');
   };
 
   return (
     <AppLayout>
       <div className="space-y-8 max-w-4xl">
-        <div>
-          <h1 className="text-h1 font-heading text-foreground mb-2">Post a Job</h1>
-          <p className="text-body text-muted-foreground">Create a new job posting to attract top talent.</p>
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/employer/jobs')}
+            className="bg-transparent text-foreground hover:bg-muted hover:text-foreground"
+          >
+            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+          </Button>
+          <div>
+            <h1 className="text-h1 font-heading text-foreground mb-2">Post a Job</h1>
+            <p className="text-body text-muted-foreground">Create a new job posting to attract top talent.</p>
+          </div>
         </div>
 
         <Card className="p-6 md:p-8 border border-border bg-card">
@@ -171,12 +186,11 @@ const PostJob: React.FC = () => {
               <Label htmlFor="description" className="text-body-sm font-medium text-foreground mb-2 block">
                 Job Description <span className="text-error">*</span>
               </Label>
-              <textarea
-                id="description"
-                placeholder="Describe the role, responsibilities, and requirements..."
+              <RichTextEditor
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full min-h-[200px] px-3 py-2 rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                onChange={(value) => setFormData({ ...formData, description: value })}
+                placeholder="Describe the role, responsibilities, and requirements..."
+                minHeight="250px"
               />
             </div>
 

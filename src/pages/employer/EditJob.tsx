@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 import { useToast } from '@/contexts/ToastContext';
 import { locationData } from '@/data/locationData';
 import { mockJobs } from '@/data/mockJobs';
@@ -195,12 +196,11 @@ const EditJob: React.FC = () => {
               <Label htmlFor="description" className="text-body-sm font-medium text-foreground mb-2 block">
                 Job Description <span className="text-error">*</span>
               </Label>
-              <textarea
-                id="description"
-                placeholder="Describe the role, responsibilities, and requirements..."
+              <RichTextEditor
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full min-h-[200px] px-3 py-2 rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                onChange={(value) => setFormData({ ...formData, description: value })}
+                placeholder="Describe the role, responsibilities, and requirements..."
+                minHeight="250px"
               />
             </div>
 
