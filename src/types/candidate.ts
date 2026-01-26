@@ -17,8 +17,16 @@ export interface CandidateConditions {
 export interface CandidateProfile {
   id: string;
   name: string;
+  email?: string;
+  phone?: string;
   title: string;
   location: string;
+  city?: string;
+  country?: string;
+  address?: string;
+  dateOfBirth?: string;
+  nationality?: string;
+  gender?: string;
   salary: { min: number; max: number };
   skills: Array<{ name: string; percentage: number }>;
   qualifications: string[];
@@ -27,6 +35,13 @@ export interface CandidateProfile {
   avatar?: string;
   videoUrl?: string;
   portfolioImages?: string[];
+  sector?: string;
+  careerLevel?: string;
+  employmentStatus?: string;
+  jobTypes?: string[];
+  travelWillingness?: number;
+  languages?: string[];
+  drivingLicenses?: string[];
   conditions: CandidateConditions;
   locationPreference: LocationHierarchy;
   experience: Array<{

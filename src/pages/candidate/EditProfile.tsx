@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { Card } from '../../components/ui/card';
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useToast } from '../../contexts/ToastContext';
 import { useUser } from '../../contexts/UserContext';
 import { candidateService } from '../../services/candidate.service';
+import { storageService } from '../../services/storage.service';
 import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, GraduationCap, MapPin, Video, Car, Plane, Loader2 } from 'lucide-react';
 import { locationData } from '../../data/locationData';
 import {
@@ -37,8 +38,13 @@ interface PreferredLocation {
 const EditProfile: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { user } = useUser();
+  const { user, refreshUser } = useUser();
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+
+  // Refs for Datei-Uploads
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const portfolioInputRef = useRef<HTMLInputElement>(null);
 
   const [experience, setExperience] = useState<any[]>([]);
   const [education, setEducation] = useState<any[]>([]);
@@ -56,30 +62,47 @@ const EditProfile: React.FC = () => {
           setFormData({
             name: user.name,
             email: user.email,
-            phone: profile.profiles?.phone || '',
-            dateOfBirth: profile.date_of_birth || '',
+            phone: profile.phone || '',
+            dateOfBirth: profile.dateOfBirth || '',
             nationality: profile.nationality || '',
             gender: profile.gender || '',
             address: profile.address || '',
-            location: `${profile.city || ''}, ${profile.country || ''}`,
-            videoUrl: profile.video_url || '',
-            title: profile.job_title || '',
+            location: profile.location || '',
+            videoUrl: profile.videoUrl || '',
+            avatar: profile.avatar || '',
+            title: profile.title || '',
             sector: profile.sector || '',
-            careerLevel: profile.career_level || '',
-            status: profile.employment_status || '',
+            careerLevel: profile.careerLevel || '',
+            status: profile.employmentStatus || '',
             jobTypes: profile.jobTypes || [],
-            noticePeriod: profile.notice_period || '',
-            travelWillingness: profile.travel_willingness?.toString() || '0',
-            salaryMin: profile.salary_expectation_min || 0,
-            salaryMax: profile.salary_expectation_max || 0,
-            entryBonus: profile.desired_entry_bonus || 0,
-            vacationDays: profile.vacation_days || 0,
-            workRadius: profile.work_radius_km || 0,
+            noticePeriod: profile.conditions.noticePeriod || '',
+            travelWillingness: profile.travelWillingness?.toString() || '0',
+            salaryMin: profile.salary.min || 0,
+            salaryMax: profile.salary.max || 0,
+            entryBonus: profile.conditions.entryBonus || 0,
+            vacationDays: profile.conditions.vacationDays || 0,
+            workRadius: profile.conditions.workRadius || 0,
           });
-          setExperience(profile.candidate_experience || []);
-          setEducation(profile.candidate_education || []);
-          setSkills(profile.candidate_skills?.map((s: any) => ({ name: s.skills?.name, percentage: s.proficiency_percentage })) || []);
-          setQualifications(profile.candidate_qualifications?.map((q: any) => q.qualifications?.name) || []);
+          setExperience(profile.experience || []);
+          setEducation(profile.education || []);
+          setSkills(profile.skills || []);
+          setQualifications(profile.qualifications || []);
+          setLanguages(profile.languages || []);
+          setDrivingLicenses(profile.drivingLicenses || []);
+
+          if (profile.locationPreference) {
+            // Mapping existing preferred locations if present
+            // This depends on how getCandidateProfile returns them
+          }
+
+          if (profile.portfolioImages) {
+            setPortfolioProjects(profile.portfolioImages.map((img: string, i: number) => ({
+              id: i.toString(),
+              title: `Project ${i + 1}`,
+              description: '',
+              image: img
+            })));
+          }
         }
       } catch (error) {
         console.error('Error fetching profile for editing:', error);
@@ -88,7 +111,7 @@ const EditProfile: React.FC = () => {
       }
     };
     fetchProfile();
-  }, [user?.id, user.name, user.email]);
+  }, [user?.id]);
   const [experienceModalOpen, setExperienceModalOpen] = useState(false);
   const [educationModalOpen, setEducationModalOpen] = useState(false);
   const [newExperience, setNewExperience] = useState({
@@ -132,6 +155,37 @@ const EditProfile: React.FC = () => {
   const cities = newLocation.country && newLocation.continent
     ? locationData[newLocation.continent]?.[newLocation.country] || []
     : [];
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0 || !user?.id) return;
+    const file = event.target.files[0];
+    setUploading(true);
+    try {
+      const publicUrl = await storageService.uploadAvatar(user.id, file);
+      setFormData({ ...formData, avatar: publicUrl });
+      showToast({ title: 'Upload Success', description: 'Profile picture uploaded' });
+    } catch (error) {
+      console.error('Avatar upload failed:', error);
+      showToast({ title: 'Upload Failed', description: 'Could not upload image', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handlePortfolioImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0 || !user?.id) return;
+    const file = event.target.files[0];
+    setUploading(true);
+    try {
+      const publicUrl = await storageService.uploadPortfolioImage(user.id, file);
+      setNewProject({ ...newProject, image: publicUrl });
+      showToast({ title: 'Upload Success', description: 'Project image uploaded' });
+    } catch (error) {
+      showToast({ title: 'Error', description: 'Image upload failed', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleAddSkill = () => {
     if (skillInput.trim() && !skills.some(s => s.name === skillInput.trim())) {
@@ -335,8 +389,16 @@ const EditProfile: React.FC = () => {
   const handleSave = async () => {
     try {
       if (!user?.id) return;
+      setLoading(true);
 
       const updates = {
+        // --- Basisdaten ---
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        avatar: formData.avatar,
+
+        // --- DB Felder (mapped) ---
         date_of_birth: formData.dateOfBirth,
         gender: formData.gender,
         nationality: formData.nationality,
@@ -355,10 +417,23 @@ const EditProfile: React.FC = () => {
         work_radius_km: formData.workRadius,
         travel_willingness: parseInt(formData.travelWillingness),
         video_url: formData.videoUrl,
+
+        // --- Arrays & Listen ---
         jobTypes: formData.jobTypes,
+        drivingLicenses: drivingLicenses,
+        skills: skills,
+        experience: experience,
+        education: education,
+        qualifications: qualifications,
+        languages: languages,
+        preferredLocations: preferredLocations,
+
+        // Portfolio Bilder (Nur Bilder URLs, da DB keine Projekte unterstützt)
+        portfolio_images: portfolioProjects.map(p => p.image).filter(Boolean)
       };
 
       await candidateService.updateCandidateProfile(user.id, updates);
+      await refreshUser();
 
       showToast({
         title: 'Profile Updated',
@@ -372,8 +447,11 @@ const EditProfile: React.FC = () => {
         description: 'An error occurred while saving your profile',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
   };
+
   if (loading) {
     return (
       <AppLayout>
@@ -409,18 +487,31 @@ const EditProfile: React.FC = () => {
 
           <div className="space-y-6">
             <div className="flex items-center space-x-6">
-              <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center text-h2 font-heading text-primary">
-                {user.name.charAt(0)}
+              <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                {formData.avatar ? (
+                  <img src={formData.avatar} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-h2 font-heading text-primary">{user.name.charAt(0)}</span>
+                )}
               </div>
               <div>
                 <Label className="text-body-sm font-medium text-foreground mb-2 block">
                   Profile Picture
                 </Label>
+                <input
+                  type="file"
+                  ref={avatarInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                />
                 <Button
                   variant="outline"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={uploading}
                   className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
                 >
-                  <Upload className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" strokeWidth={1.5} />}
                   Upload Photo
                 </Button>
                 <p className="text-caption text-muted-foreground mt-2">PNG, JPG up to 5MB</p>
@@ -1484,11 +1575,30 @@ const EditProfile: React.FC = () => {
               <Label className="text-body-sm font-medium text-foreground mb-2 block">
                 Project Image
               </Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
-                <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
-                <p className="text-body-sm text-foreground">Click to upload image</p>
+              <input
+                type="file"
+                ref={portfolioInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handlePortfolioImageUpload}
+              />
+              <div
+                onClick={() => portfolioInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer"
+              >
+                {uploading ? (
+                  <Loader2 className="w-8 h-8 mx-auto animate-spin" />
+                ) : (
+                  <>
+                    <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
+                    <p className="text-body-sm text-foreground">
+                      {newProject.image ? "Image uploaded (Click to change)" : "Click to upload image"}
+                    </p>
+                  </>
+                )}
                 <p className="text-caption text-muted-foreground">PNG, JPG up to 5MB</p>
               </div>
+              {newProject.image && !uploading && <p className="text-xs text-green-600 mt-1">Image ready</p>}
             </div>
           </div>
 
