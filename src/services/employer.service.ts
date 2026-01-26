@@ -34,7 +34,6 @@ export const employerService = {
       .maybeSingle();
 
     if (error) throw error;
-    if (!data) throw new Error('Employer profile not found');
     return data;
   },
 

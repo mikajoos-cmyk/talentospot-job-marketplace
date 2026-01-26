@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,6 +11,14 @@ import { mockCompanies } from '@/data/mockCompanies';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useUser();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const dashboardPath = user.role === 'employer' ? '/employer/dashboard' : '/candidate/dashboard';
+      navigate(dashboardPath);
+    }
+  }, [isAuthenticated, user.role, navigate]);
 
   const previewCandidates = mockCandidates.slice(0, 6);
   const featuredJobs = mockJobs.filter(job => job.featured).slice(0, 6);
@@ -27,25 +36,49 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-card border-b border-border">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <img 
-            src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png" 
-            alt="TalentoSpot" 
+          <img
+            src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png"
+            alt="TalentoSpot"
             className="h-10 w-auto"
           />
           <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/login')}
-              className="bg-transparent text-foreground hover:bg-muted hover:text-foreground font-normal"
-            >
-              Sign In
-            </Button>
-            <Button 
-              onClick={() => navigate('/register')}
-              className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-            >
-              Get Started
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    const dashboardPath = user.role === 'employer' ? '/employer/dashboard' : '/candidate/dashboard';
+                    navigate(dashboardPath);
+                  }}
+                  className="bg-transparent text-foreground hover:bg-muted hover:text-foreground font-normal"
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  onClick={logout}
+                  variant="outline"
+                  className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                >
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate('/login')}
+                  className="bg-transparent text-foreground hover:bg-muted hover:text-foreground font-normal"
+                >
+                  Sign In
+                </Button>
+                <Button
+                  onClick={() => navigate('/register')}
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                >
+                  Get Started
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -56,18 +89,18 @@ const LandingPage: React.FC = () => {
             Discover Top Talent
           </h2>
           <p className="text-body-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Connect with skilled professionals and find the perfect match for your team. 
+            Connect with skilled professionals and find the perfect match for your team.
             Join thousands of companies building their dream teams.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button 
+            <Button
               size="lg"
               onClick={() => navigate('/register')}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal h-12 px-8"
             >
               Start Hiring <ArrowRight className="ml-2 w-5 h-5" strokeWidth={2} />
             </Button>
-            <Button 
+            <Button
               size="lg"
               variant="outline"
               onClick={() => navigate('/register')}
@@ -114,8 +147,8 @@ const LandingPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {featuredJobs.map((job) => (
-              <Card 
-                key={job.id} 
+              <Card
+                key={job.id}
                 className="p-5 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1"
               >
                 <div className="flex flex-col space-y-3">
@@ -161,7 +194,7 @@ const LandingPage: React.FC = () => {
                     </div>
                   )}
 
-                  <Button 
+                  <Button
                     onClick={handleViewJob}
                     className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-medium text-body-sm h-9"
                   >
@@ -173,7 +206,7 @@ const LandingPage: React.FC = () => {
           </div>
 
           <div className="text-center mt-12">
-            <Button 
+            <Button
               size="lg"
               onClick={() => navigate('/register')}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
@@ -195,8 +228,8 @@ const LandingPage: React.FC = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 max-w-7xl mx-auto">
             {topCompanies.map((company) => (
-              <Card 
-                key={company.id} 
+              <Card
+                key={company.id}
                 className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 text-center"
               >
                 <img
@@ -217,7 +250,7 @@ const LandingPage: React.FC = () => {
           </div>
 
           <div className="text-center mt-12">
-            <Button 
+            <Button
               size="lg"
               onClick={() => navigate('/register')}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
@@ -239,8 +272,8 @@ const LandingPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {previewCandidates.map((candidate) => (
-              <Card 
-                key={candidate.id} 
+              <Card
+                key={candidate.id}
                 className="p-5 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1"
               >
                 <div className="flex flex-col space-y-3">
@@ -296,7 +329,7 @@ const LandingPage: React.FC = () => {
                     )}
                   </div>
 
-                  <Button 
+                  <Button
                     onClick={handleViewProfile}
                     className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-medium text-body-sm h-9"
                   >
@@ -308,7 +341,7 @@ const LandingPage: React.FC = () => {
           </div>
 
           <div className="text-center mt-12">
-            <Button 
+            <Button
               size="lg"
               onClick={() => navigate('/register')}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
@@ -323,9 +356,9 @@ const LandingPage: React.FC = () => {
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <img 
-                src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png" 
-                alt="TalentoSpot" 
+              <img
+                src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png"
+                alt="TalentoSpot"
                 className="h-8 w-auto mb-4 brightness-0 invert"
               />
               <p className="text-body-sm text-muted-foreground">
@@ -336,7 +369,7 @@ const LandingPage: React.FC = () => {
               <h5 className="text-body font-medium text-secondary-foreground mb-4">Explore</h5>
               <ul className="space-y-2">
                 <li>
-                  <button 
+                  <button
                     onClick={() => navigate('/register')}
                     className="text-body-sm text-muted-foreground hover:text-secondary-foreground transition-colors"
                   >
@@ -344,7 +377,7 @@ const LandingPage: React.FC = () => {
                   </button>
                 </li>
                 <li>
-                  <button 
+                  <button
                     onClick={() => navigate('/register')}
                     className="text-body-sm text-muted-foreground hover:text-secondary-foreground transition-colors"
                   >
@@ -352,7 +385,7 @@ const LandingPage: React.FC = () => {
                   </button>
                 </li>
                 <li>
-                  <button 
+                  <button
                     onClick={() => navigate('/login')}
                     className="text-body-sm text-muted-foreground hover:text-secondary-foreground transition-colors"
                   >

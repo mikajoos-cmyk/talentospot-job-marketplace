@@ -21,7 +21,7 @@ interface User {
 interface UserContextType {
   user: User;
   setUser: (user: User) => void;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
@@ -41,13 +41,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const isAuthenticated = user.role !== 'guest';
 
-  const loadUserProfile = async (userId: string) => {
+  const loadUserProfile = async (userId: string): Promise<User> => {
     try {
       let profile = null;
       try {
         profile = await authService.getProfile(userId);
       } catch (error) {
-        console.warn('Profile not yet created for user:', userId);
         const currentUser = await authService.getCurrentUser();
         if (!currentUser) throw error;
         profile = {
@@ -72,17 +71,17 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           extendedProfile = await candidateService.getCandidateProfile(userId);
         } catch (error) {
-          console.warn('Candidate profile not yet created:', error);
+          console.error('Error loading candidate profile:', error);
         }
       } else if (profile.role === 'employer') {
         try {
           extendedProfile = await employerService.getEmployerProfile(userId);
         } catch (error) {
-          console.warn('Employer profile not yet created:', error);
+          console.error('Error loading employer profile:', error);
         }
       }
 
-      setUser({
+      const updatedUser: User = {
         id: profile.id,
         name: profile.full_name || '',
         email: profile.email,
@@ -91,15 +90,20 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         companyName: extendedProfile?.company_name,
         subscription,
         profile: extendedProfile,
-      });
+      };
+
+      setUser(updatedUser);
+      return updatedUser;
     } catch (error) {
       console.error('Error loading user profile:', error);
-      setUser({
+      const guestUser: User = {
         id: '',
         name: '',
         email: '',
         role: 'guest',
-      });
+      };
+      setUser(guestUser);
+      return guestUser;
     }
   };
 
@@ -138,9 +142,17 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     const { user: authUser } = await authService.signIn({ email, password });
     await loadUserProfile(authUser.id);
+
+    // Return the user state as it's now updated in the state but the local let/const might be useful too
+    // Since setUser is async in terms of when 'user' state updates, we can re-query or just rely on what loadUserProfile does
+    // However, to be safest for the caller, let's return a value. 
+    // We need to fetch the profile again or extract it from loadUserProfile's logic if we want to be precise, 
+    // but usually callers just want to know it's done. 
+    // Let's actually make loadUserProfile return the user object it creates.
+    return await loadUserProfile(authUser.id) as unknown as User;
   };
 
   const logout = async () => {

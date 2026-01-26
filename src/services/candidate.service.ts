@@ -48,7 +48,6 @@ export const candidateService = {
       .maybeSingle();
 
     if (error) throw error;
-    if (!data) throw new Error('Candidate profile not found');
     return data;
   },
 

@@ -79,11 +79,12 @@ const Register: React.FC = () => {
         description: 'Logging you in...',
       });
 
-      await login(formData.email, formData.password);
+      // After successful signup, log the user in
+      const loggedInUser = await login(formData.email, formData.password);
 
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
+      // Redirect to the appropriate dashboard based on the selected role
+      const dashboardPath = role === 'employer' ? '/employer/dashboard' : '/candidate/dashboard';
+      navigate(dashboardPath);
     } catch (error: any) {
       console.error('Registration error:', error);
 
@@ -125,9 +126,9 @@ const Register: React.FC = () => {
           {step === 'role' && (
             <div>
               <div className="text-center mb-8">
-                <img 
-                  src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png" 
-                  alt="TalentoSpot" 
+                <img
+                  src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png"
+                  alt="TalentoSpot"
                   className="h-12 w-auto mx-auto mb-6"
                 />
                 <h1 className="text-h2 font-heading text-foreground mb-2">Join TalentoSpot</h1>
@@ -196,7 +197,7 @@ const Register: React.FC = () => {
                         type="text"
                         placeholder="TechCorp Inc."
                         value={formData.companyName}
-                        onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, companyName: e.target.value })}
                         className="bg-background text-foreground border-border"
                         required
                       />

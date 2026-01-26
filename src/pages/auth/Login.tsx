@@ -30,15 +30,14 @@ const Login: React.FC = () => {
 
     setLoading(true);
     try {
-      await login(email, password);
+      const loggedInUser = await login(email, password);
       showToast({
         title: 'Welcome back!',
         description: 'You have successfully signed in',
       });
 
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 500);
+      const dashboardPath = loggedInUser.role === 'employer' ? '/employer/dashboard' : '/candidate/dashboard';
+      navigate(dashboardPath);
     } catch (error: any) {
       showToast({
         title: 'Error',
