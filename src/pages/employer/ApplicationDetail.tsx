@@ -114,7 +114,10 @@ const ApplicationDetail: React.FC = () => {
           <div className="space-y-6">
             <Card className="p-6 border border-border bg-card">
               <div className="flex flex-col items-center text-center mb-6">
-                <Avatar className="w-24 h-24 mb-4">
+                <Avatar 
+                  className="w-24 h-24 mb-4 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
+                >
                   <AvatarImage src={candidate.avatar} alt={candidate.name} />
                   <AvatarFallback className="bg-primary text-primary-foreground text-h3">
                     {candidate.name.split(' ').map(n => n[0]).join('')}
@@ -125,7 +128,12 @@ const ApplicationDetail: React.FC = () => {
                     Refugee/Immigrant
                   </span>
                 )}
-                <h3 className="text-h3 font-heading text-foreground mb-1">{candidate.name}</h3>
+                <h3 
+                  className="text-h3 font-heading text-foreground mb-1 cursor-pointer hover:text-primary transition-colors"
+                  onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
+                >
+                  {candidate.name}
+                </h3>
                 <p className="text-body text-muted-foreground">{candidate.title}</p>
               </div>
 

@@ -87,7 +87,10 @@ const CandidateDetailView: React.FC = () => {
 
         <Card className="p-6 md:p-8 border border-border bg-card">
           <div className="flex flex-col md:flex-row gap-6">
-            <div className="relative">
+            <div 
+              className="relative cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
+            >
               <Avatar className={`w-24 h-24 ${isBlurred ? 'blur-md' : ''}`}>
                 <AvatarImage src={candidate.avatar} alt={candidate.name} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-h3">
@@ -106,7 +109,12 @@ const CandidateDetailView: React.FC = () => {
                   {candidate.originCountry && ` from ${candidate.originCountry}`}
                 </span>
               )}
-              <h2 className="text-h2 font-heading text-foreground mb-2">{displayName}</h2>
+              <h2 
+                className="text-h2 font-heading text-foreground mb-2 cursor-pointer hover:text-primary transition-colors"
+                onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
+              >
+                {displayName}
+              </h2>
               <p className="text-body text-muted-foreground mb-4">{candidate.title}</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">

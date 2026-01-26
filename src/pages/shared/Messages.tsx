@@ -165,7 +165,17 @@ const Messages: React.FC = () => {
                       selectedConversation === conversation.id ? 'bg-muted' : ''
                     }`}
                   >
-                    <Avatar className="w-12 h-12 flex-shrink-0">
+                    <Avatar 
+                      className="w-12 h-12 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (user.role === 'candidate') {
+                          navigate(`/companies/${conversation.partnerId}`);
+                        } else {
+                          navigate(`/employer/candidates/${conversation.partnerId}`);
+                        }
+                      }}
+                    >
                       <AvatarImage src={conversation.avatar} alt={conversation.name} />
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         {conversation.name.charAt(0)}
@@ -173,7 +183,17 @@ const Messages: React.FC = () => {
                     </Avatar>
                     <div className="flex-1 min-w-0 text-left">
                       <div className="flex items-center justify-between mb-1">
-                        <h4 className="text-body-sm font-medium text-foreground truncate">
+                        <h4 
+                          className="text-body-sm font-medium text-foreground truncate cursor-pointer hover:text-primary transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (user.role === 'candidate') {
+                              navigate(`/companies/${conversation.partnerId}`);
+                            } else {
+                              navigate(`/employer/candidates/${conversation.partnerId}`);
+                            }
+                          }}
+                        >
                           {conversation.name}
                         </h4>
                         <span className="text-caption text-muted-foreground flex-shrink-0 ml-2">
