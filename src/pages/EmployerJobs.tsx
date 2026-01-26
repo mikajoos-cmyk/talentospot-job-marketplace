@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, DollarSign, Users, MoreVertical, Edit, Eye, Archive, Trash2, CheckCircle } from 'lucide-react';
+import { MapPin, DollarSign, Users, MoreVertical, Edit, Eye, Archive, Trash2, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import { useUser } from '@/contexts/UserContext';
+import { jobsService } from '@/services/jobs.service';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,62 +16,53 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-interface Job {
-  id: string;
-  title: string;
-  location: string;
-  salary: string;
-  applicants: number;
-  status: 'active' | 'draft' | 'closed';
-  postedDate: string;
-}
-
 const EmployerJobs: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const { showToast } = useToast();
 
-  const [jobs, setJobs] = useState<Job[]>([
-    {
-      id: '1',
-      title: 'Senior Frontend Developer',
-      location: 'New York, NY',
-      salary: '$100k - $140k',
-      applicants: 24,
-      status: 'active',
-      postedDate: '2 days ago',
-    },
-    {
-      id: '2',
-      title: 'Product Manager',
-      location: 'San Francisco, CA',
-      salary: '$120k - $160k',
-      applicants: 18,
-      status: 'active',
-      postedDate: '5 days ago',
-    },
-    {
-      id: '3',
-      title: 'UX Designer',
-      location: 'Austin, TX',
-      salary: '$80k - $110k',
-      applicants: 0,
-      status: 'draft',
-      postedDate: '1 week ago',
-    },
-    {
-      id: '4',
-      title: 'Backend Engineer',
-      location: 'Seattle, WA',
-      salary: '$110k - $150k',
-      applicants: 32,
-      status: 'closed',
-      postedDate: '2 weeks ago',
-    },
-  ]);
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadJobs = async () => {
+      if (!user.profile || user.role !== 'employer') return;
+
+      try {
+        setLoading(true);
+        const jobsData = await jobsService.getJobsByEmployer(user.profile.id);
+        setJobs(jobsData || []);
+      } catch (error) {
+        console.error('Error loading jobs:', error);
+        showToast({
+          title: 'Error',
+          description: 'Failed to load jobs. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadJobs();
+  }, [user.profile, user.role]);
 
   const activeJobs = jobs.filter(job => job.status === 'active');
   const draftJobs = jobs.filter(job => job.status === 'draft');
   const closedJobs = jobs.filter(job => job.status === 'closed');
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
+  };
 
   const handleManageJob = (jobId: string) => {
     navigate(`/employer/jobs/${jobId}/edit`);
@@ -79,38 +72,65 @@ const EmployerJobs: React.FC = () => {
     navigate(`/jobs/${jobId}`);
   };
 
-  const handleChangeStatus = (jobId: string, newStatus: 'active' | 'draft' | 'closed') => {
-    setJobs(jobs.map(job => 
-      job.id === jobId ? { ...job, status: newStatus } : job
-    ));
+  const handleChangeStatus = async (jobId: string, newStatus: 'active' | 'draft' | 'closed') => {
+    try {
+      await jobsService.updateJob(jobId, { status: newStatus });
 
-    const statusLabels = {
-      active: 'activated',
-      draft: 'moved to draft',
-      closed: 'closed',
-    };
+      setJobs(jobs.map(job =>
+        job.id === jobId ? { ...job, status: newStatus } : job
+      ));
 
-    showToast({
-      title: 'Status Updated',
-      description: `Job has been ${statusLabels[newStatus]}`,
-    });
+      const statusLabels = {
+        active: 'activated',
+        draft: 'moved to draft',
+        closed: 'closed',
+      };
+
+      showToast({
+        title: 'Status Updated',
+        description: `Job has been ${statusLabels[newStatus]}`,
+      });
+    } catch (error) {
+      console.error('Error updating job status:', error);
+      showToast({
+        title: 'Error',
+        description: 'Failed to update job status. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleDeleteJob = (jobId: string, jobTitle: string) => {
-    setJobs(jobs.filter(job => job.id !== jobId));
-    showToast({
-      title: 'Job Deleted',
-      description: `${jobTitle} has been permanently deleted`,
-    });
+  const handleDeleteJob = async (jobId: string, jobTitle: string) => {
+    try {
+      await jobsService.deleteJob(jobId);
+
+      setJobs(jobs.filter(job => job.id !== jobId));
+      showToast({
+        title: 'Job Deleted',
+        description: `${jobTitle} has been permanently deleted`,
+      });
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      showToast({
+        title: 'Error',
+        description: 'Failed to delete job. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const JobCard: React.FC<{ job: Job }> = ({ job }) => (
-    <Card className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <h3 className="text-h4 font-heading text-foreground mb-1">{job.title}</h3>
-          <p className="text-body-sm text-muted-foreground">{job.postedDate}</p>
-        </div>
+  const JobCard: React.FC<{ job: any }> = ({ job }) => {
+    const salaryText = job.salary_min && job.salary_max
+      ? `$${job.salary_min.toLocaleString()} - $${job.salary_max.toLocaleString()}`
+      : 'Salary not specified';
+
+    return (
+      <Card className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h3 className="text-h4 font-heading text-foreground mb-1">{job.title}</h3>
+            <p className="text-body-sm text-muted-foreground">Posted {formatDate(job.created_at)}</p>
+          </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
@@ -185,26 +205,26 @@ const EmployerJobs: React.FC = () => {
       <div className="space-y-2 mb-4">
         <div className="flex items-center text-body-sm text-muted-foreground">
           <MapPin className="w-4 h-4 mr-2" strokeWidth={1.5} />
-          <span>{job.location}</span>
+          <span>{job.location || 'Location not specified'}</span>
         </div>
         <div className="flex items-center text-body-sm text-muted-foreground">
           <DollarSign className="w-4 h-4 mr-2" strokeWidth={1.5} />
-          <span>{job.salary}</span>
+          <span>{salaryText}</span>
         </div>
         <div className="flex items-center text-body-sm text-muted-foreground">
           <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
-          <span>{job.applicants} applicants</span>
+          <span>{job.applications_count || 0} applicants</span>
         </div>
       </div>
 
       <div className="flex items-center space-x-2">
-        <Button 
+        <Button
           onClick={() => handleManageJob(job.id)}
           className="flex-1 bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
         >
           Manage
         </Button>
-        <Button 
+        <Button
           onClick={() => handleViewJob(job.id)}
           variant="outline"
           className="flex-1 bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
@@ -213,7 +233,18 @@ const EmployerJobs: React.FC = () => {
         </Button>
       </div>
     </Card>
-  );
+    );
+  };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -223,7 +254,7 @@ const EmployerJobs: React.FC = () => {
             <h1 className="text-h1 font-heading text-foreground mb-2">My Jobs</h1>
             <p className="text-body text-muted-foreground">Manage your job postings and applications.</p>
           </div>
-          <Button 
+          <Button
             onClick={() => navigate('/employer/post-job')}
             className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
           >

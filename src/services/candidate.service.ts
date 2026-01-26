@@ -68,7 +68,11 @@ export const candidateService = {
       .from('candidate_profiles')
       .select(`
         *,
-        profiles!inner(full_name, avatar_url, email)
+        profiles!inner(full_name, avatar_url, email),
+        candidate_skills(
+          id,
+          skills(id, name)
+        )
       `);
 
     if (filters.job_title) {
