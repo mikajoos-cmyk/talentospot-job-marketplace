@@ -14,12 +14,11 @@ const Login: React.FC = () => {
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'candidate' | 'employer'>('candidate');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       showToast({
         title: 'Error',
@@ -31,21 +30,19 @@ const Login: React.FC = () => {
 
     setLoading(true);
     try {
-      await login(email, password, role);
+      await login(email, password);
       showToast({
         title: 'Welcome back!',
         description: 'You have successfully signed in',
       });
-      
-      if (role === 'candidate') {
-        navigate('/candidate/dashboard');
-      } else {
-        navigate('/employer/dashboard');
-      }
-    } catch (error) {
+
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
+    } catch (error: any) {
       showToast({
         title: 'Error',
-        description: 'Invalid credentials',
+        description: error?.message || 'Invalid credentials',
         variant: 'destructive',
       });
     } finally {
@@ -67,40 +64,13 @@ const Login: React.FC = () => {
 
         <Card className="p-8 border border-border bg-card">
           <div className="text-center mb-8">
-            <img 
-              src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png" 
-              alt="TalentoSpot" 
+            <img
+              src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png"
+              alt="TalentoSpot"
               className="h-12 w-auto mx-auto mb-6"
             />
             <h1 className="text-h2 font-heading text-foreground mb-2">Welcome Back</h1>
             <p className="text-body text-muted-foreground">Sign in to your account</p>
-          </div>
-
-          <div className="flex gap-2 mb-6">
-            <Button
-              type="button"
-              variant={role === 'candidate' ? 'default' : 'outline'}
-              onClick={() => setRole('candidate')}
-              className={`flex-1 font-normal ${
-                role === 'candidate'
-                  ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
-                  : 'bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground'
-              }`}
-            >
-              Candidate
-            </Button>
-            <Button
-              type="button"
-              variant={role === 'employer' ? 'default' : 'outline'}
-              onClick={() => setRole('employer')}
-              className={`flex-1 font-normal ${
-                role === 'employer'
-                  ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
-                  : 'bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground'
-              }`}
-            >
-              Employer
-            </Button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">

@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/contexts/ToastContext';
+import { authService } from '@/services/auth.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft, User, Building2, Upload } from 'lucide-react';
 
-type RegistrationStep = 'role' | 'details' | 'verification';
+type RegistrationStep = 'role' | 'details';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -28,14 +29,12 @@ const Register: React.FC = () => {
     uploadNow: false,
   });
 
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-
   const handleRoleSelect = (selectedRole: 'candidate' | 'employer') => {
     setRole(selectedRole);
     setStep('details');
   };
 
-  const handleDetailsSubmit = (e: React.FormEvent) => {
+  const handleDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (role === 'employer' && (!formData.companyName || !formData.contactPerson)) {
@@ -56,27 +55,10 @@ const Register: React.FC = () => {
       return;
     }
 
-    setStep('verification');
-  };
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`otp-${index + 1}`);
-      nextInput?.focus();
-    }
-  };
-
-  const handleVerification = async () => {
-    const otpCode = otp.join('');
-    if (otpCode.length !== 6) {
+    if (formData.password.length < 6) {
       showToast({
         title: 'Error',
-        description: 'Please enter the complete OTP code',
+        description: 'Password must be at least 6 characters',
         variant: 'destructive',
       });
       return;
@@ -84,21 +66,35 @@ const Register: React.FC = () => {
 
     setLoading(true);
     try {
-      await login(formData.email, formData.password, role!);
-      showToast({
-        title: 'Account Created!',
-        description: 'Welcome to TalentoSpot',
+      await authService.signUp({
+        email: formData.email,
+        password: formData.password,
+        fullName: formData.name,
+        role: role!,
+        phone: formData.phone,
       });
 
-      if (role === 'candidate') {
-        navigate('/candidate/dashboard');
+      if (role === 'employer' && formData.companyName) {
+        showToast({
+          title: 'Account Created!',
+          description: 'Please check your email to verify your account.',
+        });
       } else {
-        navigate('/employer/dashboard');
+        showToast({
+          title: 'Account Created!',
+          description: 'Please check your email to verify your account.',
+        });
       }
-    } catch (error) {
+
+      await login(formData.email, formData.password);
+
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+    } catch (error: any) {
       showToast({
         title: 'Error',
-        description: 'Verification failed',
+        description: error?.message || 'Registration failed. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -111,7 +107,7 @@ const Register: React.FC = () => {
       <div className="w-full max-w-2xl">
         <Button
           variant="ghost"
-          onClick={() => step === 'role' ? navigate('/') : setStep(step === 'verification' ? 'details' : 'role')}
+          onClick={() => step === 'role' ? navigate('/') : setStep('role')}
           className="mb-6 bg-transparent text-foreground hover:bg-muted hover:text-foreground font-normal"
         >
           <ArrowLeft className="w-4 h-4 mr-2" strokeWidth={1.5} />
@@ -319,61 +315,12 @@ const Register: React.FC = () => {
 
                 <Button
                   type="submit"
+                  disabled={loading}
                   className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal h-11"
                 >
-                  Continue
+                  {loading ? 'Creating Account...' : 'Create Account'}
                 </Button>
               </form>
-            </div>
-          )}
-
-          {step === 'verification' && (
-            <div>
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                  </svg>
-                </div>
-                <h1 className="text-h2 font-heading text-foreground mb-2">Verify Your Email</h1>
-                <p className="text-body text-muted-foreground">
-                  We've sent a 6-digit code to<br />
-                  <span className="font-medium text-foreground">{formData.email}</span>
-                </p>
-              </div>
-
-              <div className="space-y-6">
-                <div className="flex justify-center space-x-3">
-                  {otp.map((digit, index) => (
-                    <Input
-                      key={index}
-                      id={`otp-${index}`}
-                      type="text"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleOtpChange(index, e.target.value)}
-                      className="w-12 h-12 text-center text-h4 font-heading bg-background text-foreground border-border"
-                    />
-                  ))}
-                </div>
-
-                <Button
-                  onClick={handleVerification}
-                  disabled={loading || otp.join('').length !== 6}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal h-11"
-                >
-                  {loading ? 'Verifying...' : 'Verify & Continue'}
-                </Button>
-
-                <div className="text-center">
-                  <p className="text-body-sm text-muted-foreground">
-                    Didn't receive the code?{' '}
-                    <button className="text-primary hover:text-primary-hover font-medium">
-                      Resend
-                    </button>
-                  </p>
-                </div>
-              </div>
             </div>
           )}
         </Card>
