@@ -43,7 +43,21 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const loadUserProfile = async (userId: string) => {
     try {
-      const profile = await authService.getProfile(userId);
+      let profile = null;
+      try {
+        profile = await authService.getProfile(userId);
+      } catch (error) {
+        console.warn('Profile not yet created for user:', userId);
+        const currentUser = await authService.getCurrentUser();
+        if (!currentUser) throw error;
+        profile = {
+          id: currentUser.id,
+          email: currentUser.email || '',
+          full_name: currentUser.user_metadata?.full_name || '',
+          role: currentUser.user_metadata?.role || 'candidate',
+          avatar_url: null,
+        };
+      }
 
       let extendedProfile = null;
       let subscription = null;
@@ -58,13 +72,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           extendedProfile = await candidateService.getCandidateProfile(userId);
         } catch (error) {
-          console.error('Error loading candidate profile:', error);
+          console.warn('Candidate profile not yet created:', error);
         }
       } else if (profile.role === 'employer') {
         try {
           extendedProfile = await employerService.getEmployerProfile(userId);
         } catch (error) {
-          console.error('Error loading employer profile:', error);
+          console.warn('Employer profile not yet created:', error);
         }
       }
 
