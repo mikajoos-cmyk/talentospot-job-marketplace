@@ -417,9 +417,8 @@ const CandidateDetailView: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {candidate.experience.map((exp: any) => (
-                    <div key={exp.id || Math.random()} className="relative pl-6 border-l-2 border-border">
-                      <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary"></div>
+                  {candidate.experience.map((exp: any, index: number) => (
+                    <div key={exp.id || index} className="relative pl-6 border-l-2 border-border">                      <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary"></div>
                       <h4 className="text-h4 font-heading text-foreground mb-1">{exp.title}</h4>
                       <p className="text-body-sm text-muted-foreground mb-2">
                         {exp.company} • {exp.period || `${new Date(exp.startDate).toLocaleDateString()} - ${exp.endDate ? new Date(exp.endDate).toLocaleDateString() : 'Present'}`}
@@ -443,9 +442,8 @@ const CandidateDetailView: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {candidate.education.map((edu: any) => (
-                    <div key={edu.id || Math.random()} className="relative pl-6 border-l-2 border-border">
-                      <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-accent"></div>
+                  {candidate.education.map((edu: any, index: number) => (
+                    <div key={edu.id || index} className="relative pl-6 border-l-2 border-border">                      <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-accent"></div>
                       <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
                       <p className="text-body-sm text-muted-foreground">
                         {edu.institution} • {edu.period || `${new Date(edu.startDate).toLocaleDateString()} - ${edu.endDate ? new Date(edu.endDate).toLocaleDateString() : 'Present'}`}

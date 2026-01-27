@@ -5,20 +5,30 @@ import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
-import { Send, Search, ArrowLeft, Loader2, Paperclip, Check, CheckCheck, Plus, X, Download, FileText, MoreVertical } from 'lucide-react';
+import { Send, Search, ArrowLeft, Loader2, Paperclip, Check, CheckCheck, Plus, X, Download, FileText, MoreVertical, Flag, Ban } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import { useToast } from '../../contexts/ToastContext';
 import { messagesService } from '../../services/messages.service';
 import { storageService } from '../../services/storage.service';
 import { candidateService } from '../../services/candidate.service';
 import { employerService } from '../../services/employer.service';
+
+import { Separator } from '../../components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from '../../components/ui/dialog';
-import { Separator } from '../../components/ui/separator';
+import { userActionsService } from '../../services/user-actions.service';
 
 const Messages: React.FC = () => {
   const navigate = useNavigate();
@@ -41,6 +51,12 @@ const Messages: React.FC = () => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // Report & Block State
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
 
   const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString);
@@ -345,6 +361,59 @@ const Messages: React.FC = () => {
     }
   };
 
+  const handleReportUser = async () => {
+    const partner = currentPartner;
+    if (!partner || !reportReason.trim() || !user.id) return;
+
+    setActionLoading(true);
+    try {
+      await userActionsService.reportUser(user.id, partner.id, reportReason);
+      showToast({
+        title: "User Reported",
+        description: "Usually we review reports within 24 hours.",
+      });
+      setReportDialogOpen(false);
+      setReportReason('');
+    } catch (error) {
+      console.error('Error reporting user:', error);
+      showToast({
+        title: "Error",
+        description: "Failed to report user.",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBlockUser = async () => {
+    const partner = currentPartner;
+    if (!partner || !user.id) return;
+
+    setActionLoading(true);
+    try {
+      await userActionsService.blockUser(user.id, partner.id);
+      showToast({
+        title: "User Blocked",
+        description: "You will no longer receive messages from this user.",
+      });
+      setBlockDialogOpen(false);
+      // Ideally refresh conversations or navigate away
+      const convData = await messagesService.getConversations(user.id);
+      setConversations(convData || []);
+      setSelectedConversation(null); // Deselect
+    } catch (error) {
+      console.error('Error blocking user:', error);
+      showToast({
+        title: "Error",
+        description: "Failed to block user.",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const filteredUsers = selectableUsers.filter(u => {
     const name = u.full_name || u.company_name || u.profiles?.full_name || '';
     return name.toLowerCase().includes(userSearchQuery.toLowerCase());
@@ -504,9 +573,23 @@ const Messages: React.FC = () => {
                       </div>
                     </div>
 
-                    <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground">
-                      <MoreVertical className="w-5 h-5" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground">
+                          <MoreVertical className="w-5 h-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setReportDialogOpen(true)} className="text-red-500 focus:text-red-500 cursor-pointer">
+                          <Flag className="w-4 h-4 mr-2" />
+                          Report User
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setBlockDialogOpen(true)} className="text-red-500 focus:text-red-500 cursor-pointer">
+                          <Ban className="w-4 h-4 mr-2" />
+                          Block User
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   {/* Messages Area */}
@@ -783,6 +866,51 @@ const Messages: React.FC = () => {
               })
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Dialog */}
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Report User</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for reporting this user. This will be reviewed by our team.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <textarea
+              className="w-full min-h-[100px] p-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Describe the issue..."
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReportDialogOpen(false)} disabled={actionLoading}>Cancel</Button>
+            <Button variant="destructive" onClick={handleReportUser} disabled={!reportReason.trim() || actionLoading}>
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Report User"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Block Dialog */}
+      <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Block User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to block {currentPartner?.display_name || 'this user'}?
+              They will not be able to send you messages or see your profile.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBlockDialogOpen(false)} disabled={actionLoading}>Cancel</Button>
+            <Button variant="destructive" onClick={handleBlockUser} disabled={actionLoading}>
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Block User"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </AppLayout>
