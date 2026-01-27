@@ -9,6 +9,8 @@ import { Label } from '../../components/ui/label';
 import { Card } from '../../components/ui/card';
 import { ArrowLeft, User, Building2, Upload } from 'lucide-react';
 
+import logoImg from '@/assets/logo.png';
+
 type RegistrationStep = 'role' | 'details';
 
 const Register: React.FC = () => {
@@ -128,7 +130,7 @@ const Register: React.FC = () => {
             <div>
               <div className="text-center mb-8">
                 <img
-                  src="//logo.png"
+                  src={logoImg}
                   alt="TalentoSpot"
                   className="h-12 w-auto mx-auto mb-6"
                 />

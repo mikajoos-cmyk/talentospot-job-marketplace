@@ -8,6 +8,7 @@ import { Label } from '../../components/ui/label';
 import { Card } from '../../components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 
+import logoImg from '@/assets/logo.png';
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useUser();
@@ -64,7 +65,7 @@ const Login: React.FC = () => {
         <Card className="p-8 border border-border bg-card">
           <div className="text-center mb-8">
             <img
-              src="//logo.png"
+              src={logoImg}
               alt="TalentoSpot"
               className="h-12 w-auto mx-auto mb-6"
             />

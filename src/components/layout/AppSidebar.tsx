@@ -4,6 +4,7 @@ import { useUser } from '@/contexts/UserContext';
 import { LayoutDashboard, User, Briefcase, Settings, Users, Building2, ChevronLeft, ChevronRight, CreditCard, Bookmark, Mail, MessageSquare, Network as NetworkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import logoImg from '@/assets/logo.png';
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -58,13 +59,13 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
         <div className="h-16 flex items-center justify-between px-4 border-b border-secondary-hover">
           {!collapsed ? (
             <img
-              src="//logo.png"
+              src={logoImg}
               alt="TalentoSpot"
               className="h-8 w-auto"
             />
           ) : (
             <img
-              src="//logo.png"
+              src={logoImg}
               alt="TalentoSpot"
               className="h-6 w-auto mx-auto"
             />

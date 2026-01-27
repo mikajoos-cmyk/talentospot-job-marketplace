@@ -8,6 +8,7 @@ import { MapPin, DollarSign, ArrowRight, Users, Briefcase, TrendingUp, Calendar,
 import { jobsService } from '../services/jobs.service';
 import { employerService } from '../services/employer.service';
 import { candidateService } from '../services/candidate.service';
+import logoImg from '../assets/logo.png';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -68,7 +69,7 @@ const LandingPage: React.FC = () => {
       <header className="sticky top-0 z-50 bg-card border-b border-border">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <img
-            src="//logo.png"
+            src={logoImg}
             alt="TalentoSpot"
             className="h-10 w-auto"
           />
@@ -388,7 +389,7 @@ const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <img
-                src="//logo.png"
+                src={logoImg}
                 alt="TalentoSpot"
                 className="h-8 w-auto mb-4 brightness-0 invert"
               />
