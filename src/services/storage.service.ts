@@ -21,7 +21,10 @@ export const storageService = {
         upsert: true,
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('Supabase Avatar Upload Error:', uploadError);
+      throw uploadError;
+    }
 
     const { data } = supabase.storage
       .from(BUCKETS.AVATARS)
@@ -63,7 +66,10 @@ export const storageService = {
         upsert: false,
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('Supabase Portfolio Upload Error:', uploadError);
+      throw uploadError;
+    }
 
     const { data } = supabase.storage
       .from(BUCKETS.PORTFOLIOS)
@@ -99,7 +105,7 @@ export const storageService = {
     const filePath = `${userId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from(BUCKETS.LOGOS)
+      .from(BUCKETS.AVATARS)
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: true,
@@ -108,7 +114,7 @@ export const storageService = {
     if (uploadError) throw uploadError;
 
     const { data } = supabase.storage
-      .from(BUCKETS.LOGOS)
+      .from(BUCKETS.AVATARS)
       .getPublicUrl(filePath);
 
     return data.publicUrl;

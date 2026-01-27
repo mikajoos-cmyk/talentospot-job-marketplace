@@ -1,12 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import AppLayout from '@/components/layout/AppLayout';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import AppLayout from '../../components/layout/AppLayout';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
 import { Users, Lock, Star, Building2 } from 'lucide-react';
-import { useUser } from '@/contexts/UserContext';
-import { mockFollowers } from '@/data/mockInvitations';
-import { mockCompanies } from '@/data/mockCompanies';
+import { useUser } from '../../contexts/UserContext';
+import { mockFollowers } from '../../data/mockInvitations';
+import { mockCompanies } from '../../data/mockCompanies';
+import { CandidateFollower } from '../../types/invitation';
 
 const Followers: React.FC = () => {
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ const Followers: React.FC = () => {
                 </div>
               </div>
 
-              <Button 
+              <Button
                 onClick={() => navigate('/candidate/packages')}
                 size="lg"
                 className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal h-12 px-8"
@@ -70,14 +71,14 @@ const Followers: React.FC = () => {
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockFollowers.map((follower) => {
-                const company = mockCompanies.find(c => c.id === follower.companyId);
+              {mockFollowers.map((follower: CandidateFollower) => {
+                const company = mockCompanies.find((c: any) => c.id === follower.companyId);
                 return (
                   <Card key={follower.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
                     <div className="space-y-4">
                       <div className="flex items-start space-x-4">
                         <img
-                          src={company?.logo || 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_1.png'}
+                          src={company?.logo || 'https://ui-avatars.com/api/?name=' + company?.name + '&background=6366f1&color=fff'}
                           alt={follower.companyName}
                           className="w-16 h-16 rounded-lg object-cover"
                           loading="lazy"
@@ -95,7 +96,7 @@ const Followers: React.FC = () => {
                         <span>Shortlisted {new Date(follower.followedDate).toLocaleDateString()}</span>
                       </div>
 
-                      <Button 
+                      <Button
                         onClick={() => navigate(`/companies/${follower.companyId}`)}
                         className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                       >

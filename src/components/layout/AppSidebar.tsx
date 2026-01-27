@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
-import { LayoutDashboard, User, Briefcase, Settings, Users, Building2, ChevronLeft, ChevronRight, Shield, CreditCard, Bookmark, Mail, MessageSquare, Network as NetworkIcon } from 'lucide-react';
+import { LayoutDashboard, User, Briefcase, Settings, Users, Building2, ChevronLeft, ChevronRight, CreditCard, Bookmark, Mail, MessageSquare, Network as NetworkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
@@ -43,30 +43,29 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
 
-  const menuItems = user.role === 'candidate' 
-    ? candidateMenuItems 
+  const menuItems = user.role === 'candidate'
+    ? candidateMenuItems
     : user.role === 'admin'
-    ? adminMenuItems
-    : employerMenuItems;
+      ? adminMenuItems
+      : employerMenuItems;
 
   return (
-    <aside 
-      className={`fixed left-0 top-0 h-screen bg-secondary text-secondary-foreground transition-all duration-normal z-40 ${
-        collapsed ? 'w-16' : 'w-64'
-      }`}
+    <aside
+      className={`fixed left-0 top-0 h-screen bg-secondary text-secondary-foreground transition-all duration-normal z-40 ${collapsed ? 'w-16' : 'w-64'
+        }`}
     >
       <div className="flex flex-col h-full">
         <div className="h-16 flex items-center justify-between px-4 border-b border-secondary-hover">
           {!collapsed ? (
-            <img 
-              src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png" 
-              alt="TalentoSpot" 
+            <img
+              src="/src/assets/logo.png"
+              alt="TalentoSpot"
               className="h-8 w-auto"
             />
           ) : (
-            <img 
-              src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png" 
-              alt="TalentoSpot" 
+            <img
+              src="/src/assets/logo.png"
+              alt="TalentoSpot"
               className="h-6 w-auto mx-auto"
             />
           )}
@@ -86,16 +85,15 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
-              
+
               return (
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    className={`flex items-center h-11 px-4 rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-primary/10 text-primary border-l-3 border-primary'
-                        : 'text-secondary-foreground hover:bg-secondary-hover hover:text-secondary-foreground'
-                    }`}
+                    className={`flex items-center h-11 px-4 rounded-lg transition-all duration-200 ${isActive
+                      ? 'bg-primary/10 text-primary border-l-3 border-primary'
+                      : 'text-secondary-foreground hover:bg-secondary-hover hover:text-secondary-foreground'
+                      }`}
                     title={collapsed ? item.label : undefined}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
@@ -110,7 +108,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
         </nav>
 
         <Separator className="bg-secondary-hover" />
-        
+
         <div className="p-4">
           <div className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-3'}`}>
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium">

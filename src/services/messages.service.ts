@@ -6,8 +6,20 @@ export const messagesService = {
       .from('conversations')
       .select(`
         *,
-        participant1:profiles!conversations_participant_1_fkey(id, full_name, avatar_url, role),
-        participant2:profiles!conversations_participant_2_fkey(id, full_name, avatar_url, role)
+        participant1:profiles!conversations_participant_1_fkey(
+          id, 
+          full_name, 
+          avatar_url, 
+          role,
+          employer_profiles(company_name, logo_url, contact_person)
+        ),
+        participant2:profiles!conversations_participant_2_fkey(
+          id, 
+          full_name, 
+          avatar_url, 
+          role,
+          employer_profiles(company_name, logo_url, contact_person)
+        )
       `)
       .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
       .order('last_message_at', { ascending: false });
@@ -56,22 +68,29 @@ export const messagesService = {
     return data;
   },
 
-  async sendMessage(conversationId: string, senderId: string, content: string) {
+  async sendMessage(conversationId: string, senderId: string, content: string, fileUrl?: string, fileType?: string, fileName?: string) {
     const { data, error } = await supabase
       .from('messages')
       .insert({
         conversation_id: conversationId,
         sender_id: senderId,
         content,
+        file_url: fileUrl,
+        file_type: fileType,
+        file_name: fileName,
       })
       .select()
       .single();
 
     if (error) throw error;
 
+    // Update conversation with last message info
     await supabase
       .from('conversations')
-      .update({ last_message_at: new Date().toISOString() })
+      .update({
+        last_message_at: new Date().toISOString(),
+        last_message_content: content
+      })
       .eq('id', conversationId);
 
     return data;
@@ -105,5 +124,16 @@ export const messagesService = {
 
     if (error) throw error;
     return count || 0;
+  },
+
+  async markAllAsRead(conversationId: string, userId: string) {
+    const { error } = await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('conversation_id', conversationId)
+      .neq('sender_id', userId)
+      .eq('is_read', false);
+
+    if (error) throw error;
   },
 };

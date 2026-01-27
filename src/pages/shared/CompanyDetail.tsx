@@ -7,12 +7,15 @@ import { employerService } from '../../services/employer.service';
 import { jobsService } from '../../services/jobs.service';
 import { useToast } from '../../contexts/ToastContext';
 import ReviewCard from '../../components/shared/ReviewCard';
-import ReviewModal from '../../components/shared/ReviewModal';
+// import ReviewModal from '../../components/shared/ReviewModal';
+import { useUser } from '../../contexts/UserContext';
+import { followsService } from '../../services/follows.service';
 
 const CompanyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user } = useUser(); // Need user context
   const [company, setCompany] = useState<any>(null);
   const [companyJobs, setCompanyJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +33,13 @@ const CompanyDetail: React.FC = () => {
         ]);
         setCompany(companyData);
         setCompanyJobs(jobsData);
+
+        // Check follow status if user is logged in
+        if (user?.profile?.id && user.role === 'candidate') {
+          const following = await followsService.isFollowing(user.profile.id, id);
+          setIsFollowing(following);
+        }
+
       } catch (error) {
         console.error('Error fetching company data:', error);
       } finally {
@@ -37,20 +47,46 @@ const CompanyDetail: React.FC = () => {
       }
     };
     fetchData();
-  }, [id]);
+  }, [id, user?.profile?.id, user?.role]);
 
   // Use empty reviews/rating for now as they are not in the current DB schema per survey
   const companyReviews: any[] = [];
   const averageRating = 0;
 
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-    showToast({
-      title: isFollowing ? 'Unfollowed' : 'Following',
-      description: isFollowing
-        ? `You unfollowed ${company?.name}`
-        : `You are now following ${company?.name}`,
-    });
+  const handleFollow = async () => {
+    if (!user?.profile?.id) {
+      showToast({
+        title: 'Authentication required',
+        description: 'Please log in to follow companies',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      if (isFollowing) {
+        await followsService.unfollowEmployer(user.profile.id, id!);
+        setIsFollowing(false);
+        showToast({
+          title: 'Unfollowed',
+          description: `You unfollowed ${company?.company_name}`,
+        });
+      } else {
+        await followsService.followEmployer(user.profile.id, id!);
+        setIsFollowing(true);
+        showToast({
+          title: 'Following',
+          description: `You are now following ${company?.company_name}`,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating follow status:', error);
+      showToast({
+        title: 'Error',
+        description: 'Failed to update follow status',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleMessage = () => {
@@ -171,7 +207,7 @@ const CompanyDetail: React.FC = () => {
                     <div className="flex items-center text-body text-foreground">
                       <Globe className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
                       <a
-                        href={company.website}
+                        href={company.website?.startsWith('http') ? company.website : `https://${company.website}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary hover:text-primary-hover hover:underline"
@@ -188,7 +224,7 @@ const CompanyDetail: React.FC = () => {
           <Card className="p-8 border border-border bg-card">
             <h2 className="text-h2 font-heading text-foreground mb-6">About Us</h2>
             <div
-              className="text-body text-foreground leading-relaxed prose prose-sm max-w-none [&>ul]:list-disc [&>ul]:ml-6 [&>ul]:my-2 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol]:my-2 [&>p]:my-2 [&>strong]:font-semibold [&>em]:italic mb-6"
+              className="text-body text-foreground leading-relaxed prose prose-sm max-w-none mb-6"
               dangerouslySetInnerHTML={{ __html: company.description }}
             />
 
@@ -232,7 +268,10 @@ const CompanyDetail: React.FC = () => {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="text-h4 font-heading text-foreground mb-2">{job.title}</h3>
-                        <p className="text-body-sm text-foreground mb-3 line-clamp-2">{job.description}</p>
+                        <div
+                          className="text-body-sm text-foreground mb-3 line-clamp-2 prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: job.description }}
+                        />
                         <div className="flex flex-wrap gap-4">
                           <div className="flex items-center text-body-sm text-muted-foreground">
                             <MapPin className="w-4 h-4 mr-2" strokeWidth={1.5} />

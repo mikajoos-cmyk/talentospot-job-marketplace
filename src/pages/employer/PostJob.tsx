@@ -8,17 +8,26 @@ import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import RichTextEditor from '../../components/ui/rich-text-editor';
 import { useToast } from '../../contexts/ToastContext';
+import { useUser } from '../../contexts/UserContext';
+import { jobsService } from '../../services/jobs.service';
 import { locationData } from '../../data/locationData';
-import { X, Plus, ArrowLeft } from 'lucide-react';
+import { X, Plus, ArrowLeft, Loader2, Home } from 'lucide-react';
+import { Switch } from '../../components/ui/switch';
+import { Slider } from '../../components/ui/slider';
 
 const PostJob: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user } = useUser();
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     salary: '',
-    type: 'Full-time',
+    salary_min: 1000,
+    salary_max: 250000,
+    salary_currency: 'EUR',
+    type: 'full_time',
     entryBonus: '',
     contractDuration: '',
     location: {
@@ -26,6 +35,7 @@ const PostJob: React.FC = () => {
       country: '',
       city: '',
     },
+    homeOfficeAvailable: false,
   });
 
   const [languages, setLanguages] = useState<string[]>([]);
@@ -61,15 +71,7 @@ const PostJob: React.FC = () => {
     setQualifications(qualifications.filter(q => q !== qualification));
   };
 
-  const handleSaveDraft = () => {
-    showToast({
-      title: 'Draft Saved',
-      description: 'Your job posting has been saved as a draft',
-    });
-    navigate('/employer/jobs');
-  };
-
-  const handlePublish = () => {
+  const saveJob = async (status: 'draft' | 'active') => {
     if (!formData.title || !formData.description) {
       showToast({
         title: 'Error',
@@ -79,11 +81,60 @@ const PostJob: React.FC = () => {
       return;
     }
 
-    showToast({
-      title: 'Job Published',
-      description: 'Your job posting is now live',
-    });
-    navigate('/employer/jobs');
+    if (!user?.id) {
+      showToast({
+        title: 'Error',
+        description: 'You must be logged in to post a job',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+
+      await jobsService.createJob({
+        employer_id: user.id,
+        title: formData.title,
+        description: formData.description,
+        continent: formData.location.continent,
+        country: formData.location.country,
+        city: formData.location.city,
+        employment_type: formData.type,
+        salary_min: formData.salary_min,
+        salary_max: formData.salary_max,
+        salary_currency: formData.salary_currency,
+        entry_bonus: formData.entryBonus ? parseInt(formData.entryBonus) : undefined,
+        contract_duration: formData.contractDuration,
+        required_languages: languages,
+        required_qualifications: qualifications,
+        home_office_available: formData.homeOfficeAvailable,
+        status: status,
+      });
+
+      showToast({
+        title: status === 'active' ? 'Job Published' : 'Draft Saved',
+        description: status === 'active' ? 'Your job posting is now live' : 'Your job posting has been saved as a draft',
+      });
+      navigate('/employer/jobs');
+    } catch (error: any) {
+      console.error('Error saving job:', error);
+      showToast({
+        title: 'Error',
+        description: error.message || 'Failed to save job',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveDraft = () => {
+    saveJob('draft');
+  };
+
+  const handlePublish = () => {
+    saveJob('active');
   };
 
   return (
@@ -195,18 +246,41 @@ const PostJob: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="salary" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Salary Range
-                </Label>
-                <Input
-                  id="salary"
-                  type="text"
-                  placeholder="e.g., $80k - $120k"
-                  value={formData.salary}
-                  onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
-                  className="bg-background text-foreground border-border"
-                />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="salary" className="text-body-sm font-medium text-foreground">
+                    Salary Range ({formData.salary_currency})
+                  </Label>
+                  <div className="w-32">
+                    <Select
+                      value={formData.salary_currency}
+                      onValueChange={(value) => setFormData({ ...formData, salary_currency: value })}
+                    >
+                      <SelectTrigger className="bg-background text-foreground border-border h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="GBP">GBP (£)</SelectItem>
+                        <SelectItem value="CHF">CHF (₣)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <Slider
+                    value={[formData.salary_min, formData.salary_max]}
+                    onValueChange={(value) => setFormData({ ...formData, salary_min: value[0], salary_max: value[1] })}
+                    min={1000}
+                    max={250000}
+                    step={1000}
+                  />
+                  <div className="flex justify-between text-caption text-muted-foreground">
+                    <span>{formData.salary_currency} {formData.salary_min.toLocaleString()}</span>
+                    <span>{formData.salary_currency} {formData.salary_max.toLocaleString()}</span>
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -218,10 +292,10 @@ const PostJob: React.FC = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Full-time">Full-time</SelectItem>
-                    <SelectItem value="Part-time">Part-time</SelectItem>
-                    <SelectItem value="Contract">Contract</SelectItem>
-                    <SelectItem value="Freelance">Freelance</SelectItem>
+                    <SelectItem value="full_time">Full-time</SelectItem>
+                    <SelectItem value="part_time">Part-time</SelectItem>
+                    <SelectItem value="contract">Contract</SelectItem>
+                    <SelectItem value="freelance">Freelance</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -336,6 +410,27 @@ const PostJob: React.FC = () => {
                 ))}
               </div>
             </div>
+
+            <div className="flex items-center justify-between p-4 bg-muted rounded-lg border border-border">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Home className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <Label htmlFor="home-office" className="text-body font-medium text-foreground">
+                    Home Office Available
+                  </Label>
+                  <p className="text-caption text-muted-foreground">
+                    Enable if this position allows for remote work/home office
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="home-office"
+                checked={formData.homeOfficeAvailable}
+                onCheckedChange={(checked) => setFormData({ ...formData, homeOfficeAvailable: checked })}
+              />
+            </div>
           </div>
         </Card>
 
@@ -343,14 +438,18 @@ const PostJob: React.FC = () => {
           <Button
             variant="outline"
             onClick={handleSaveDraft}
+            disabled={isSaving}
             className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
           >
+            {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Save Draft
           </Button>
           <Button
             onClick={handlePublish}
+            disabled={isSaving}
             className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
           >
+            {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Publish Job
           </Button>
         </div>

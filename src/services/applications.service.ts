@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { invitationsService } from './invitations.service';
 
 export interface Application {
   job_id: string;
@@ -24,6 +25,18 @@ export const applicationsService = {
       row_id: application.job_id,
       column_name: 'applications_count',
     });
+
+    // Mark any pending invitations for this job as accepted
+    try {
+      await invitationsService.updateInvitationStatusByJobAndCandidate(
+        application.job_id,
+        application.candidate_id,
+        'accepted'
+      );
+    } catch (invError) {
+      console.error('Error updating invitation status:', invError);
+      // Don't fail the application if invitation update fails
+    }
 
     return data;
   },
@@ -106,7 +119,18 @@ export const applicationsService = {
         ),
         candidate_profiles!inner(
           *,
-          profiles!inner(*)
+          profiles!inner(*),
+          candidate_skills(proficiency_percentage, skills(id, name)),
+          candidate_languages(proficiency_level, languages(id, name)),
+          candidate_experience(*),
+          candidate_education(*),
+          candidate_qualifications(qualifications(id, name)),
+          candidate_preferred_locations(
+            id,
+            cities(name),
+            countries(name),
+            continents(name)
+          )
         )
       `)
       .eq('id', applicationId)
@@ -114,5 +138,17 @@ export const applicationsService = {
 
     if (error) throw error;
     return data;
+  },
+
+  async hasApplied(jobId: string, candidateId: string) {
+    const { data, error } = await supabase
+      .from('job_applications')
+      .select('id')
+      .eq('job_id', jobId)
+      .eq('candidate_id', candidateId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return !!data;
   },
 };

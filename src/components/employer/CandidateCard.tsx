@@ -8,6 +8,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
 import { jobsService } from '@/services/jobs.service';
 import { invitationsService } from '@/services/invitations.service';
+import { candidateService } from '@/services/candidate.service';
 import {
   Dialog,
   DialogContent,
@@ -19,18 +20,26 @@ import {
 interface CandidateCardProps {
   candidate: any;
   packageTier: 'free' | 'basic' | 'premium';
+  accessStatus?: string;
 }
 
-const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier }) => {
+const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier, accessStatus }) => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { showToast } = useToast();
-  const isBlurred = packageTier === 'free';
-  const canContact = packageTier === 'premium';
+  // Strict privacy: Blurred unless request accepted.
+  // Package tier might still be relevant for *initiating* contact, but visibility depends on request.
+  const isBlurred = accessStatus !== 'accepted';
+  const canContact = !isBlurred && packageTier === 'premium'; // Only contact if revealed AND premium? Or revealed implies contact? User said "nach dem akzeptieren sollen alle infos angezeigt werden".
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [requestPending, setRequestPending] = useState(false);
+  const [requestPending, setRequestPending] = useState(accessStatus === 'pending');
   const [jobs, setJobs] = useState<any[]>([]);
+
+  // Sync state with prop
+  useEffect(() => {
+    setRequestPending(accessStatus === 'pending' || accessStatus === 'rejected');
+  }, [accessStatus]);
 
   useEffect(() => {
     const loadJobs = async () => {
@@ -54,12 +63,30 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier })
         title: 'Contact Initiated',
         description: `You can now contact ${candidateName}`,
       });
+    } else if (isBlurred && accessStatus !== 'pending' && accessStatus !== 'rejected') {
+      // Request Personal Data
+      try {
+        if (!user.profile?.id) return;
+        const result = await candidateService.requestDataAccess(candidate.id, user.profile.id);
+        if (result.status === 'exists') {
+          showToast({ title: 'Info', description: 'Request already pending or processed.' });
+        } else {
+          showToast({
+            title: 'Request Sent',
+            description: `Personal data request sent to candidate.`,
+          });
+          setRequestPending(true);
+        }
+      } catch (e) {
+        console.error(e);
+        showToast({ title: 'Error', description: 'Failed to send request.', variant: 'destructive' });
+      }
     } else {
-      setRequestPending(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Pending or Rejected state
+      const statusText = accessStatus === 'rejected' ? 'rejected' : 'pending';
       showToast({
-        title: 'Request Sent',
-        description: `Personal data request sent to ${isBlurred ? 'candidate' : candidateName}`,
+        title: `Request ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}`,
+        description: `Your request is ${statusText}.`,
       });
     }
   };
@@ -77,7 +104,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier })
         return;
       }
 
-      await invitationsService.createInvitation({
+      await invitationsService.sendInvitation({
         job_id: jobId,
         candidate_id: candidate.id,
         employer_id: user.profile.id,
@@ -99,19 +126,31 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier })
     }
   };
 
+  // Always show anonymized name in search results
   const displayName = isBlurred
     ? `Candidate #${String(candidate.id).slice(-3).padStart(3, '0')}`
-    : candidate.profiles?.full_name || 'Candidate';
+    : candidate.name || 'Candidate';
 
-  const candidateAvatar = candidate.profiles?.avatar_url;
+  // Always blur avatar in search results until access is granted
+  const shouldBlurIdentity = isBlurred;
+
+  const candidateAvatar = candidate.avatar;
   const candidateTitle = candidate.title || 'Professional';
-  const candidateLocation = candidate.current_location || 'Location not specified';
-  const minSalary = candidate.expected_salary_min || 0;
-  const maxSalary = candidate.expected_salary_max || 0;
-  const isRefugee = candidate.is_refugee || false;
-  const entryBonus = candidate.entry_bonus;
-  const availableFrom = candidate.available_from;
-  const noticePeriod = candidate.notice_period;
+  const candidateLocation = candidate.location || 'Location not specified';
+  const minSalary = candidate.salary?.min || 0;
+  const maxSalary = candidate.salary?.max || 0;
+  const isRefugee = candidate.isRefugee || false;
+  const entryBonus = candidate.conditions?.entryBonus;
+  const availableFrom = candidate.availableFrom;
+  const noticePeriod = candidate.conditions?.noticePeriod;
+
+  // Format preferred locations
+  const preferredLocationsString = candidate.preferredLocations?.map((loc: any) => {
+    const parts = [];
+    if (loc.city) parts.push(loc.city);
+    if (loc.country) parts.push(loc.country);
+    return parts.join(', ');
+  }).filter(Boolean).join('; ');
 
   return (
     <>
@@ -122,13 +161,13 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier })
             onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
           >
             <div className="relative">
-              <Avatar className={`w-16 h-16 ${isBlurred ? 'blur-md' : ''}`}>
+              <Avatar className={`w-16 h-16 ${shouldBlurIdentity ? 'blur-md' : ''}`}>
                 <AvatarImage src={candidateAvatar} alt={displayName} />
                 <AvatarFallback className="bg-primary text-primary-foreground">
-                  {displayName.split(' ').map(n => n[0]).join('')}
+                  {displayName.split(' ').map((n: string) => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
-              {isBlurred && (
+              {shouldBlurIdentity && (
                 <div className="absolute inset-0 bg-white/30 backdrop-blur-sm rounded-full"></div>
               )}
             </div>
@@ -138,7 +177,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier })
                   Refugee/Immigrant
                 </span>
               )}
-              <h4 className="text-h4 font-heading text-foreground truncate hover:text-primary transition-colors">
+              <h4 className={`text-h4 font-heading text-foreground truncate hover:text-primary transition-colors ${shouldBlurIdentity ? 'blur-sm' : ''}`}>
                 {displayName}
               </h4>
               <p className="text-body-sm text-muted-foreground">{candidateTitle}</p>
@@ -154,17 +193,24 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier })
               <div className="flex items-center text-body-sm text-muted-foreground">
                 <DollarSign className="w-4 h-4 mr-2" strokeWidth={1.5} />
                 <span>
-                  ${minSalary.toLocaleString()} - ${maxSalary.toLocaleString()}
+                  {candidate.currency || 'EUR'} {minSalary.toLocaleString()} - {maxSalary.toLocaleString()}
                 </span>
               </div>
             )}
           </div>
 
+          {preferredLocationsString && (
+            <div className="text-body-sm text-muted-foreground mt-1">
+              <span className="font-medium text-foreground">Preferred: </span>
+              {preferredLocationsString}
+            </div>
+          )}
+
           {entryBonus && (
             <div className="bg-warning/10 border border-warning/30 rounded-lg p-3">
               <div className="flex items-center justify-between">
                 <span className="text-body-sm font-medium text-warning">Entry Bonus</span>
-                <span className="text-h4 font-heading text-warning">${entryBonus.toLocaleString()}</span>
+                <span className="text-h4 font-heading text-warning">{candidate.currency || 'EUR'} {entryBonus.toLocaleString()}</span>
               </div>
             </div>
           )}
@@ -186,12 +232,12 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier })
 
           {candidate.skills && candidate.skills.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {candidate.skills.slice(0, 3).map((skill: any) => (
+              {candidate.skills.slice(0, 3).map((skillItem: any, index: number) => (
                 <span
-                  key={skill.id || skill.name}
+                  key={index}
                   className="px-2 py-1 bg-muted text-foreground text-caption rounded-md"
                 >
-                  {skill.name || 'Skill'}
+                  {skillItem.name || 'Skill'}
                 </span>
               ))}
               {candidate.skills.length > 3 && (
@@ -205,10 +251,10 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier })
           <div className="flex space-x-2">
             <Button
               onClick={handleAction}
-              disabled={requestPending}
+              disabled={requestPending || accessStatus === 'rejected'}
               className="flex-1 bg-primary text-primary-foreground hover:bg-primary-hover font-normal disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {canContact ? 'Contact' : requestPending ? 'Request Pending' : 'Request Data'}
+              {canContact ? 'Contact' : accessStatus === 'rejected' ? 'Request Rejected' : requestPending ? 'Request Pending' : 'Request Data'}
             </Button>
             <Button
               onClick={() => setInviteDialogOpen(true)}
@@ -259,7 +305,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier })
                         {job.salary_min && job.salary_max && (
                           <>
                             <span>•</span>
-                            <span>${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}</span>
+                            <span>{job.salary_currency || 'EUR'} {job.salary_min.toLocaleString()} - {job.salary_max.toLocaleString()}</span>
                           </>
                         )}
                       </div>

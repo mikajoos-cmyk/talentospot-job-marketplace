@@ -27,7 +27,7 @@ export const mockJobs: Job[] = [
     salary: '$100k - $140k',
     type: 'Full-time',
     description: 'Build amazing user experiences with React and TypeScript. Join our innovative team working on cutting-edge web applications.',
-    image: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_1.png',
+    image: 'https://ui-avatars.com/api/?name=Frontend&background=6366f1&color=fff',
     featured: true,
     datePosted: '2024-01-15',
     attributes: {
@@ -46,7 +46,7 @@ export const mockJobs: Job[] = [
     salary: '$120k - $160k',
     type: 'Full-time',
     description: 'Lead product strategy and development for our core platform. Work with cross-functional teams to deliver exceptional products.',
-    image: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_2.png',
+    image: 'https://ui-avatars.com/api/?name=Product&background=ec4899&color=fff',
     featured: true,
     datePosted: '2024-01-14',
     attributes: {
@@ -65,7 +65,7 @@ export const mockJobs: Job[] = [
     salary: '$80k - $110k',
     type: 'Full-time',
     description: 'Create intuitive and beautiful user interfaces. Collaborate with developers and stakeholders to bring designs to life.',
-    image: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_3.png',
+    image: 'https://ui-avatars.com/api/?name=Design&background=10b981&color=fff',
     featured: true,
     datePosted: '2024-01-13',
     attributes: {
@@ -83,7 +83,7 @@ export const mockJobs: Job[] = [
     salary: '$110k - $150k',
     type: 'Full-time',
     description: 'Build scalable APIs and microservices. Work with modern cloud technologies and distributed systems.',
-    image: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_4.png',
+    image: 'https://ui-avatars.com/api/?name=Backend&background=f59e0b&color=fff',
     featured: false,
     datePosted: '2024-01-12',
     attributes: {
@@ -102,7 +102,7 @@ export const mockJobs: Job[] = [
     salary: '$105k - $145k',
     type: 'Full-time',
     description: 'Manage cloud infrastructure and CI/CD pipelines. Ensure high availability and performance of our systems.',
-    image: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_5.png',
+    image: 'https://ui-avatars.com/api/?name=DevOps&background=3b82f6&color=fff',
     featured: false,
     datePosted: '2024-01-11',
     attributes: {
@@ -120,7 +120,7 @@ export const mockJobs: Job[] = [
     salary: '$115k - $155k',
     type: 'Full-time',
     description: 'Develop machine learning models and data pipelines. Turn data into actionable insights for business decisions.',
-    image: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_1.png',
+    image: 'https://ui-avatars.com/api/?name=Data&background=8b5cf6&color=fff',
     featured: true,
     datePosted: '2024-01-10',
     attributes: {
@@ -139,7 +139,7 @@ export const mockJobs: Job[] = [
     salary: '$95k - $135k',
     type: 'Full-time',
     description: 'Build native mobile applications for iOS and Android. Create seamless user experiences across platforms.',
-    image: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_2.png',
+    image: 'https://ui-avatars.com/api/?name=Mobile&background=6366f1&color=fff',
     featured: false,
     datePosted: '2024-01-09',
     attributes: {
@@ -157,7 +157,7 @@ export const mockJobs: Job[] = [
     salary: '$120k - $170k',
     type: 'Full-time',
     description: 'Protect our infrastructure and applications from security threats. Implement security best practices and conduct audits.',
-    image: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_3.png',
+    image: 'https://ui-avatars.com/api/?name=Security&background=ec4899&color=fff',
     featured: false,
     datePosted: '2024-01-08',
     attributes: {

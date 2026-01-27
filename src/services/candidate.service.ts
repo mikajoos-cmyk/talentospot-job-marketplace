@@ -5,10 +5,81 @@ import { CandidateProfile } from '../types/candidate';
 // Wandelt leere Strings in NULL um, damit Constraints nicht verletzt werden
 const val = (v: any) => (v === '' ? null : v);
 
-
 export const candidateService = {
+  // Data Access Requests
+  async requestDataAccess(candidateId: string, employerId: string) {
+    const { data, error } = await supabase
+      .from('data_access_requests')
+      .insert({
+        candidate_id: candidateId,
+        employer_id: employerId,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      // If unique constraint fails (23505) or conflict (409) occurs, it means request exists.
+      if (error.code === '23505' || (error as any).status === 409) return { status: 'exists' };
+      throw error;
+    }
+    return data;
+  },
+
+  async checkDataAccess(candidateId: string, employerId: string) {
+    const { data, error } = await supabase
+      .from('data_access_requests')
+      .select('status')
+      .eq('candidate_id', candidateId)
+      .eq('employer_id', employerId)
+      .maybeSingle();
+
+    if (error) return 'none'; // Or handle error
+    return data?.status || 'none';
+  },
+
+  async getDataAccessRequests(candidateId: string) {
+    const { data, error } = await supabase
+      .from('data_access_requests')
+      .select(`
+        *,
+        employer:employer_id (
+          id,
+          company_name,
+          logo_url,
+          description
+        )
+      `)
+      .eq('candidate_id', candidateId)
+      .eq('status', 'pending');
+
+    if (error) throw error;
+    return data;
+  },
+
+  async respondToDataAccessRequest(requestId: string, status: 'accepted' | 'rejected') {
+    const { data, error } = await supabase
+      .from('data_access_requests')
+      .update({ status })
+      .eq('id', requestId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getEmployerAccessRequests(employerId: string) {
+    const { data, error } = await supabase
+      .from('data_access_requests')
+      .select('candidate_id, status')
+      .eq('employer_id', employerId);
+
+    if (error) throw error;
+    return { data };
+  },
+
   // Mapping: DB (snake_case) -> Frontend (camelCase)
-  // Dies verhindert "undefined" Fehler im UI
   mapDbToProfile(data: any): CandidateProfile {
     return {
       id: data.id,
@@ -27,6 +98,7 @@ export const candidateService = {
         min: data.salary_expectation_min || 0,
         max: data.salary_expectation_max || 0
       },
+      currency: data.currency || 'EUR',
       skills: data.candidate_skills?.map((item: any) => ({
         name: item.skills?.name,
         percentage: item.proficiency_percentage
@@ -36,16 +108,41 @@ export const candidateService = {
       originCountry: data.origin_country,
       avatar: data.profiles?.avatar_url,
       videoUrl: data.video_url,
-      portfolioImages: data.portfolio_images,
+      portfolioImages: data.portfolio_images?.map((item: any) => {
+        if (typeof item === 'string') {
+          try {
+            const parsed = JSON.parse(item);
+            if (parsed && typeof parsed === 'object' && parsed.image) {
+              return {
+                image: parsed.image,
+                title: parsed.title || '',
+                description: parsed.description || ''
+              };
+            }
+          } catch (e) {
+            // Not JSON, treat as plain image URL
+          }
+          return { image: item, title: '', description: '' };
+        }
+        return {
+          image: item?.image || item?.url || '',
+          title: item?.title || '',
+          description: item?.description || ''
+        };
+      }) || [],
       sector: data.sector || '',
       careerLevel: data.career_level || '',
       employmentStatus: data.employment_status || '',
       jobTypes: data.job_type || [],
       travelWillingness: data.travel_willingness || 0,
-      languages: data.candidate_languages?.map((l: any) => l.languages?.name) || [],
+      languages: data.candidate_languages?.map((l: any) => ({
+        name: l.languages?.name,
+        level: l.proficiency_level
+      })) || [],
       drivingLicenses: data.driving_licenses || [],
 
       // Komplexe Objekte/Logik für Frontend-Struktur
+      availableFrom: data.available_from,
       conditions: {
         entryBonus: data.desired_entry_bonus,
         startDate: data.available_from,
@@ -54,19 +151,25 @@ export const candidateService = {
           min: data.salary_expectation_min || 0,
           max: data.salary_expectation_max || 0
         },
+        currency: data.currency || 'EUR',
         workRadius: data.work_radius_km,
         homeOfficePreference: data.home_office_preference,
         vacationDays: data.vacation_days
       },
-      locationPreference: {
-        continent: '', // Muss ggf. aus Relationen geladen werden
-        country: '',
-        cities: []
-      },
+      preferredLocations: data.candidate_preferred_locations?.map((l: any) => ({
+        continent: l.continents?.name || '',
+        country: l.countries?.name || '',
+        city: l.cities?.name || ''
+      })) || [],
+
+
+
       experience: data.candidate_experience?.map((exp: any) => ({
         id: exp.id,
         title: exp.job_title,
         company: exp.company_name,
+        startDate: exp.start_date,
+        endDate: exp.end_date,
         period: `${exp.start_date} - ${exp.end_date || 'Present'}`,
         description: exp.description
       })) || [],
@@ -74,6 +177,8 @@ export const candidateService = {
         id: edu.id,
         degree: edu.degree,
         institution: edu.institution,
+        startDate: edu.start_date,
+        endDate: edu.end_date,
         period: `${edu.start_date} - ${edu.end_date || 'Present'}`
       })) || []
     };
@@ -89,7 +194,13 @@ export const candidateService = {
         candidate_languages(proficiency_level, languages(id, name)),
         candidate_experience(*),
         candidate_education(*),
-        candidate_qualifications(qualifications(id, name))
+        candidate_qualifications(qualifications(id, name)),
+        candidate_preferred_locations(
+          id,
+          cities(name),
+          countries(name),
+          continents(name)
+        )
       `)
       .eq('id', userId)
       .single();
@@ -104,30 +215,34 @@ export const candidateService = {
     console.log('Service empfängt Updates:', updates);
 
     // 1. Profil-Stammdaten (Tabelle: profiles)
-    // Diese Daten liegen in der Auth-Tabelle 'profiles', nicht in 'candidate_profiles'
-    if (updates.name || updates.phone || updates.email || updates.avatar) {
+    console.log('Verarbeite Profil-Stammdaten Updates:', {
+      name: updates.name,
+      phone: updates.phone,
+      email: updates.email,
+      avatar: updates.avatar
+    });
+
+    if (updates.name || updates.phone || updates.email || updates.avatar !== undefined) {
       const profileUpdates: any = {};
       if (updates.name) profileUpdates.full_name = updates.name;
       if (updates.phone) profileUpdates.phone = updates.phone;
-      if (updates.avatar) profileUpdates.avatar_url = updates.avatar;
+      if (updates.avatar !== undefined) profileUpdates.avatar_url = updates.avatar;
 
-      const { error } = await supabase.from('profiles').update(profileUpdates).eq('id', userId);
+      console.log('Führe Update auf Tabelle "profiles" aus:', profileUpdates);
+      const { data: updatedProfile, error } = await supabase
+        .from('profiles')
+        .update(profileUpdates)
+        .eq('id', userId)
+        .select();
+
       if (error) {
-        console.error('Fehler beim Update von profiles:', error);
+        console.error('Fehler beim Update der "profiles" Tabelle:', error);
         throw error;
       }
-    }
-
-    if (updates.avatar) {
-      const { error } = await supabase.from('profiles').update({ avatar_url: updates.avatar }).eq('id', userId);
-      if (error) {
-        console.error('Fehler beim Update von Avatar:', error);
-        throw error;
-      }
+      console.log('Update der "profiles" Tabelle erfolgreich:', updatedProfile);
     }
 
     // 2. Kandidaten-Details (Tabelle: candidate_profiles)
-    // Mapping von Frontend (camelCase) zu Datenbank (snake_case)
     const dbUpdates: any = {
       id: userId, // WICHTIG für Upsert!
 
@@ -144,7 +259,7 @@ export const candidateService = {
       description: val(updates.description),
 
       // Berufliche Daten
-      job_title: val(updates.jobTitle ?? updates.job_title ?? updates.title), // Fallback für 'title'
+      job_title: val(updates.jobTitle ?? updates.job_title ?? updates.title),
       sector: val(updates.sector),
       career_level: val(updates.careerLevel ?? updates.career_level),
       years_of_experience: updates.yearsOfExperience ?? updates.years_of_experience,
@@ -160,27 +275,28 @@ export const candidateService = {
       travel_willingness: updates.travelWillingness ?? updates.travel_willingness,
       home_office_preference: updates.homeOfficePreference ?? updates.home_office_preference,
       available_from: val(updates.startDate ?? updates.available_from),
+      currency: updates.currency || 'EUR',
 
       // Medien
       video_url: val(updates.videoUrl ?? updates.video_url),
       cv_url: val(updates.cvUrl ?? updates.cv_url),
 
       // Arrays (Listen)
-      // WICHTIG: Supabase erwartet Arrays für diese Spalten
       job_type: updates.jobTypes ?? updates.job_type,
       contract_type: updates.contractTypes ?? updates.contract_type,
       driving_licenses: updates.drivingLicenses ?? updates.driving_licenses,
-      portfolio_images: updates.portfolio_images ?? (updates.portfolioImages ? updates.portfolioImages.map((p: any) => typeof p === 'string' ? p : p.image).filter(Boolean) : undefined)
+      portfolio_images: (updates.portfolioImages || updates.portfolio_images)?.map((p: any) =>
+        typeof p === 'object' ? JSON.stringify(p) : p
+      )
     };
 
-    // Gehaltsobjekt Fallback (falls Frontend { salary: { min, max } } sendet)
+    // Gehaltsobjekt Fallback
     if (updates.salary) {
       dbUpdates.salary_expectation_min = updates.salary.min;
       dbUpdates.salary_expectation_max = updates.salary.max;
       if (updates.salary.currency) dbUpdates.currency = updates.salary.currency;
     }
 
-    // Upsert durchführen (Erstellt Eintrag wenn nicht vorhanden, sonst Update)
     console.log('Sende Upsert an DB:', dbUpdates);
     const { error: profileError } = await supabase
       .from('candidate_profiles')
@@ -192,8 +308,7 @@ export const candidateService = {
       throw profileError;
     }
 
-    // 3. Relationen speichern (Skills, Experience, Education, etc.)
-    // Wir löschen alte Einträge und fügen neue hinzu (einfachste Sync-Methode)
+    // 3. Relationen speichern
 
     // --- Experience ---
     if (updates.experience && Array.isArray(updates.experience)) {
@@ -203,13 +318,12 @@ export const candidateService = {
           candidate_id: userId,
           job_title: e.title || e.job_title,
           company_name: e.company || e.company_name,
-          start_date: e.startDate || e.start_date || '2000-01-01', // Fallback Datumsformat beachten!
+          start_date: e.startDate || e.start_date || '2000-01-01', // Fallback Datum
           end_date: e.endDate || e.end_date || null,
           description: e.description,
           is_current: e.isCurrent || e.is_current || false
         }));
-        const { error: expError } = await supabase.from('candidate_experience').insert(expData);
-        if (expError) console.error('Fehler Experience:', expError);
+        await supabase.from('candidate_experience').insert(expData);
       }
     }
 
@@ -223,32 +337,44 @@ export const candidateService = {
           institution: e.institution,
           start_date: e.startDate || e.start_date || '2000-01-01',
           end_date: e.endDate || e.end_date || null,
-          description: e.description
+          description: e.description || ''
         }));
-        const { error: eduError } = await supabase.from('candidate_education').insert(eduData);
-        if (eduError) console.error('Fehler Education:', eduError);
+        await supabase.from('candidate_education').insert(eduData);
       }
     }
 
-    // --- Skills ---
+    // --- Skills (Optimiert: Case-Insensitive Suche) ---
     if (updates.skills && Array.isArray(updates.skills)) {
       await supabase.from('candidate_skills').delete().eq('candidate_id', userId);
 
       for (const skill of updates.skills) {
-        // Name auslesen (entweder String oder Objekt)
         const skillName = typeof skill === 'string' ? skill : skill.name;
         const proficiency = typeof skill === 'object' ? (skill.percentage || skill.proficiency_percentage || 0) : 0;
 
         if (!skillName) continue;
 
-        // Skill ID finden oder erstellen
         let skillId;
-        const { data: existingSkill } = await supabase.from('skills').select('id').eq('name', skillName).maybeSingle();
+        // Nutze ilike für Case-Insensitive Suche
+        const { data: existingSkill } = await supabase
+          .from('skills')
+          .select('id')
+          .ilike('name', skillName)
+          .maybeSingle();
 
         if (existingSkill) {
           skillId = existingSkill.id;
         } else {
-          const { data: newSkill } = await supabase.from('skills').insert({ name: skillName, category: 'Other' }).select('id').single();
+          // Versuche Insert (klappt jetzt dank neuer Policy)
+          const { data: newSkill, error: insertError } = await supabase
+            .from('skills')
+            .insert({ name: skillName, category: 'Other' })
+            .select('id')
+            .single();
+
+          if (insertError) {
+            console.error('Error creating skill:', insertError);
+            continue; // Überspringen bei Fehler
+          }
           skillId = newSkill?.id;
         }
 
@@ -262,7 +388,42 @@ export const candidateService = {
       }
     }
 
-    // --- Languages ---
+    // --- Qualifications (Optimiert) ---
+    if (updates.qualifications && Array.isArray(updates.qualifications)) {
+      await supabase.from('candidate_qualifications').delete().eq('candidate_id', userId);
+
+      for (const qualName of updates.qualifications) {
+        if (!qualName) continue;
+        let qualId;
+        const { data: existing } = await supabase
+          .from('qualifications')
+          .select('id')
+          .ilike('name', qualName)
+          .maybeSingle();
+
+        if (existing) {
+          qualId = existing.id;
+        } else {
+          const { data: newQual, error: insertError } = await supabase
+            .from('qualifications')
+            .insert({ name: qualName, category: 'Other' })
+            .select('id')
+            .single();
+
+          if (insertError) {
+            console.error('Error creating qualification:', insertError);
+            continue;
+          }
+          qualId = newQual?.id;
+        }
+
+        if (qualId) {
+          await supabase.from('candidate_qualifications').insert({ candidate_id: userId, qualification_id: qualId });
+        }
+      }
+    }
+
+    // --- Languages (Optimiert) ---
     if (updates.languages && Array.isArray(updates.languages)) {
       await supabase.from('candidate_languages').delete().eq('candidate_id', userId);
 
@@ -273,14 +434,27 @@ export const candidateService = {
         if (!langName) continue;
 
         let langId;
-        const { data: existing } = await supabase.from('languages').select('id').eq('name', langName).maybeSingle();
+        const { data: existing } = await supabase
+          .from('languages')
+          .select('id')
+          .ilike('name', langName)
+          .maybeSingle();
 
         if (existing) {
           langId = existing.id;
         } else {
-          // Fallback Code generieren (nur erste 2 Buchstaben), da 'code' unique ist
-          const code = langName.substring(0, 2).toLowerCase() + Math.floor(Math.random() * 100);
-          const { data: newLang } = await supabase.from('languages').insert({ name: langName, code: code }).select('id').single();
+          // Generiere Dummy-Code sicher
+          const code = langName.substring(0, 2).toLowerCase() + Math.floor(Math.random() * 10000);
+          const { data: newLang, error: insertError } = await supabase
+            .from('languages')
+            .insert({ name: langName, code: code })
+            .select('id')
+            .single();
+
+          if (insertError) {
+            console.error('Error creating language:', insertError);
+            continue;
+          }
           langId = newLang?.id;
         }
 
@@ -299,36 +473,60 @@ export const candidateService = {
       await supabase.from('candidate_preferred_locations').delete().eq('candidate_id', userId);
 
       for (const loc of updates.preferredLocations) {
-        // Find City ID
-        const { data: cityData } = await supabase
-          .from('cities')
-          .select('id, country_id')
-          .eq('name', loc.city)
-          .maybeSingle();
+        if (!loc.city || !loc.country || !loc.continent) continue;
 
-        if (cityData) {
-          const cityId = cityData.id;
-          const countryId = cityData.country_id;
-
-          // Find Continent ID
-          const { data: countryData } = await supabase
-            .from('countries')
-            .select('continent_id')
-            .eq('id', countryId)
-            .single();
-
-          const continentId = countryData?.continent_id;
-
-          if (cityId && countryId && continentId) {
-            await supabase.from('candidate_preferred_locations').insert({
-              candidate_id: userId,
-              city_id: cityId,
-              country_id: countryId,
-              continent_id: continentId
-            });
-          }
+        // 1. Kontinent finden oder erstellen
+        let continentId;
+        const { data: contData } = await supabase.from('continents').select('id').eq('name', loc.continent).maybeSingle();
+        if (contData) {
+          continentId = contData.id;
         } else {
-          console.warn(`Location not found in DB: ${loc.city}, ${loc.country}`);
+          // Dummy Code generieren
+          const code = loc.continent.substring(0, 2).toUpperCase() + Math.floor(Math.random() * 100);
+          const { data: newCont } = await supabase.from('continents').insert({ name: loc.continent, code: code }).select('id').single();
+          continentId = newCont?.id;
+        }
+
+        // 2. Land finden oder erstellen
+        let countryId;
+        if (continentId) {
+          const { data: countryData } = await supabase.from('countries').select('id').eq('name', loc.country).maybeSingle();
+          if (countryData) {
+            countryId = countryData.id;
+          } else {
+            const code = loc.country.substring(0, 2).toUpperCase() + Math.floor(Math.random() * 100);
+            const { data: newCountry } = await supabase.from('countries').insert({
+              name: loc.country,
+              code: code,
+              continent_id: continentId
+            }).select('id').single();
+            countryId = newCountry?.id;
+          }
+        }
+
+        // 3. Stadt finden oder erstellen
+        let cityId;
+        if (countryId) {
+          const { data: cityData } = await supabase.from('cities').select('id').eq('name', loc.city).maybeSingle();
+          if (cityData) {
+            cityId = cityData.id;
+          } else {
+            const { data: newCity } = await supabase.from('cities').insert({
+              name: loc.city,
+              country_id: countryId
+            }).select('id').single();
+            cityId = newCity?.id;
+          }
+        }
+
+        // 4. Verknüpfung speichern
+        if (cityId && countryId && continentId) {
+          await supabase.from('candidate_preferred_locations').insert({
+            candidate_id: userId,
+            city_id: cityId,
+            country_id: countryId,
+            continent_id: continentId
+          });
         }
       }
     }
@@ -338,11 +536,31 @@ export const candidateService = {
     let query = supabase
       .from('candidate_profiles')
       .select(`
-        *,
+        id,
+        job_title,
+        city,
+        country,
+        is_refugee,
+        origin_country,
+        salary_expectation_min,
+        salary_expectation_max,
+        desired_entry_bonus,
+        available_from,
+        notice_period,
+        sector,
+        career_level,
+        employment_status,
         profiles!inner(full_name, avatar_url, email),
         candidate_skills(
           id,
+          proficiency_percentage,
           skills(id, name)
+        ),
+        candidate_preferred_locations(
+          id,
+          cities(name),
+          countries(name),
+          continents(name)
         )
       `);
 
@@ -381,19 +599,26 @@ export const candidateService = {
     const { data, error } = await query;
 
     if (error) throw error;
-    return data;
+    return data?.map(item => this.mapDbToProfile(item)) || [];
   },
 
-  // Helper Methoden für Relationen
-  async getCandidateSkills(candidateId: string) {
+  async getFeaturedTalent(limit: number = 6) {
     const { data, error } = await supabase
-      .from('candidate_skills')
-      .select(`*, skills(*)`)
-      .eq('candidate_id', candidateId);
+      .from('candidate_profiles')
+      .select(`
+        *,
+        profiles!inner(full_name, avatar_url),
+        candidate_skills(
+          skills(name)
+        )
+      `)
+      .limit(limit);
+
     if (error) throw error;
     return data;
   },
 
+  // Helper Methoden
   async addCandidateSkill(candidateId: string, skillId: string, proficiency: number) {
     const { data, error } = await supabase
       .from('candidate_skills')
@@ -432,21 +657,5 @@ export const candidateService = {
       .single();
     if (error) throw error;
     return data;
-  },
-
-  async getFeaturedTalent(limit: number = 6) {
-    const { data, error } = await supabase
-      .from('candidate_profiles')
-      .select(`
-        *,
-        profiles!inner(full_name, avatar_url),
-        candidate_skills(
-          skills(name)
-        )
-      `)
-      .limit(limit);
-
-    if (error) throw error;
-    return data;
-  },
+  }
 };

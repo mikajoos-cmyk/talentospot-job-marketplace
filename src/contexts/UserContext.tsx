@@ -12,7 +12,7 @@ interface User {
   email: string;
   role: UserRole;
   avatar?: string;
-  packageTier?: 'free' | 'basic' | 'premium';
+  packageTier?: 'free' | 'basic' | 'premium' | 'starting' | 'standard';
   companyName?: string;
   subscription?: any;
   profile?: any;
@@ -83,6 +83,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else if (profile.role === 'employer') {
         try {
           extendedProfile = await employerService.getEmployerProfile(userId);
+          if (extendedProfile) {
+            if (extendedProfile.company_name) profile.full_name = extendedProfile.company_name;
+            if (extendedProfile.logo_url) profile.avatar_url = extendedProfile.logo_url;
+          }
         } catch (error) {
           console.error('Error loading employer profile:', error);
         }
@@ -95,8 +99,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         role: profile.role as UserRole,
         avatar: profile.avatar_url || undefined,
         companyName: extendedProfile?.company_name,
-        subscription,
         profile: extendedProfile,
+        packageTier: subscription?.packages?.name?.toLowerCase() as any || 'free',
       };
 
       setUser(updatedUser);

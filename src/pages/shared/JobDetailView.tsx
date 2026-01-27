@@ -6,8 +6,11 @@ import { Button } from '../../components/ui/button';
 import RichTextEditor from '../../components/ui/rich-text-editor';
 import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2, Map } from 'lucide-react';
 import { jobsService } from '../../services/jobs.service';
-import { employerService } from '../../services/employer.service';
+// import { employerService } from '../../services/employer.service';
 import { useToast } from '../../contexts/ToastContext';
+import { useUser } from '../../contexts/UserContext';
+import { applicationsService } from '../../services/applications.service';
+import { messagesService } from '../../services/messages.service';
 import { Loader2 } from 'lucide-react';
 import {
   Dialog,
@@ -17,15 +20,17 @@ import {
   DialogTitle,
 } from '../../components/ui/dialog';
 import { Label } from '../../components/ui/label';
-import { Input } from '../../components/ui/input';
+// import { Input } from '../../components/ui/input';
 
 const JobDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user, isAuthenticated } = useUser();
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
 
   React.useEffect(() => {
@@ -41,16 +46,82 @@ const JobDetailView: React.FC = () => {
         setLoading(false);
       }
     };
-    fetchJob();
-  }, [id]);
+    const checkApplicationStatus = async () => {
+      if (id && user?.id && user.role === 'candidate') {
+        try {
+          const applied = await applicationsService.hasApplied(id, user.id);
+          setHasApplied(applied);
+        } catch (error) {
+          console.error('Error checking application status:', error);
+        }
+      }
+    };
 
-  const handleApply = () => {
-    showToast({
-      title: 'Application Submitted',
-      description: `Your application for ${job?.title} has been submitted successfully`,
-    });
-    setApplyDialogOpen(false);
-    setCoverLetter('');
+    fetchJob();
+    checkApplicationStatus();
+  }, [id, user?.id, user?.role]);
+
+  const handleApply = async () => {
+    if (!isAuthenticated) {
+      showToast({
+        title: 'Authentication Required',
+        description: 'Please log in as a candidate to apply for this job',
+        variant: 'destructive',
+      });
+      navigate('/login');
+      return;
+    }
+
+    if (user.role !== 'candidate') {
+      showToast({
+        title: 'Only Candidates Can Apply',
+        description: 'Your account type does not allow job applications',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      // 1. Submit Application
+      await applicationsService.applyToJob({
+        job_id: id!,
+        candidate_id: user.id,
+        employer_id: job.employer_id,
+        cover_letter: coverLetter,
+      });
+
+      // 2. Notify Employer via Message
+      try {
+        // Find or create conversation with the employer
+        // job.employer_profiles.id is the employer's profile ID (which is the user ID in this case)
+        const conversation = await messagesService.getOrCreateConversation(user.id, job.employer_id);
+
+        // Send notification message
+        await messagesService.sendMessage(
+          conversation.id,
+          user.id,
+          `I have applied for the position: **${job.title}**. You can review my application in your dashboard.`
+        );
+      } catch (msgError) {
+        console.error('Error sending notification message:', msgError);
+        // We don't fail the whole process if message fails, application is the most important
+      }
+
+      showToast({
+        title: 'Application Submitted',
+        description: `Your application for ${job?.title} has been submitted successfully`,
+      });
+      setApplyDialogOpen(false);
+      setCoverLetter('');
+      navigate('/candidate/applications');
+    } catch (error: any) {
+      console.error('Error submitting application:', error);
+      showToast({
+        title: 'Application Failed',
+        description: error.message || 'There was an error submitting your application. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (loading) {
@@ -119,7 +190,7 @@ const JobDetailView: React.FC = () => {
                 </div>
                 <div className="flex items-center text-body text-foreground">
                   <Briefcase className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{job.employment_type}</span>
+                  <span>{job.employment_type?.replace(/_/g, ' ')}</span>
                 </div>
                 <div className="flex items-center text-body text-foreground">
                   <Calendar className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
@@ -142,7 +213,7 @@ const JobDetailView: React.FC = () => {
             <div>
               <h3 className="text-h3 font-heading text-foreground mb-4">Job Description</h3>
               <div
-                className="text-body text-foreground prose prose-sm max-w-none [&>ul]:list-disc [&>ul]:ml-6 [&>ul]:my-2 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol]:my-2 [&>p]:my-2 [&>strong]:font-semibold [&>em]:italic"
+                className="text-body text-foreground prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{ __html: job.description }}
               />
             </div>
@@ -202,9 +273,13 @@ const JobDetailView: React.FC = () => {
 
             <Button
               onClick={() => setApplyDialogOpen(true)}
-              className="w-full md:w-auto bg-primary text-primary-foreground hover:bg-primary-hover font-normal h-12 px-8"
+              disabled={hasApplied}
+              className={`w-full md:w-auto font-normal h-12 px-8 ${hasApplied
+                  ? 'bg-muted text-muted-foreground'
+                  : 'bg-primary text-primary-foreground hover:bg-primary-hover'
+                }`}
             >
-              Apply for this Position
+              {hasApplied ? 'Already Applied' : 'Apply for this Position'}
             </Button>
           </div>
         </Card>

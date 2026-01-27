@@ -178,7 +178,7 @@ const JobSearch: React.FC = () => {
             type="search"
             placeholder="Search by job title or company..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             className="pl-12 h-12 bg-background text-foreground border-border"
           />
         </div>
@@ -215,15 +215,22 @@ const JobSearch: React.FC = () => {
                               navigate(`/companies/${job.employer_id}`);
                             }}
                           >
-                            <Building2 className="w-6 h-6 text-muted-foreground" />
+                            {job.employer_profiles?.logo_url ? (
+                              <img
+                                src={job.employer_profiles.logo_url}
+                                alt={job.employer_profiles.company_name}
+                                className="w-full h-full rounded-lg object-cover"
+                              />
+                            ) : (
+                              <Building2 className="w-6 h-6 text-muted-foreground" />
+                            )}
                           </div>
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => handleSaveJob(job.id)}
-                            className={`bg-transparent hover:bg-muted ${
-                              savedJobs.includes(job.id) ? 'text-accent' : 'text-muted-foreground'
-                            } hover:text-foreground`}
+                            className={`bg-transparent hover:bg-muted ${savedJobs.includes(job.id) ? 'text-accent' : 'text-muted-foreground'
+                              } hover:text-foreground`}
                             aria-label={savedJobs.includes(job.id) ? 'Remove from saved' : 'Save job'}
                           >
                             <Bookmark className="w-5 h-5" strokeWidth={1.5} fill={savedJobs.includes(job.id) ? 'currentColor' : 'none'} />
@@ -257,23 +264,23 @@ const JobSearch: React.FC = () => {
                               <DollarSign className="w-4 h-4 mr-2" strokeWidth={1.5} />
                               <span>
                                 {job.salary_min && job.salary_max
-                                  ? `€${job.salary_min.toLocaleString()} - €${job.salary_max.toLocaleString()}`
+                                  ? `${job.salary_currency || 'EUR'} ${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}`
                                   : job.salary_min
-                                  ? `€${job.salary_min.toLocaleString()}+`
-                                  : `€${job.salary_max.toLocaleString()}`}
+                                    ? `${job.salary_currency || 'EUR'} ${job.salary_min.toLocaleString()}+`
+                                    : `${job.salary_currency || 'EUR'} ${job.salary_max.toLocaleString()}`}
                               </span>
                             </div>
                           )}
                           <div className="flex items-center text-body-sm text-muted-foreground">
                             <Briefcase className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                            <span>{job.employment_type?.replace(/_/g, ' ') || 'Full Time'}</span>
+                            <span className="capitalize">{job.employment_type?.replace(/_/g, ' ') || 'Full Time'}</span>
                           </div>
                         </div>
 
                         {job.entry_bonus && job.entry_bonus > 0 && (
                           <div className="bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
                             <span className="text-body-sm font-medium text-warning">
-                              Entry Bonus: €{job.entry_bonus.toLocaleString()}
+                              Entry Bonus: {job.salary_currency || 'EUR'} {job.entry_bonus.toLocaleString()}
                             </span>
                           </div>
                         )}
@@ -356,7 +363,7 @@ const JobSearch: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </AppLayout >
   );
 };
 

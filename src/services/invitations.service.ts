@@ -73,6 +73,21 @@ export const invitationsService = {
     return data;
   },
 
+  async updateInvitationStatusByJobAndCandidate(jobId: string, candidateId: string, status: 'accepted' | 'declined') {
+    const { data, error } = await supabase
+      .from('job_invitations')
+      .update({
+        status,
+        responded_at: new Date().toISOString(),
+      })
+      .eq('job_id', jobId)
+      .eq('candidate_id', candidateId)
+      .eq('status', 'pending');
+
+    if (error) throw error;
+    return data;
+  },
+
   async getInvitationById(invitationId: string) {
     const { data, error } = await supabase
       .from('job_invitations')

@@ -130,11 +130,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         className={cn(
           'px-4 py-3 text-body text-foreground outline-none overflow-y-auto',
           'prose prose-sm max-w-none',
-          '[&>ul]:list-disc [&>ul]:ml-6 [&>ul]:my-2',
-          '[&>ol]:list-decimal [&>ol]:ml-6 [&>ol]:my-2',
-          '[&>p]:my-2',
-          '[&>strong]:font-semibold',
-          '[&>em]:italic',
           !value && !isFocused && 'before:content-[attr(data-placeholder)] before:text-muted-foreground before:pointer-events-none'
         )}
         style={{ minHeight }}

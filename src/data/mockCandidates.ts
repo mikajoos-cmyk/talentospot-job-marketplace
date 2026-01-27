@@ -16,7 +16,7 @@ export const mockCandidates: CandidateProfile[] = [
     qualifications: ['Bachelor Computer Science', 'AWS Certified', 'Scrum Master'],
     isRefugee: true,
     originCountry: 'Syria',
-    avatar: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_1.png',
+    avatar: `https://ui-avatars.com/api/?name=Candidate&background=6366f1&color=fff`,
     videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     portfolioImages: [
       'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400',
@@ -33,11 +33,12 @@ export const mockCandidates: CandidateProfile[] = [
       homeOfficePreference: 'hybrid',
       vacationDays: 30,
     },
-    locationPreference: {
-      continent: 'Europe',
-      country: 'Germany',
-      cities: ['Berlin', 'Munich', 'Hamburg'],
-    },
+    locationPreference: undefined,
+    preferredLocations: [
+      { continent: 'Europe', country: 'Germany', city: 'Berlin' },
+      { continent: 'Europe', country: 'Germany', city: 'Munich' },
+      { continent: 'Europe', country: 'Germany', city: 'Hamburg' },
+    ],
     experience: [
       {
         id: '1',
@@ -77,7 +78,7 @@ export const mockCandidates: CandidateProfile[] = [
     ],
     qualifications: ['Master Software Engineering', 'Google Cloud Certified'],
     isRefugee: false,
-    avatar: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_2.png',
+    avatar: `https://ui-avatars.com/api/?name=Candidate&background=ec4899&color=fff`,
     conditions: {
       entryBonus: 8000,
       startDate: '2024-02-15',
@@ -87,11 +88,11 @@ export const mockCandidates: CandidateProfile[] = [
       homeOfficePreference: 'full',
       vacationDays: 28,
     },
-    locationPreference: {
-      continent: 'Europe',
-      country: 'United Kingdom',
-      cities: ['London', 'Manchester'],
-    },
+    locationPreference: undefined,
+    preferredLocations: [
+      { continent: 'Europe', country: 'United Kingdom', city: 'London' },
+      { continent: 'Europe', country: 'United Kingdom', city: 'Manchester' },
+    ],
     experience: [],
     education: [],
   },
@@ -110,7 +111,7 @@ export const mockCandidates: CandidateProfile[] = [
     qualifications: ['Bachelor Design', 'UX Certification'],
     isRefugee: true,
     originCountry: 'Afghanistan',
-    avatar: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_3.png',
+    avatar: `https://ui-avatars.com/api/?name=Candidate&background=10b981&color=fff`,
     videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     portfolioImages: [
       'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400',
@@ -125,11 +126,11 @@ export const mockCandidates: CandidateProfile[] = [
       homeOfficePreference: 'hybrid',
       vacationDays: 25,
     },
-    locationPreference: {
-      continent: 'Europe',
-      country: 'France',
-      cities: ['Paris', 'Lyon'],
-    },
+    locationPreference: undefined,
+    preferredLocations: [
+      { continent: 'Europe', country: 'France', city: 'Paris' },
+      { continent: 'Europe', country: 'France', city: 'Lyon' },
+    ],
     experience: [],
     education: [],
   },
@@ -147,7 +148,7 @@ export const mockCandidates: CandidateProfile[] = [
     ],
     qualifications: ['Bachelor IT', 'AWS Solutions Architect', 'Kubernetes Admin'],
     isRefugee: false,
-    avatar: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_4.png',
+    avatar: `https://ui-avatars.com/api/?name=Candidate&background=f59e0b&color=fff`,
     conditions: {
       startDate: '2024-05-01',
       noticePeriod: '3 months',
@@ -156,11 +157,11 @@ export const mockCandidates: CandidateProfile[] = [
       homeOfficePreference: 'full',
       vacationDays: 30,
     },
-    locationPreference: {
-      continent: 'Europe',
-      country: 'Spain',
-      cities: ['Madrid', 'Barcelona'],
-    },
+    locationPreference: undefined,
+    preferredLocations: [
+      { continent: 'Europe', country: 'Spain', city: 'Madrid' },
+      { continent: 'Europe', country: 'Spain', city: 'Barcelona' },
+    ],
     experience: [],
     education: [],
   },
@@ -179,7 +180,7 @@ export const mockCandidates: CandidateProfile[] = [
     qualifications: ['PhD Data Science', 'Machine Learning Specialist'],
     isRefugee: true,
     originCountry: 'Iraq',
-    avatar: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_5.png',
+    avatar: `https://ui-avatars.com/api/?name=Candidate&background=3b82f6&color=fff`,
     conditions: {
       entryBonus: 10000,
       startDate: '2024-03-15',
@@ -189,11 +190,11 @@ export const mockCandidates: CandidateProfile[] = [
       homeOfficePreference: 'hybrid',
       vacationDays: 27,
     },
-    locationPreference: {
-      continent: 'Europe',
-      country: 'Netherlands',
-      cities: ['Amsterdam', 'Rotterdam'],
-    },
+    locationPreference: undefined,
+    preferredLocations: [
+      { continent: 'Europe', country: 'Netherlands', city: 'Amsterdam' },
+      { continent: 'Europe', country: 'Netherlands', city: 'Rotterdam' },
+    ],
     experience: [],
     education: [],
   },
@@ -211,7 +212,7 @@ export const mockCandidates: CandidateProfile[] = [
     ],
     qualifications: ['MBA', 'Product Management Certification', 'PMP'],
     isRefugee: false,
-    avatar: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_1.png',
+    avatar: `https://ui-avatars.com/api/?name=Candidate&background=6366f1&color=fff`,
     conditions: {
       entryBonus: 12000,
       startDate: '2024-02-01',
@@ -221,11 +222,10 @@ export const mockCandidates: CandidateProfile[] = [
       homeOfficePreference: 'hybrid',
       vacationDays: 32,
     },
-    locationPreference: {
-      continent: 'Europe',
-      country: 'Ireland',
-      cities: ['Dublin'],
-    },
+    locationPreference: undefined,
+    preferredLocations: [
+      { continent: 'Europe', country: 'Ireland', city: 'Dublin' },
+    ],
     experience: [],
     education: [],
   },

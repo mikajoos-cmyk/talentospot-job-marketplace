@@ -15,7 +15,7 @@ export const mockCompanies: Company[] = [
   {
     id: 'techcorp',
     name: 'TechCorp',
-    logo: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_1.png',
+    logo: 'https://ui-avatars.com/api/?name=TechCorp&background=6366f1&color=fff',
     description: 'Leading technology company building innovative solutions for the future.',
     industry: 'Technology',
     size: '1000-5000',
@@ -27,7 +27,7 @@ export const mockCompanies: Company[] = [
   {
     id: 'startupxyz',
     name: 'StartupXYZ',
-    logo: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_2.png',
+    logo: 'https://ui-avatars.com/api/?name=StartupXYZ&background=ec4899&color=fff',
     description: 'Fast-growing startup revolutionizing the e-commerce industry.',
     industry: 'E-commerce',
     size: '50-200',
@@ -39,7 +39,7 @@ export const mockCompanies: Company[] = [
   {
     id: 'designhub',
     name: 'DesignHub',
-    logo: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_3.png',
+    logo: 'https://ui-avatars.com/api/?name=DesignHub&background=10b981&color=fff',
     description: 'Creative agency specializing in digital design and branding.',
     industry: 'Design',
     size: '20-50',
@@ -51,7 +51,7 @@ export const mockCompanies: Company[] = [
   {
     id: 'dataco',
     name: 'DataCo',
-    logo: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_4.png',
+    logo: 'https://ui-avatars.com/api/?name=DataCo&background=f59e0b&color=fff',
     description: 'Data analytics platform helping businesses make data-driven decisions.',
     industry: 'Analytics',
     size: '200-500',
@@ -63,7 +63,7 @@ export const mockCompanies: Company[] = [
   {
     id: 'cloudtech',
     name: 'CloudTech',
-    logo: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_5.png',
+    logo: 'https://ui-avatars.com/api/?name=CloudTech&background=3b82f6&color=fff',
     description: 'Cloud infrastructure provider with global reach and reliability.',
     industry: 'Cloud Services',
     size: '500-1000',
@@ -75,7 +75,7 @@ export const mockCompanies: Company[] = [
   {
     id: 'aisolutions',
     name: 'AI Solutions',
-    logo: 'https://c.animaapp.com/mktjfn7fdsCv0P/img/ai_1.png',
+    logo: 'https://ui-avatars.com/api/?name=AISolutions&background=8b5cf6&color=fff',
     description: 'Artificial intelligence company developing cutting-edge ML solutions.',
     industry: 'AI/ML',
     size: '100-500',

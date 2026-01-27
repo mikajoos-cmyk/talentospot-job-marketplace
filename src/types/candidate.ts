@@ -9,6 +9,7 @@ export interface CandidateConditions {
   startDate?: string;
   noticePeriod?: string;
   salaryExpectation: { min: number; max: number };
+  currency: string;
   workRadius: number;
   homeOfficePreference: 'full' | 'hybrid' | 'none';
   vacationDays: number;
@@ -28,33 +29,45 @@ export interface CandidateProfile {
   nationality?: string;
   gender?: string;
   salary: { min: number; max: number };
+  currency: string;
   skills: Array<{ name: string; percentage: number }>;
   qualifications: string[];
   isRefugee: boolean;
   originCountry?: string;
+  description?: string;
   avatar?: string;
   videoUrl?: string;
-  portfolioImages?: string[];
+  portfolioImages?: Array<{ image: string; title?: string; description?: string }>;
   sector?: string;
   careerLevel?: string;
   employmentStatus?: string;
   jobTypes?: string[];
   travelWillingness?: number;
-  languages?: string[];
+  languages?: Array<{ name: string; level: string }>;
   drivingLicenses?: string[];
   conditions: CandidateConditions;
-  locationPreference: LocationHierarchy;
+  preferredLocations: Array<{
+    continent: string;
+    country: string;
+    city: string;
+  }>;
+  availableFrom?: string;
   experience: Array<{
     id: string;
     title: string;
     company: string;
+    startDate?: string;
+    endDate?: string;
     period: string;
+    isCurrent?: boolean;
     description: string;
   }>;
   education: Array<{
     id: string;
     degree: string;
     institution: string;
+    startDate?: string;
+    endDate?: string;
     period: string;
   }>;
 }

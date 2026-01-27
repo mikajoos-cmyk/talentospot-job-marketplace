@@ -11,13 +11,16 @@ import { useToast } from '../../contexts/ToastContext';
 import { locationData } from '../../data/locationData';
 import { jobsService } from '../../services/jobs.service';
 import { Loader2 } from 'lucide-react';
-import { X, Plus, ArrowLeft } from 'lucide-react';
+import { X, Plus, ArrowLeft, Home } from 'lucide-react';
+import { Switch } from '../../components/ui/switch';
+import { Slider } from '../../components/ui/slider';
 
 const EditJob: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<any>(null);
 
   const [languages, setLanguages] = useState<string[]>([]);
@@ -35,15 +38,18 @@ const EditJob: React.FC = () => {
           setFormData({
             title: job.title || '',
             description: job.description || '',
-            salary: job.salary_min && job.salary_max ? `${job.salary_min} - ${job.salary_max}` : '',
-            type: job.employment_type || 'Full-time',
+            salary_min: job.salary_min || 1000,
+            salary_max: job.salary_max || 250000,
+            salary_currency: job.salary_currency || 'EUR',
+            type: job.employment_type || 'full_time',
             entryBonus: job.entry_bonus?.toString() || '',
             contractDuration: job.contract_duration || '',
             location: {
-              continent: 'Europe', // Default for now
+              continent: job.continent || 'Europe',
               country: job.country || '',
               city: job.city || '',
             },
+            homeOfficeAvailable: job.home_office_available || false,
           });
           setLanguages(job.required_languages || []);
           setQualifications(job.required_qualifications || []);
@@ -56,12 +62,6 @@ const EditJob: React.FC = () => {
     };
     fetchJob();
   }, [id]);
-
-  const continents = Object.keys(locationData);
-  const countries = formData.location.continent ? Object.keys(locationData[formData.location.continent] || {}) : [];
-  const cities = formData.location.country && formData.location.continent
-    ? locationData[formData.location.continent]?.[formData.location.country] || []
-    : [];
 
   const handleAddLanguage = () => {
     if (languageInput.trim() && !languages.includes(languageInput.trim())) {
@@ -85,7 +85,7 @@ const EditJob: React.FC = () => {
     setQualifications(qualifications.filter(q => q !== qualification));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.title || !formData.description) {
       showToast({
         title: 'Error',
@@ -95,11 +95,43 @@ const EditJob: React.FC = () => {
       return;
     }
 
-    showToast({
-      title: 'Job Updated',
-      description: 'Your job posting has been updated successfully',
-    });
-    navigate('/employer/jobs');
+    if (!id) return;
+
+    setIsSaving(true);
+    try {
+
+      await jobsService.updateJob(id, {
+        title: formData.title,
+        description: formData.description,
+        continent: formData.location.continent,
+        country: formData.location.country,
+        city: formData.location.city,
+        employment_type: formData.type,
+        salary_min: formData.salary_min,
+        salary_max: formData.salary_max,
+        salary_currency: formData.salary_currency,
+        entry_bonus: formData.entryBonus ? parseInt(formData.entryBonus) : undefined,
+        contract_duration: formData.contractDuration,
+        required_languages: languages,
+        required_qualifications: qualifications,
+        home_office_available: formData.homeOfficeAvailable,
+      });
+
+      showToast({
+        title: 'Job Updated',
+        description: 'Your job posting has been updated successfully',
+      });
+      navigate('/employer/jobs');
+    } catch (error: any) {
+      console.error('Error updating job:', error);
+      showToast({
+        title: 'Error',
+        description: error.message || 'Failed to update job',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (loading) {
@@ -124,6 +156,12 @@ const EditJob: React.FC = () => {
       </AppLayout>
     );
   }
+
+  const continents = Object.keys(locationData);
+  const countries = formData.location.continent ? Object.keys(locationData[formData.location.continent] || {}) : [];
+  const cities = formData.location.country && formData.location.continent
+    ? locationData[formData.location.continent]?.[formData.location.country] || []
+    : [];
 
   return (
     <AppLayout>
@@ -234,18 +272,41 @@ const EditJob: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="salary" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Salary Range
-                </Label>
-                <Input
-                  id="salary"
-                  type="text"
-                  placeholder="e.g., $80k - $120k"
-                  value={formData.salary}
-                  onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
-                  className="bg-background text-foreground border-border"
-                />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="salary" className="text-body-sm font-medium text-foreground">
+                    Salary Range ({formData.salary_currency})
+                  </Label>
+                  <div className="w-32">
+                    <Select
+                      value={formData.salary_currency}
+                      onValueChange={(value) => setFormData({ ...formData, salary_currency: value })}
+                    >
+                      <SelectTrigger className="bg-background text-foreground border-border h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="GBP">GBP (£)</SelectItem>
+                        <SelectItem value="CHF">CHF (₣)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <Slider
+                    value={[formData.salary_min, formData.salary_max]}
+                    onValueChange={(value: number[]) => setFormData({ ...formData, salary_min: value[0], salary_max: value[1] })}
+                    min={1000}
+                    max={250000}
+                    step={1000}
+                  />
+                  <div className="flex justify-between text-caption text-muted-foreground">
+                    <span>{formData.salary_currency} {formData.salary_min.toLocaleString()}</span>
+                    <span>{formData.salary_currency} {formData.salary_max.toLocaleString()}</span>
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -257,10 +318,10 @@ const EditJob: React.FC = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Full-time">Full-time</SelectItem>
-                    <SelectItem value="Part-time">Part-time</SelectItem>
-                    <SelectItem value="Contract">Contract</SelectItem>
-                    <SelectItem value="Freelance">Freelance</SelectItem>
+                    <SelectItem value="full_time">Full-time</SelectItem>
+                    <SelectItem value="part_time">Part-time</SelectItem>
+                    <SelectItem value="contract">Contract</SelectItem>
+                    <SelectItem value="freelance">Freelance</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -375,6 +436,27 @@ const EditJob: React.FC = () => {
                 ))}
               </div>
             </div>
+
+            <div className="flex items-center justify-between p-4 bg-muted rounded-lg border border-border">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Home className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <Label htmlFor="home-office" className="text-body font-medium text-foreground">
+                    Home Office Available
+                  </Label>
+                  <p className="text-caption text-muted-foreground">
+                    Enable if this position allows for remote work/home office
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="home-office"
+                checked={formData.homeOfficeAvailable}
+                onCheckedChange={(checked) => setFormData({ ...formData, homeOfficeAvailable: checked })}
+              />
+            </div>
           </div>
         </Card>
 
@@ -382,14 +464,17 @@ const EditJob: React.FC = () => {
           <Button
             variant="outline"
             onClick={() => navigate('/employer/jobs')}
+            disabled={isSaving}
             className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
+            disabled={isSaving}
             className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
           >
+            {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Save Changes
           </Button>
         </div>

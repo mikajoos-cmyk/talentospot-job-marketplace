@@ -67,4 +67,21 @@ export const shortlistsService = {
     if (error) throw error;
     return data;
   },
+
+  async getCompaniesShortlistingCandidate(candidateId: string) {
+    const { data, error } = await supabase
+      .from('shortlists')
+      .select(`
+        *,
+        employer_profiles!inner(
+          *,
+          profiles!inner(full_name, avatar_url)
+        )
+      `)
+      .eq('candidate_id', candidateId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  },
 };

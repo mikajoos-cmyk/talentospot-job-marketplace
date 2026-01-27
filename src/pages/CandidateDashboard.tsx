@@ -178,7 +178,7 @@ const CandidateDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <ProfileViewsChart />
-            
+
             <Card className="p-6 border border-border bg-card">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-h3 font-heading text-foreground">Recent Applications</h3>
@@ -277,58 +277,64 @@ const CandidateDashboard: React.FC = () => {
 
             {modalType === 'invitations' && (
               <div className="space-y-4">
-                {invitations.length === 0 ? (
+                {invitations.filter((i: any) => i.status === 'pending').length === 0 ? (
                   <p className="text-body-sm text-muted-foreground text-center py-8">
                     No invitations yet
                   </p>
                 ) : (
-                  invitations.map((invitation) => (
+                  invitations.filter((i: any) => i.status === 'pending').map((invitation) => (
                     <Card
                       key={invitation.id}
                       className="p-4 border border-border bg-background hover:shadow-md transition-all duration-normal"
                     >
                       <div className="flex items-start space-x-4">
-                        <Building2 className="w-12 h-12 text-muted-foreground" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className={`px-2 py-1 text-caption rounded-md border ${
-                              invitation.status === 'pending'
+                        <div className="flex items-start space-x-4">
+                          <Avatar className="w-12 h-12 rounded-lg">
+                            <AvatarImage src={invitation.jobs?.employer_profiles?.logo_url || ''} className="object-cover" />
+                            <AvatarFallback className="rounded-lg">
+                              <Building2 className="w-6 h-6 text-muted-foreground" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <span className={`px-2 py-1 text-caption rounded-md border ${invitation.status === 'pending'
                                 ? 'bg-warning/10 text-warning border-warning/30'
                                 : invitation.status === 'accepted'
-                                ? 'bg-success/10 text-success border-success/30'
-                                : 'bg-error/10 text-error border-error/30'
-                            }`}>
-                              {invitation.status}
-                            </span>
-                          </div>
-                          <h4 className="text-h4 font-heading text-foreground mb-1">
-                            {invitation.jobs?.title || 'Job Title'}
-                          </h4>
-                          <p className="text-body-sm text-muted-foreground mb-2">
-                            {invitation.jobs?.employer_profiles?.company_name || 'Company'}
-                          </p>
-                          {invitation.message && (
-                            <p className="text-body-sm text-foreground italic mb-2">
-                              "{invitation.message}"
+                                  ? 'bg-success/10 text-success border-success/30'
+                                  : 'bg-error/10 text-error border-error/30'
+                                }`}>
+                                {invitation.status}
+                              </span>
+                            </div>
+                            <h4 className="text-h4 font-heading text-foreground mb-1">
+                              {invitation.jobs?.title || 'Job Title'}
+                            </h4>
+                            <p className="text-body-sm text-muted-foreground mb-2">
+                              {invitation.jobs?.employer_profiles?.company_name || 'Company'}
                             </p>
-                          )}
-                          <div className="flex flex-wrap gap-3 text-caption text-muted-foreground">
-                            <div className="flex items-center">
-                              <Calendar className="w-3 h-3 mr-1" strokeWidth={1.5} />
-                              {formatDate(invitation.sent_at)}
+                            {invitation.message && (
+                              <p className="text-body-sm text-foreground italic mb-2">
+                                "{invitation.message}"
+                              </p>
+                            )}
+                            <div className="flex flex-wrap gap-3 text-caption text-muted-foreground">
+                              <div className="flex items-center">
+                                <Calendar className="w-3 h-3 mr-1" strokeWidth={1.5} />
+                                {formatDate(invitation.sent_at || invitation.created_at || new Date().toISOString())}
+                              </div>
                             </div>
+                            {invitation.status === 'pending' && (
+                              <div className="flex gap-2 mt-3">
+                                <Button
+                                  size="sm"
+                                  onClick={() => navigate('/candidate/invitations')}
+                                  className="bg-primary text-primary-foreground hover:bg-primary-hover"
+                                >
+                                  View Details
+                                </Button>
+                              </div>
+                            )}
                           </div>
-                          {invitation.status === 'pending' && (
-                            <div className="flex gap-2 mt-3">
-                              <Button
-                                size="sm"
-                                onClick={() => navigate('/candidate/invitations')}
-                                className="bg-primary text-primary-foreground hover:bg-primary-hover"
-                              >
-                                View Details
-                              </Button>
-                            </div>
-                          )}
                         </div>
                       </div>
                     </Card>

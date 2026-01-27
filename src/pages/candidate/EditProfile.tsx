@@ -41,6 +41,7 @@ const EditProfile: React.FC = () => {
   const { user, refreshUser } = useUser();
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   // Refs for Datei-Uploads
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -82,6 +83,10 @@ const EditProfile: React.FC = () => {
             entryBonus: profile.conditions.entryBonus || 0,
             vacationDays: profile.conditions.vacationDays || 0,
             workRadius: profile.conditions.workRadius || 0,
+            homeOfficePreference: profile.conditions.homeOfficePreference || 'none',
+            description: profile.description || '',
+            availableFrom: profile.availableFrom || '',
+            currency: profile.currency || 'EUR',
           });
           setExperience(profile.experience || []);
           setEducation(profile.education || []);
@@ -90,17 +95,22 @@ const EditProfile: React.FC = () => {
           setLanguages(profile.languages || []);
           setDrivingLicenses(profile.drivingLicenses || []);
 
-          if (profile.locationPreference) {
-            // Mapping existing preferred locations if present
-            // This depends on how getCandidateProfile returns them
+          if (profile.preferredLocations) {
+            const locations: PreferredLocation[] = profile.preferredLocations.map((loc: any, i: number) => ({
+              id: `init-${i}`,
+              continent: loc.continent,
+              country: loc.country,
+              city: loc.city
+            }));
+            setPreferredLocations(locations);
           }
 
           if (profile.portfolioImages) {
-            setPortfolioProjects(profile.portfolioImages.map((img: string, i: number) => ({
+            setPortfolioProjects(profile.portfolioImages.map((p: any, i: number) => ({
               id: i.toString(),
-              title: `Project ${i + 1}`,
-              description: '',
-              image: img
+              title: p.title || `Project ${i + 1}`,
+              description: p.description || '',
+              image: p.image || ''
             })));
           }
         }
@@ -117,19 +127,24 @@ const EditProfile: React.FC = () => {
   const [newExperience, setNewExperience] = useState({
     title: '',
     company: '',
-    period: '',
+    startDate: '',
+    endDate: '',
+    isCurrent: false,
     description: '',
   });
   const [newEducation, setNewEducation] = useState({
     degree: '',
     institution: '',
-    period: '',
+    startDate: '',
+    endDate: '',
+    isCurrent: false,
   });
 
   const [skillInput, setSkillInput] = useState('');
   const [qualificationInput, setQualificationInput] = useState('');
-  const [languages, setLanguages] = useState<string[]>([]);
+  const [languages, setLanguages] = useState<{ name: string; level: string }[]>([]);
   const [languageInput, setLanguageInput] = useState('');
+  const [languageLevel, setLanguageLevel] = useState('b2');
   const [drivingLicenses, setDrivingLicenses] = useState<string[]>([]);
   const [licenseInput, setLicenseInput] = useState('');
 
@@ -157,20 +172,61 @@ const EditProfile: React.FC = () => {
     : [];
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files || event.target.files.length === 0 || !user?.id) return;
-    const file = event.target.files[0];
+    const files = event.target.files;
+    console.log('handleAvatarUpload triggered', { fileCount: files?.length, userId: user?.id });
+
+    if (!files || files.length === 0) return;
+    const file = files[0];
+
+    // Show preview immediately - do this before any other checks
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      console.log('Created preview URL:', previewUrl);
+      setAvatarPreview(previewUrl);
+    } catch (err) {
+      console.error('Failed to create preview URL:', err);
+    }
+
+    if (!user?.id) {
+      console.error('No user ID available for upload');
+      showToast({ title: 'Error', description: 'User session not found. Please log in again.', variant: 'destructive' });
+      return;
+    }
+
     setUploading(true);
     try {
+      console.log('Starting upload for file:', file.name);
       const publicUrl = await storageService.uploadAvatar(user.id, file);
-      setFormData({ ...formData, avatar: publicUrl });
+      console.log('Upload successful, public URL:', publicUrl);
+
+      setFormData((prev: any) => {
+        const next = { ...prev, avatar: publicUrl };
+        console.log('Updating formData avatar:', next.avatar);
+        return next;
+      });
+
       showToast({ title: 'Upload Success', description: 'Profile picture uploaded' });
     } catch (error) {
-      console.error('Avatar upload failed:', error);
+      console.error('Avatar upload failed during service call:', error);
       showToast({ title: 'Upload Failed', description: 'Could not upload image', variant: 'destructive' });
+      // We keep the preview for now so the user can see what they tried to upload
     } finally {
       setUploading(false);
+      // Reset input value so the same file can be selected again if needed
+      if (event.target) {
+        event.target.value = '';
+      }
     }
   };
+
+  // Cleanup preview URL to avoid memory leaks
+  React.useEffect(() => {
+    return () => {
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
 
   const handlePortfolioImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0 || !user?.id) return;
@@ -203,10 +259,10 @@ const EditProfile: React.FC = () => {
   };
 
   const handleAddExperience = () => {
-    if (!newExperience.title.trim() || !newExperience.company.trim()) {
+    if (!newExperience.title.trim() || !newExperience.company.trim() || !newExperience.startDate) {
       showToast({
         title: 'Error',
-        description: 'Please fill in all required fields',
+        description: 'Please fill in all required fields (Job Title, Company, and Start Date)',
         variant: 'destructive',
       });
       return;
@@ -216,12 +272,15 @@ const EditProfile: React.FC = () => {
       id: Date.now().toString(),
       title: newExperience.title,
       company: newExperience.company,
-      period: newExperience.period,
+      startDate: newExperience.startDate,
+      endDate: newExperience.isCurrent ? null : newExperience.endDate,
+      isCurrent: newExperience.isCurrent,
+      period: `${newExperience.startDate} - ${newExperience.isCurrent ? 'Present' : (newExperience.endDate || 'Present')}`,
       description: newExperience.description,
     };
 
     setExperience([...experience, exp]);
-    setNewExperience({ title: '', company: '', period: '', description: '' });
+    setNewExperience({ title: '', company: '', startDate: '', endDate: '', isCurrent: false, description: '' });
     setExperienceModalOpen(false);
     showToast({
       title: 'Experience Added',
@@ -238,10 +297,10 @@ const EditProfile: React.FC = () => {
   };
 
   const handleAddEducation = () => {
-    if (!newEducation.degree.trim() || !newEducation.institution.trim()) {
+    if (!newEducation.degree.trim() || !newEducation.institution.trim() || !newEducation.startDate) {
       showToast({
         title: 'Error',
-        description: 'Please fill in all required fields',
+        description: 'Please fill in all required fields (Degree, Institution, and Start Date)',
         variant: 'destructive',
       });
       return;
@@ -251,11 +310,13 @@ const EditProfile: React.FC = () => {
       id: Date.now().toString(),
       degree: newEducation.degree,
       institution: newEducation.institution,
-      period: newEducation.period,
+      startDate: newEducation.startDate,
+      endDate: newEducation.isCurrent ? null : newEducation.endDate,
+      period: `${newEducation.startDate} - ${newEducation.isCurrent ? 'Present' : (newEducation.endDate || 'Present')}`,
     };
 
     setEducation([...education, edu]);
-    setNewEducation({ degree: '', institution: '', period: '' });
+    setNewEducation({ degree: '', institution: '', startDate: '', endDate: '', isCurrent: false });
     setEducationModalOpen(false);
     showToast({
       title: 'Education Added',
@@ -283,14 +344,14 @@ const EditProfile: React.FC = () => {
   };
 
   const handleAddLanguage = () => {
-    if (languageInput.trim() && !languages.includes(languageInput.trim())) {
-      setLanguages([...languages, languageInput.trim()]);
+    if (languageInput.trim() && !languages.some(l => l.name.toLowerCase() === languageInput.trim().toLowerCase())) {
+      setLanguages([...languages, { name: languageInput.trim(), level: languageLevel }]);
       setLanguageInput('');
     }
   };
 
-  const handleRemoveLanguage = (language: string) => {
-    setLanguages(languages.filter(l => l !== language));
+  const handleRemoveLanguage = (languageName: string) => {
+    setLanguages(languages.filter(l => l.name !== languageName));
   };
 
   const handleAddLicense = () => {
@@ -416,7 +477,11 @@ const EditProfile: React.FC = () => {
         vacation_days: formData.vacationDays,
         work_radius_km: formData.workRadius,
         travel_willingness: parseInt(formData.travelWillingness),
+        home_office_preference: formData.homeOfficePreference,
+        available_from: formData.availableFrom,
         video_url: formData.videoUrl,
+        description: formData.description,
+        currency: formData.currency,
 
         // --- Arrays & Listen ---
         jobTypes: formData.jobTypes,
@@ -428,8 +493,12 @@ const EditProfile: React.FC = () => {
         languages: languages,
         preferredLocations: preferredLocations,
 
-        // Portfolio Bilder (Nur Bilder URLs, da DB keine Projekte unterstützt)
-        portfolio_images: portfolioProjects.map(p => p.image).filter(Boolean)
+        // Portfolio Bilder (Speichert nun das ganze Objekt)
+        portfolioImages: portfolioProjects.map(p => ({
+          image: p.image,
+          title: p.title,
+          description: p.description
+        }))
       };
 
       await candidateService.updateCandidateProfile(user.id, updates);
@@ -487,11 +556,11 @@ const EditProfile: React.FC = () => {
 
           <div className="space-y-6">
             <div className="flex items-center space-x-6">
-              <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                {formData.avatar ? (
-                  <img src={formData.avatar} alt="Profile" className="w-full h-full object-cover" />
+              <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-border shadow-sm">
+                {avatarPreview || formData.avatar ? (
+                  <img src={avatarPreview || formData.avatar} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-h2 font-heading text-primary">{user.name.charAt(0)}</span>
+                  <span className="text-h2 font-heading text-primary">{(user.name || 'U').charAt(0)}</span>
                 )}
               </div>
               <div>
@@ -674,6 +743,19 @@ const EditProfile: React.FC = () => {
                 />
               </div>
 
+              <div className="md:col-span-2">
+                <Label htmlFor="description" className="text-body-sm font-medium text-foreground mb-2 block">
+                  About Me / Profile Description
+                </Label>
+                <textarea
+                  id="description"
+                  placeholder="Describe your professional background and what you are looking for..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full min-h-[120px] px-3 py-2 rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-sans text-body-sm"
+                />
+              </div>
+
               <div>
                 <Label htmlFor="sector" className="text-body-sm font-medium text-foreground mb-2 block">
                   Sector
@@ -827,7 +909,7 @@ const EditProfile: React.FC = () => {
               <Label className="text-body-sm font-medium text-foreground mb-2 block">
                 Languages
               </Label>
-              <div className="flex space-x-2 mb-3">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
                 <Input
                   type="text"
                   placeholder="Add language..."
@@ -836,10 +918,24 @@ const EditProfile: React.FC = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleAddLanguage()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
+                <Select value={languageLevel} onValueChange={setLanguageLevel}>
+                  <SelectTrigger className="w-full sm:w-[150px] bg-background text-foreground border-border">
+                    <SelectValue placeholder="Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="a1">A1 (Beginner)</SelectItem>
+                    <SelectItem value="a2">A2 (Elementary)</SelectItem>
+                    <SelectItem value="b1">B1 (Intermediate)</SelectItem>
+                    <SelectItem value="b2">B2 (Upper Intermediate)</SelectItem>
+                    <SelectItem value="c1">C1 (Advanced)</SelectItem>
+                    <SelectItem value="c2">C2 (Proficient)</SelectItem>
+                    <SelectItem value="native">Native</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button
                   size="icon"
                   onClick={handleAddLanguage}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal w-full sm:w-10"
                 >
                   <Plus className="w-5 h-5" strokeWidth={2} />
                 </Button>
@@ -847,14 +943,14 @@ const EditProfile: React.FC = () => {
               <div className="flex flex-wrap gap-2">
                 {languages.map((language) => (
                   <div
-                    key={language}
+                    key={language.name}
                     className="flex items-center space-x-1 px-3 py-1 bg-info/10 text-info rounded-full text-body-sm"
                   >
-                    <span>{language}</span>
+                    <span className="capitalize">{language.name} ({language.level.toUpperCase()})</span>
                     <button
-                      onClick={() => handleRemoveLanguage(language)}
+                      onClick={() => handleRemoveLanguage(language.name)}
                       className="hover:text-info-hover"
-                      aria-label={`Remove ${language}`}
+                      aria-label={`Remove ${language.name}`}
                     >
                       <X className="w-4 h-4" strokeWidth={2} />
                     </button>
@@ -964,6 +1060,22 @@ const EditProfile: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div>
+                <Label htmlFor="homeOfficePreference" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Home Office Preference
+                </Label>
+                <Select value={formData.homeOfficePreference} onValueChange={(value: any) => setFormData({ ...formData, homeOfficePreference: value })}>
+                  <SelectTrigger className="bg-background text-foreground border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Home Office</SelectItem>
+                    <SelectItem value="hybrid">Hybrid</SelectItem>
+                    <SelectItem value="full">Full Remote</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
@@ -1029,30 +1141,40 @@ const EditProfile: React.FC = () => {
           <h3 className="text-h3 font-heading text-foreground mb-6">Salary & Conditions</h3>
 
           <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <Label htmlFor="currency" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Currency
+                </Label>
+                <Select value={formData.currency || 'EUR'} onValueChange={(value) => setFormData({ ...formData, currency: value })}>
+                  <SelectTrigger className="bg-background text-foreground border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="CHF">CHF (₣)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div>
               <Label className="text-body-sm font-medium text-foreground mb-3 block">
-                Salary Expectation: ${formData.salaryMin.toLocaleString()} - ${formData.salaryMax.toLocaleString()}
+                Salary Expectation: {formData.currency || 'EUR'} {formData.salaryMin.toLocaleString()} - {formData.salaryMax.toLocaleString()}
               </Label>
               <div className="space-y-4">
-                <div>
-                  <Label className="text-caption text-muted-foreground mb-2 block">Minimum</Label>
-                  <Slider
-                    value={[formData.salaryMin]}
-                    onValueChange={(value) => setFormData({ ...formData, salaryMin: value[0] })}
-                    min={30000}
-                    max={200000}
-                    step={5000}
-                  />
-                </div>
-                <div>
-                  <Label className="text-caption text-muted-foreground mb-2 block">Maximum</Label>
-                  <Slider
-                    value={[formData.salaryMax]}
-                    onValueChange={(value) => setFormData({ ...formData, salaryMax: value[0] })}
-                    min={30000}
-                    max={200000}
-                    step={5000}
-                  />
+                <Slider
+                  value={[formData.salaryMin, formData.salaryMax]}
+                  onValueChange={(value) => setFormData({ ...formData, salaryMin: value[0], salaryMax: value[1] })}
+                  min={1000}
+                  max={250000}
+                  step={1000}
+                />
+                <div className="flex justify-between text-caption text-muted-foreground">
+                  <span>min. {formData.currency || 'EUR'} {formData.salaryMin.toLocaleString()}</span>
+                  <span>max. {formData.currency || 'EUR'} {formData.salaryMax.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -1096,6 +1218,19 @@ const EditProfile: React.FC = () => {
                   step={5}
                 />
               </div>
+            </div>
+
+            <div>
+              <Label htmlFor="availableFrom" className="text-body-sm font-medium text-foreground mb-2 block">
+                Available From
+              </Label>
+              <Input
+                id="availableFrom"
+                type="date"
+                value={formData.availableFrom || ''}
+                onChange={(e) => setFormData({ ...formData, availableFrom: e.target.value })}
+                className="bg-background text-foreground border-border"
+              />
             </div>
           </div>
         </Card>
@@ -1271,10 +1406,10 @@ const EditProfile: React.FC = () => {
             Save Changes
           </Button>
         </div>
-      </div>
+      </div >
 
       {/* Experience Modal */}
-      <Dialog open={experienceModalOpen} onOpenChange={setExperienceModalOpen}>
+      < Dialog open={experienceModalOpen} onOpenChange={setExperienceModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">Add Work Experience</DialogTitle>
@@ -1312,18 +1447,47 @@ const EditProfile: React.FC = () => {
               />
             </div>
 
-            <div>
-              <Label htmlFor="expPeriod" className="text-body-sm font-medium text-foreground mb-2 block">
-                Period
-              </Label>
-              <Input
-                id="expPeriod"
-                type="text"
-                placeholder="e.g., 2020 - Present"
-                value={newExperience.period}
-                onChange={(e) => setNewExperience({ ...newExperience, period: e.target.value })}
-                className="bg-background text-foreground border-border"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="expStart" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Start Date <span className="text-error">*</span>
+                </Label>
+                <Input
+                  id="expStart"
+                  type="date"
+                  value={newExperience.startDate}
+                  onChange={(e) => setNewExperience({ ...newExperience, startDate: e.target.value })}
+                  className="bg-background text-foreground border-border"
+                />
+              </div>
+
+              {!newExperience.isCurrent && (
+                <div>
+                  <Label htmlFor="expEnd" className="text-body-sm font-medium text-foreground mb-2 block">
+                    End Date
+                  </Label>
+                  <Input
+                    id="expEnd"
+                    type="date"
+                    value={newExperience.endDate}
+                    onChange={(e) => setNewExperience({ ...newExperience, endDate: e.target.value })}
+                    className="bg-background text-foreground border-border"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="expCurrent"
+                checked={newExperience.isCurrent}
+                onChange={(e) => setNewExperience({ ...newExperience, isCurrent: e.target.checked })}
+                className="rounded border-border bg-background text-primary focus:ring-primary"
               />
+              <Label htmlFor="expCurrent" className="text-body-sm font-medium text-foreground cursor-pointer">
+                I am currently working in this role
+              </Label>
             </div>
 
             <div>
@@ -1345,7 +1509,7 @@ const EditProfile: React.FC = () => {
               variant="outline"
               onClick={() => {
                 setExperienceModalOpen(false);
-                setNewExperience({ title: '', company: '', period: '', description: '' });
+                setNewExperience({ title: '', company: '', startDate: '', endDate: '', isCurrent: false, description: '' });
               }}
               className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
             >
@@ -1360,10 +1524,10 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Education Modal */}
-      <Dialog open={educationModalOpen} onOpenChange={setEducationModalOpen}>
+      < Dialog open={educationModalOpen} onOpenChange={setEducationModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">Add Education</DialogTitle>
@@ -1401,18 +1565,47 @@ const EditProfile: React.FC = () => {
               />
             </div>
 
-            <div>
-              <Label htmlFor="eduPeriod" className="text-body-sm font-medium text-foreground mb-2 block">
-                Period
-              </Label>
-              <Input
-                id="eduPeriod"
-                type="text"
-                placeholder="e.g., 2014 - 2018"
-                value={newEducation.period}
-                onChange={(e) => setNewEducation({ ...newEducation, period: e.target.value })}
-                className="bg-background text-foreground border-border"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="eduStart" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Start Date <span className="text-error">*</span>
+                </Label>
+                <Input
+                  id="eduStart"
+                  type="date"
+                  value={newEducation.startDate}
+                  onChange={(e) => setNewEducation({ ...newEducation, startDate: e.target.value })}
+                  className="bg-background text-foreground border-border"
+                />
+              </div>
+
+              {!newEducation.isCurrent && (
+                <div>
+                  <Label htmlFor="eduEnd" className="text-body-sm font-medium text-foreground mb-2 block">
+                    End Date
+                  </Label>
+                  <Input
+                    id="eduEnd"
+                    type="date"
+                    value={newEducation.endDate}
+                    onChange={(e) => setNewEducation({ ...newEducation, endDate: e.target.value })}
+                    className="bg-background text-foreground border-border"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="eduCurrent"
+                checked={newEducation.isCurrent}
+                onChange={(e) => setNewEducation({ ...newEducation, isCurrent: e.target.checked })}
+                className="rounded border-border bg-background text-primary focus:ring-primary"
               />
+              <Label htmlFor="eduCurrent" className="text-body-sm font-medium text-foreground cursor-pointer">
+                I am currently studying here
+              </Label>
             </div>
           </div>
 
@@ -1421,7 +1614,7 @@ const EditProfile: React.FC = () => {
               variant="outline"
               onClick={() => {
                 setEducationModalOpen(false);
-                setNewEducation({ degree: '', institution: '', period: '' });
+                setNewEducation({ degree: '', institution: '', startDate: '', endDate: '', isCurrent: false });
               }}
               className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
             >
@@ -1429,17 +1622,17 @@ const EditProfile: React.FC = () => {
             </Button>
             <Button
               onClick={handleAddEducation}
-              disabled={!newEducation.degree.trim() || !newEducation.institution.trim()}
+              disabled={!newEducation.degree?.trim() || !newEducation.institution?.trim() || !newEducation.startDate}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
               Add Education
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Preferred Location Modal */}
-      <Dialog open={locationModalOpen} onOpenChange={setLocationModalOpen}>
+      < Dialog open={locationModalOpen} onOpenChange={setLocationModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">Add Preferred Work Location</DialogTitle>
@@ -1531,10 +1724,10 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Portfolio Modal */}
-      <Dialog open={portfolioModalOpen} onOpenChange={setPortfolioModalOpen}>
+      < Dialog open={portfolioModalOpen} onOpenChange={setPortfolioModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">Add Portfolio Project</DialogTitle>
@@ -1584,19 +1777,24 @@ const EditProfile: React.FC = () => {
               />
               <div
                 onClick={() => portfolioInputRef.current?.click()}
-                className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer"
+                className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors cursor-pointer overflow-hidden relative group min-h-[160px] flex flex-col items-center justify-center"
               >
                 {uploading ? (
                   <Loader2 className="w-8 h-8 mx-auto animate-spin" />
+                ) : newProject.image ? (
+                  <div className="absolute inset-0 w-full h-full">
+                    <img src={newProject.image} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <p className="text-white text-body-sm font-medium">Click to change image</p>
+                    </div>
+                  </div>
                 ) : (
                   <>
                     <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
-                    <p className="text-body-sm text-foreground">
-                      {newProject.image ? "Image uploaded (Click to change)" : "Click to upload image"}
-                    </p>
+                    <p className="text-body-sm text-foreground">Click to upload image</p>
+                    <p className="text-caption text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
                   </>
                 )}
-                <p className="text-caption text-muted-foreground">PNG, JPG up to 5MB</p>
               </div>
               {newProject.image && !uploading && <p className="text-xs text-green-600 mt-1">Image ready</p>}
             </div>
@@ -1622,8 +1820,8 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
-    </AppLayout>
+      </Dialog >
+    </AppLayout >
   );
 };
 

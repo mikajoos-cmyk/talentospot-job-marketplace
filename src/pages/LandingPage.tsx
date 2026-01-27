@@ -68,7 +68,7 @@ const LandingPage: React.FC = () => {
       <header className="sticky top-0 z-50 bg-card border-b border-border">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <img
-            src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png"
+            src="/src/assets/logo.png"
             alt="TalentoSpot"
             className="h-10 w-auto"
           />
@@ -388,7 +388,7 @@ const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <img
-                src="https://c.animaapp.com/mktjfn7fdsCv0P/img/uploaded-asset-1769361458695-0.png"
+                src="/src/assets/logo.png"
                 alt="TalentoSpot"
                 className="h-8 w-auto mb-4 brightness-0 invert"
               />

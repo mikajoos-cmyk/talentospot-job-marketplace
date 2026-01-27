@@ -24,11 +24,66 @@ export interface Job {
 }
 
 export const jobsService = {
+  async resolveEntities(names: string[], table: string, category: string = 'Other'): Promise<string[]> {
+    if (!names || names.length === 0) return [];
+
+    const ids: string[] = [];
+    for (const name of names) {
+      if (!name) continue;
+
+      // Search by name (case-insensitive)
+      const { data: existing } = await supabase
+        .from(table)
+        .select('id')
+        .ilike('name', name)
+        .maybeSingle();
+
+      if (existing) {
+        ids.push(existing.id);
+      } else {
+        // Create new entity
+        const insertData: any = { name };
+        if (table === 'languages') {
+          // Generate a simple code for languages if missing
+          insertData.code = name.substring(0, 2).toLowerCase() + Math.floor(Math.random() * 1000);
+        } else {
+          insertData.category = category;
+        }
+
+        const { data: created, error } = await supabase
+          .from(table)
+          .insert(insertData)
+          .select('id')
+          .single();
+
+        if (!error && created) {
+          ids.push(created.id);
+        } else {
+          console.error(`Error creating ${table} entity:`, error);
+        }
+      }
+    }
+    return ids;
+  },
+
   async createJob(job: Job) {
+    // Resolve names to IDs for array fields
+    const resolvedJob = { ...job };
+
+    if (job.required_languages) {
+      resolvedJob.required_languages = await this.resolveEntities(job.required_languages, 'languages');
+    }
+    if (job.required_qualifications) {
+      resolvedJob.required_qualifications = await this.resolveEntities(job.required_qualifications, 'qualifications');
+    }
+    if (job.required_skills) {
+      resolvedJob.required_skills = await this.resolveEntities(job.required_skills, 'skills');
+    }
+
     const { data, error } = await supabase
       .from('jobs')
       .insert({
-        ...job,
+        ...resolvedJob,
         posted_at: new Date().toISOString(),
       })
       .select()
@@ -39,9 +94,22 @@ export const jobsService = {
   },
 
   async updateJob(jobId: string, updates: Partial<Job>) {
+    // Resolve names to IDs for array fields
+    const resolvedUpdates = { ...updates };
+
+    if (updates.required_languages) {
+      resolvedUpdates.required_languages = await this.resolveEntities(updates.required_languages, 'languages');
+    }
+    if (updates.required_qualifications) {
+      resolvedUpdates.required_qualifications = await this.resolveEntities(updates.required_qualifications, 'qualifications');
+    }
+    if (updates.required_skills) {
+      resolvedUpdates.required_skills = await this.resolveEntities(updates.required_skills, 'skills');
+    }
+
     const { data, error } = await supabase
       .from('jobs')
-      .update(updates)
+      .update(resolvedUpdates)
       .eq('id', jobId)
       .select()
       .single();
@@ -57,6 +125,40 @@ export const jobsService = {
       .eq('id', jobId);
 
     if (error) throw error;
+  },
+
+  async mapDbJobToFrontend(data: any) {
+    if (!data) return null;
+
+    // Resolve IDs back to names for array fields
+    if (data.required_languages?.length > 0) {
+      const { data: langs } = await supabase.from('languages').select('id, name').in('id', data.required_languages);
+      data.required_languages = data.required_languages.map((id: string) => langs?.find(l => l.id === id)?.name || id);
+    }
+    if (data.required_qualifications?.length > 0) {
+      const { data: quals } = await supabase.from('qualifications').select('id, name').in('id', data.required_qualifications);
+      data.required_qualifications = data.required_qualifications.map((id: string) => quals?.find(q => q.id === id)?.name || id);
+    }
+    if (data.required_skills?.length > 0) {
+      const { data: skills } = await supabase.from('skills').select('id, name').in('id', data.required_skills);
+      data.required_skills = data.required_skills.map((id: string) => skills?.find(s => s.id === id)?.name || id);
+    }
+
+    // Map company data if employer_profiles join exists
+    const result = { ...data };
+    if (data.employer_profiles) {
+      result.company = {
+        name: data.employer_profiles.company_name,
+        logo: data.employer_profiles.logo_url,
+        location: `${data.employer_profiles.headquarters_city || ''}, ${data.employer_profiles.headquarters_country || ''}`.replace(/^, |, $/g, ''), // Clean up if parts missing
+        industry: data.employer_profiles.industry,
+        size: data.employer_profiles.company_size,
+        website: data.employer_profiles.website,
+        email: data.employer_profiles.profiles?.email
+      };
+    }
+
+    return result;
   },
 
   async getJobById(jobId: string) {
@@ -88,19 +190,7 @@ export const jobsService = {
       .update({ views: (data.views || 0) + 1 })
       .eq('id', jobId);
 
-    // Wenn das Frontend "company" als flaches Objekt erwartet:
-    return {
-      ...data,
-      company: {
-        name: data.employer_profiles?.company_name,
-        logo: data.employer_profiles?.logo_url,
-        location: `${data.employer_profiles?.headquarters_city || ''}, ${data.employer_profiles?.headquarters_country || ''}`.replace(/^, |, $/g, ''), // Clean up if parts missing
-        industry: data.employer_profiles?.industry,
-        size: data.employer_profiles?.company_size,
-        website: data.employer_profiles?.website,
-        email: data.employer_profiles?.profiles?.email
-      }
-    };
+    return this.mapDbJobToFrontend(data);
   },
 
   async searchJobs(filters: any = {}) {
@@ -149,7 +239,9 @@ export const jobsService = {
     const { data, error } = await query;
 
     if (error) throw error;
-    return data;
+
+    // Map multiple results
+    return Promise.all((data || []).map(job => this.mapDbJobToFrontend(job)));
   },
 
   async getJobsByEmployer(employerId: string) {
@@ -160,7 +252,7 @@ export const jobsService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data;
+    return Promise.all((data || []).map(job => this.mapDbJobToFrontend(job)));
   },
 
   async getLatestJobs(limit: number = 10) {
@@ -179,7 +271,7 @@ export const jobsService = {
       .limit(limit);
 
     if (error) throw error;
-    return data;
+    return Promise.all((data || []).map(job => this.mapDbJobToFrontend(job)));
   },
 
   async getFeaturedJobs(limit: number = 6) {
@@ -199,6 +291,6 @@ export const jobsService = {
       .limit(limit);
 
     if (error) throw error;
-    return data;
+    return Promise.all((data || []).map(job => this.mapDbJobToFrontend(job)));
   },
 };

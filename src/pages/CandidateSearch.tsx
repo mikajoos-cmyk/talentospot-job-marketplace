@@ -11,20 +11,35 @@ const CandidateSearch: React.FC = () => {
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState<any[]>([]);
-  const [filters, setFilters] = useState<CandidateFiltersType>({
-    salary: [30000, 120000],
-    bonus: [0, 50000],
-    workRadius: 50,
-    isRefugee: false,
-    originCountry: '',
-    skills: [],
-    qualifications: [],
-    location: {
-      continent: '',
-      country: '',
-      cities: [],
-    },
+  const [accessRequests, setAccessRequests] = useState<Record<string, string>>({});
+  const [filters, setFilters] = useState<CandidateFiltersType>(() => {
+    const savedFilters = sessionStorage.getItem('candidate_search_filters');
+    if (savedFilters) {
+      try {
+        return JSON.parse(savedFilters);
+      } catch (e) {
+        console.error('Error parsing saved filters:', e);
+      }
+    }
+    return {
+      salary: [30000, 120000],
+      bonus: [0, 50000],
+      workRadius: 50,
+      isRefugee: false,
+      originCountry: '',
+      skills: [],
+      qualifications: [],
+      location: {
+        continent: '',
+        country: '',
+        cities: [],
+      },
+    };
   });
+
+  useEffect(() => {
+    sessionStorage.setItem('candidate_search_filters', JSON.stringify(filters));
+  }, [filters]);
 
   useEffect(() => {
     const loadCandidates = async () => {
@@ -54,6 +69,16 @@ const CandidateSearch: React.FC = () => {
 
         const data = await candidateService.searchCandidates(searchFilters);
         setCandidates(data || []);
+
+        if (user?.role === 'employer' && user.profile?.id) {
+          // Fetch access requests for this employer
+          const { data: requests } = await candidateService.getEmployerAccessRequests(user.profile.id);
+          const requestMap: Record<string, string> = {};
+          requests?.forEach((r: any) => {
+            requestMap[r.candidate_id] = r.status;
+          });
+          setAccessRequests(requestMap);
+        }
       } catch (error) {
         console.error('Error loading candidates:', error);
         setCandidates([]);
@@ -106,6 +131,9 @@ const CandidateSearch: React.FC = () => {
                         key={candidate.id}
                         candidate={candidate}
                         packageTier={user.subscription?.packages?.tier || 'free'}
+                        test-accessStatus={accessRequests[candidate.id]} // Using a temp prop name to avoid lint error if I haven't updated Child yet? No, I should update child first? Typescript will complain.
+                        // Actually, I can just pass it as 'accessStatus' assuming I update the child concurrently or handle the error.
+                        accessStatus={accessRequests[candidate.id]}
                       />
                     ))}
                   </div>

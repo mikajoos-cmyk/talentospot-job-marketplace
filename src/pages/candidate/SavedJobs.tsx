@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { Card } from '../../components/ui/card';
@@ -138,7 +138,9 @@ const SavedJobs: React.FC = () => {
                     </p>
                   </div>
 
-                  <p className="text-body-sm text-foreground line-clamp-2">{job.jobs?.description}</p>
+                  <p className="text-body-sm text-foreground line-clamp-2">
+                    {job.jobs?.description?.replace(/<[^>]*>/g, '') || 'No description available'}
+                  </p>
 
                   <div className="space-y-2">
                     <div className="flex items-center text-body-sm text-muted-foreground">
@@ -151,9 +153,17 @@ const SavedJobs: React.FC = () => {
                     </div>
                     <div className="flex items-center text-body-sm text-muted-foreground">
                       <Briefcase className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                      <span>{job.jobs?.employment_type}</span>
+                      <span className="capitalize">{job.jobs?.employment_type?.replace(/_/g, ' ') || 'Full Time'}</span>
                     </div>
                   </div>
+
+                  {job.jobs?.entry_bonus && job.jobs.entry_bonus > 0 && (
+                    <div className="bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
+                      <span className="text-body-sm font-medium text-warning">
+                        Entry Bonus: {job.jobs.salary_currency || 'EUR'} {job.jobs.entry_bonus.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
 
                   <div className="flex space-x-2">
                     <Button

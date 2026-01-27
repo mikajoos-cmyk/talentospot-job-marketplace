@@ -4,10 +4,11 @@ import AppLayout from '../../components/layout/AppLayout';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
-import { MapPin, DollarSign, ArrowLeft, Mail, Phone, MessageSquare, Star, Loader2 } from 'lucide-react';
+import { MapPin, DollarSign, ArrowLeft, Mail, Phone, MessageSquare, Star, Loader2, Globe, Briefcase, GraduationCap, Award, Plane, Car } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import { applicationsService } from '../../services/applications.service';
 import ReviewModal from '../../components/shared/ReviewModal';
+import { Progress } from '../../components/ui/progress';
 
 const ApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -56,7 +57,7 @@ const ApplicationDetail: React.FC = () => {
     );
   }
 
-  const candidate = application.profiles;
+  const candidate = application.candidate_profiles?.profiles;
   const candidateDetails = application.candidate_profiles;
   const job = application.jobs;
   const applicationStatus = application.status;
@@ -144,23 +145,89 @@ const ApplicationDetail: React.FC = () => {
             </Card>
 
             <Card className="p-6 border border-border bg-card">
-              <h3 className="text-h3 font-heading text-foreground mb-4">Skills</h3>
-              <div className="space-y-3">
+              <div className="flex items-center space-x-3 mb-4">
+                <Award className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                <h3 className="text-h3 font-heading text-foreground">Skills</h3>
+              </div>
+              <div className="space-y-4">
                 {candidateDetails?.candidate_skills?.map((cs: any) => (
-                  <div key={cs.id}>
-                    <div className="flex items-center justify-between mb-1">
+                  <div key={cs.id || cs.skills?.name}>
+                    <div className="flex items-center justify-between mb-2">
                       <span className="text-body-sm font-medium text-foreground">{cs.skills?.name}</span>
                       <span className="text-body-sm text-muted-foreground">{cs.proficiency_percentage}%</span>
                     </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary transition-all duration-300"
-                        style={{ width: `${cs.proficiency_percentage}%` }}
-                      />
+                    <Progress value={cs.proficiency_percentage} className="h-2" />
+                  </div>
+                ))}
+                {(!candidateDetails?.candidate_skills || candidateDetails.candidate_skills.length === 0) && (
+                  <p className="text-body-sm text-muted-foreground">No skills specified</p>
+                )}
+              </div>
+            </Card>
+
+            <Card className="p-6 border border-border bg-card">
+              <div className="flex items-center space-x-3 mb-4">
+                <Globe className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                <h3 className="text-h3 font-heading text-foreground">Languages</h3>
+              </div>
+              <div className="space-y-4">
+                {candidateDetails?.candidate_languages?.map((cl: any) => (
+                  <div key={cl.id || cl.languages?.name}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-body-sm font-medium text-foreground">{cl.languages?.name}</span>
+                      <span className="text-body-sm text-muted-foreground capitalize">{cl.proficiency_level}</span>
                     </div>
                   </div>
                 ))}
+                {(!candidateDetails?.candidate_languages || candidateDetails.candidate_languages.length === 0) && (
+                  <p className="text-body-sm text-muted-foreground">No languages specified</p>
+                )}
               </div>
+            </Card>
+
+            <Card className="p-6 border border-border bg-card">
+              <div className="flex items-center space-x-3 mb-6">
+                <Briefcase className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                <h3 className="text-h3 font-heading text-foreground">Work Experience</h3>
+              </div>
+              {!candidateDetails?.candidate_experience || candidateDetails.candidate_experience.length === 0 ? (
+                <p className="text-body-sm text-muted-foreground">No work experience added</p>
+              ) : (
+                <div className="space-y-6">
+                  {candidateDetails.candidate_experience.map((exp: any) => (
+                    <div key={exp.id || Math.random()} className="relative pl-6 border-l-2 border-border">
+                      <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary"></div>
+                      <h4 className="text-h4 font-heading text-foreground mb-1">{exp.job_title}</h4>
+                      <p className="text-body-sm text-muted-foreground mb-2">
+                        {exp.company_name} • {exp.start_date} - {exp.end_date || 'Present'}
+                      </p>
+                      <p className="text-body-sm text-foreground">{exp.description}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card className="p-6 border border-border bg-card">
+              <div className="flex items-center space-x-3 mb-6">
+                <GraduationCap className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                <h3 className="text-h3 font-heading text-foreground">Education</h3>
+              </div>
+              {!candidateDetails?.candidate_education || candidateDetails.candidate_education.length === 0 ? (
+                <p className="text-body-sm text-muted-foreground">No education added</p>
+              ) : (
+                <div className="space-y-4">
+                  {candidateDetails.candidate_education.map((edu: any) => (
+                    <div key={edu.id || Math.random()} className="relative pl-6 border-l-2 border-border">
+                      <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-accent"></div>
+                      <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
+                      <p className="text-body-sm text-muted-foreground">
+                        {edu.institution} • {edu.start_date} - {edu.end_date || 'Present'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
 
@@ -250,10 +317,79 @@ const ApplicationDetail: React.FC = () => {
               <Card className="p-6 border border-warning/30 bg-warning/5">
                 <h3 className="text-h4 font-heading text-foreground mb-4">Entry Bonus Expected</h3>
                 <p className="text-h3 font-heading text-warning">
-                  €{candidateDetails.desired_entry_bonus.toLocaleString()}
+                  {candidateDetails.currency || 'EUR'} {candidateDetails.desired_entry_bonus.toLocaleString()}
                 </p>
               </Card>
             )}
+
+            <Card className="p-6 border border-border bg-card">
+              <div className="flex items-center space-x-3 mb-4">
+                <Award className="w-5 h-5 text-accent" strokeWidth={1.5} />
+                <h3 className="text-h4 font-heading text-foreground">Qualifications</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {candidateDetails?.candidate_qualifications?.map((q: any) => (
+                  <span
+                    key={q.qualifications?.id}
+                    className="px-3 py-1 bg-accent/10 text-accent text-body-sm rounded-lg"
+                  >
+                    {q.qualifications?.name}
+                  </span>
+                ))}
+                {(!candidateDetails?.candidate_qualifications || candidateDetails.candidate_qualifications.length === 0) && (
+                  <p className="text-body-sm text-muted-foreground">No qualifications specified</p>
+                )}
+              </div>
+            </Card>
+
+            <Card className="p-6 border border-border bg-card">
+              <div className="flex items-center space-x-3 mb-4">
+                <MapPin className="w-5 h-5 text-accent" strokeWidth={1.5} />
+                <h3 className="text-h4 font-heading text-foreground">Preferred Locations</h3>
+              </div>
+              <div className="space-y-2">
+                {candidateDetails?.candidate_preferred_locations?.map((loc: any) => (
+                  <div key={loc.id} className="flex items-center p-2 bg-muted rounded-lg">
+                    <MapPin className="w-4 h-4 mr-2 text-accent" strokeWidth={1.5} />
+                    <span className="text-body-sm text-foreground">
+                      {[loc.cities?.name, loc.countries?.name].filter(Boolean).join(', ')}
+                      {loc.continents?.name && <span className="text-muted-foreground ml-1">({loc.continents.name})</span>}
+                    </span>
+                  </div>
+                ))}
+                {(!candidateDetails?.candidate_preferred_locations || candidateDetails.candidate_preferred_locations.length === 0) && (
+                  <p className="text-body-sm text-muted-foreground">No preferred locations specified</p>
+                )}
+              </div>
+            </Card>
+
+            <Card className="p-6 border border-border bg-card">
+              <div className="flex items-center space-x-3 mb-4">
+                <Car className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                <h3 className="text-h4 font-heading text-foreground">Additional Info</h3>
+              </div>
+              <div className="space-y-3">
+                {candidateDetails?.driving_licenses && candidateDetails.driving_licenses.length > 0 && (
+                  <div>
+                    <p className="text-caption text-muted-foreground mb-1">Driving Licenses</p>
+                    <div className="flex flex-wrap gap-2">
+                      {candidateDetails.driving_licenses.map((license: string) => (
+                        <span key={license} className="px-2 py-1 bg-primary/10 text-primary text-caption rounded-md">{license}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {candidateDetails?.travel_willingness !== undefined && (
+                  <div>
+                    <p className="text-caption text-muted-foreground mb-1">Travel Willingness</p>
+                    <div className="flex items-center">
+                      <Plane className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
+                      <span className="text-body-sm text-foreground">Up to {candidateDetails.travel_willingness}%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
           </div>
         </div>
       </div>
