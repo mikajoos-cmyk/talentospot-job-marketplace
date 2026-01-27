@@ -30,11 +30,27 @@ const LandingPage: React.FC = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        const jobsPromise = jobsService.getLatestJobs(6).catch(err => {
+          console.error('Failed to fetch jobs:', err);
+          return [];
+        });
+
+        const companiesPromise = employerService.getTopCompanies(6).catch(err => {
+          console.error('Failed to fetch companies:', err);
+          return [];
+        });
+
+        const candidatesPromise = candidateService.getFeaturedTalent(6).catch(err => {
+          console.error('Failed to fetch candidates:', err);
+          return [];
+        });
+
         const [jobs, companies, candidates] = await Promise.all([
-          jobsService.getFeaturedJobs(6),
-          employerService.getTopCompanies(6),
-          candidateService.getFeaturedTalent(6)
+          jobsPromise,
+          companiesPromise,
+          candidatesPromise
         ]);
+
         setFeaturedJobs(jobs);
         setTopCompanies(companies);
         setPreviewCandidates(candidates);
@@ -171,7 +187,7 @@ const LandingPage: React.FC = () => {
       <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
-            <h3 className="text-h2 font-heading text-foreground mb-4">Latest Opportunities</h3>
+            <h3 className="text-h2 font-heading text-foreground mb-4">Latest Jobs</h3>
             <p className="text-body text-muted-foreground">
               Explore exciting job openings from top companies
             </p>

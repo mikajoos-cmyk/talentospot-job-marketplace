@@ -607,11 +607,12 @@ export const candidateService = {
       .from('candidate_profiles')
       .select(`
         *,
-        profiles!inner(full_name, avatar_url),
+        profiles(full_name, avatar_url),
         candidate_skills(
           skills(name)
         )
       `)
+      .order('created_at', { ascending: false })
       .limit(limit);
 
     if (error) throw error;
