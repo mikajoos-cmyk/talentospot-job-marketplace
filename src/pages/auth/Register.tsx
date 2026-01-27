@@ -128,7 +128,7 @@ const Register: React.FC = () => {
             <div>
               <div className="text-center mb-8">
                 <img
-                  src="/src/assets/logo.png"
+                  src="//logo.png"
                   alt="TalentoSpot"
                   className="h-12 w-auto mx-auto mb-6"
                 />

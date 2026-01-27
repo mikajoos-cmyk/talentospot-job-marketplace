@@ -58,13 +58,13 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
         <div className="h-16 flex items-center justify-between px-4 border-b border-secondary-hover">
           {!collapsed ? (
             <img
-              src="/src/assets/logo.png"
+              src="//logo.png"
               alt="TalentoSpot"
               className="h-8 w-auto"
             />
           ) : (
             <img
-              src="/src/assets/logo.png"
+              src="//logo.png"
               alt="TalentoSpot"
               className="h-6 w-auto mx-auto"
             />
