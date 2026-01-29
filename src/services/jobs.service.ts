@@ -1,5 +1,10 @@
 import { supabase } from '../lib/supabase';
 
+export interface JobLanguageRequirement {
+  name: string;
+  level: string;
+}
+
 export interface Job {
   id?: string;
   employer_id: string;
@@ -15,7 +20,7 @@ export interface Job {
   salary_currency?: string;
   entry_bonus?: number;
   contract_duration?: string;
-  required_languages?: string[];
+  required_languages?: JobLanguageRequirement[] | string[]; // Support both formats for backward compatibility
   home_office_available?: boolean;
   required_qualifications?: string[];
   required_skills?: string[];
@@ -72,11 +77,12 @@ export const jobsService = {
 
   async createJob(job: Job) {
     // Resolve names to IDs for array fields
-    const resolvedJob = { ...job };
+    const resolvedJob: any = { ...job };
 
-    if (job.required_languages) {
-      resolvedJob.required_languages = await this.resolveEntities(job.required_languages, 'languages');
-    }
+    // Handle required_languages separately - don't include in main insert
+    const languagesWithLevels = job.required_languages;
+    delete resolvedJob.required_languages;
+
     if (job.required_qualifications) {
       resolvedJob.required_qualifications = await this.resolveEntities(job.required_qualifications, 'qualifications');
     }
@@ -94,16 +100,64 @@ export const jobsService = {
       .single();
 
     if (error) throw error;
+
+    // Now insert language requirements with levels into junction table
+    if (languagesWithLevels && languagesWithLevels.length > 0 && data.id) {
+      await this.saveJobLanguageRequirements(data.id, languagesWithLevels);
+    }
+
     return data;
+  },
+
+  async saveJobLanguageRequirements(jobId: string, languages: JobLanguageRequirement[] | string[]) {
+    // Delete existing language requirements
+    await supabase.from('job_required_languages').delete().eq('job_id', jobId);
+
+    if (!languages || languages.length === 0) return;
+
+    for (const lang of languages) {
+      const langName = typeof lang === 'string' ? lang : lang.name;
+      const langLevel = typeof lang === 'object' ? lang.level : 'B2';
+
+      // Find or create language
+      let langId;
+      const { data: existing } = await supabase
+        .from('languages')
+        .select('id')
+        .ilike('name', langName)
+        .maybeSingle();
+
+      if (existing) {
+        langId = existing.id;
+      } else {
+        const code = langName.substring(0, 2).toLowerCase() + Math.floor(Math.random() * 10000);
+        const { data: newLang } = await supabase
+          .from('languages')
+          .insert({ name: langName, code })
+          .select('id')
+          .single();
+        langId = newLang?.id;
+      }
+
+      // Insert junction record
+      if (langId) {
+        await supabase.from('job_required_languages').insert({
+          job_id: jobId,
+          language_id: langId,
+          proficiency_level: langLevel
+        });
+      }
+    }
   },
 
   async updateJob(jobId: string, updates: Partial<Job>) {
     // Resolve names to IDs for array fields
-    const resolvedUpdates = { ...updates };
+    const resolvedUpdates: any = { ...updates };
 
-    if (updates.required_languages) {
-      resolvedUpdates.required_languages = await this.resolveEntities(updates.required_languages, 'languages');
-    }
+    // Handle required_languages separately
+    const languagesWithLevels = updates.required_languages;
+    delete resolvedUpdates.required_languages;
+
     if (updates.required_qualifications) {
       resolvedUpdates.required_qualifications = await this.resolveEntities(updates.required_qualifications, 'qualifications');
     }
@@ -119,6 +173,12 @@ export const jobsService = {
       .single();
 
     if (error) throw error;
+
+    // Update language requirements if provided
+    if (languagesWithLevels !== undefined) {
+      await this.saveJobLanguageRequirements(jobId, languagesWithLevels as any);
+    }
+
     return data;
   },
 
@@ -134,11 +194,18 @@ export const jobsService = {
   async mapDbJobToFrontend(data: any) {
     if (!data) return null;
 
+    // Load language requirements from junction table
+    const { data: langReqs } = await supabase
+      .from('job_required_languages')
+      .select('proficiency_level, languages(name)')
+      .eq('job_id', data.id);
+
+    data.required_languages = (langReqs || []).map((lr: any) => ({
+      name: lr.languages?.name || '',
+      level: lr.proficiency_level
+    }));
+
     // Resolve IDs back to names for array fields
-    if (data.required_languages?.length > 0) {
-      const { data: langs } = await supabase.from('languages').select('id, name').in('id', data.required_languages);
-      data.required_languages = data.required_languages.map((id: string) => langs?.find(l => l.id === id)?.name || id);
-    }
     if (data.required_qualifications?.length > 0) {
       const { data: quals } = await supabase.from('qualifications').select('id, name').in('id', data.required_qualifications);
       data.required_qualifications = data.required_qualifications.map((id: string) => quals?.find(q => q.id === id)?.name || id);

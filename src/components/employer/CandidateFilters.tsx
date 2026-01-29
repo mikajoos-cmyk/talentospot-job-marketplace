@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { X, Plus, Map, ChevronDown, Filter } from 'lucide-react';
 import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
 import { locationData, refugeeOriginCountries } from '@/data/locationData';
+import { getLanguageLevelOptions } from '@/utils/language-levels';
 
 interface CandidateFiltersProps {
   filters: CandidateFiltersType;
@@ -20,6 +21,7 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
   const [skillInput, setSkillInput] = useState('');
   const [qualificationInput, setQualificationInput] = useState('');
   const [languageInput, setLanguageInput] = useState('');
+  const [languageLevel, setLanguageLevel] = useState('B2');
   const [licenseInput, setLicenseInput] = useState('');
   const [showMap, setShowMap] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -59,19 +61,25 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
   };
 
   const handleAddLanguage = () => {
-    if (languageInput.trim() && !(filters.languages || []).includes(languageInput.trim())) {
+    const langs = Array.isArray(filters.languages) ? filters.languages : [];
+    const langExists = langs.some(l =>
+      (typeof l === 'string' ? l : l.name).toLowerCase() === languageInput.trim().toLowerCase()
+    );
+
+    if (languageInput.trim() && !langExists) {
       onFiltersChange({
         ...filters,
-        languages: [...(filters.languages || []), languageInput.trim()],
+        languages: [...langs, { name: languageInput.trim(), level: languageLevel }] as any,
       });
       setLanguageInput('');
     }
   };
 
-  const handleRemoveLanguage = (language: string) => {
+  const handleRemoveLanguage = (languageName: string) => {
+    const langs = Array.isArray(filters.languages) ? filters.languages : [];
     onFiltersChange({
       ...filters,
-      languages: (filters.languages || []).filter(l => l !== language),
+      languages: langs.filter(l => (typeof l === 'string' ? l : l.name) !== languageName) as any,
     });
   };
 
@@ -582,7 +590,7 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
               <Label className="text-body-sm font-medium text-foreground mb-2 block">
                 Languages
               </Label>
-              <div className="flex space-x-2 mb-3">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
                 <Input
                   type="text"
                   placeholder="Add language..."
@@ -591,30 +599,44 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
                   onKeyPress={(e) => e.key === 'Enter' && handleAddLanguage()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
+                <Select value={languageLevel} onValueChange={setLanguageLevel}>
+                  <SelectTrigger className="w-[85px] bg-background text-foreground border-border">
+                    <SelectValue placeholder="Lvl" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getLanguageLevelOptions(true).map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Button
                   size="icon"
                   onClick={handleAddLanguage}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal w-full sm:w-10"
                 >
                   <Plus className="w-5 h-5" strokeWidth={2} />
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {(filters.languages || []).map((language) => (
-                  <div
-                    key={language}
-                    className="flex items-center space-x-1 px-3 py-1 bg-info/10 text-info rounded-full text-body-sm"
-                  >
-                    <span>{language}</span>
-                    <button
-                      onClick={() => handleRemoveLanguage(language)}
-                      className="hover:text-info-hover"
-                      aria-label={`Remove ${language}`}
+                {(filters.languages || []).map((lang: any) => {
+                  const langName = typeof lang === 'string' ? lang : lang.name;
+                  const langLevel = typeof lang === 'object' ? lang.level : '';
+                  return (
+                    <div
+                      key={langName}
+                      className="flex items-center space-x-1 px-3 py-1 bg-info/10 text-info rounded-full text-body-sm"
                     >
-                      <X className="w-4 h-4" strokeWidth={2} />
-                    </button>
-                  </div>
-                ))}
+                      <span className="capitalize">{langName}{langLevel ? ` (${langLevel})` : ''}</span>
+                      <button
+                        onClick={() => handleRemoveLanguage(langName)}
+                        className="hover:text-info-hover"
+                        aria-label={`Remove ${langName}`}
+                      >
+                        <X className="w-4 h-4" strokeWidth={2} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

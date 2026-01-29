@@ -73,14 +73,14 @@ const EditJob: React.FC = () => {
   }, [id]);
 
   const handleAddLanguage = () => {
-    if (languageInput.trim() && !languages.some(l => l.name.toLowerCase() === languageInput.trim().toLowerCase())) {
-      setLanguages([...languages, { name: languageInput.trim(), level: languageLevel }]);
+    if (languageInput.trim() && !languages.includes(languageInput.trim())) {
+      setLanguages([...languages, languageInput.trim()]);
       setLanguageInput('');
     }
   };
 
-  const handleRemoveLanguage = (languageName: string) => {
-    setLanguages(languages.filter(l => l.name !== languageName));
+  const handleRemoveLanguage = (language: string) => {
+    setLanguages(languages.filter((l: string) => l !== language));
   };
 
   const handleAddQualification = () => {
@@ -458,7 +458,7 @@ const EditJob: React.FC = () => {
               <Label className="text-body-sm font-medium text-foreground mb-2 block">
                 Required Languages
               </Label>
-              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
+              <div className="flex space-x-2 mb-3">
                 <Input
                   type="text"
                   placeholder="Add language..."
@@ -467,20 +467,10 @@ const EditJob: React.FC = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleAddLanguage()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
-                <Select value={languageLevel} onValueChange={setLanguageLevel}>
-                  <SelectTrigger className="w-full sm:w-[150px] bg-background text-foreground border-border">
-                    <SelectValue placeholder="Level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getLanguageLevelOptions().map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
                 <Button
                   size="icon"
                   onClick={handleAddLanguage}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal w-full sm:w-10"
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                 >
                   <Plus className="w-5 h-5" strokeWidth={2} />
                 </Button>
@@ -488,14 +478,14 @@ const EditJob: React.FC = () => {
               <div className="flex flex-wrap gap-2">
                 {languages.map((language) => (
                   <div
-                    key={language.name}
+                    key={language}
                     className="flex items-center space-x-1 px-3 py-1 bg-info/10 text-info rounded-full text-body-sm"
                   >
-                    <span className="capitalize">{language.name} ({language.level})</span>
+                    <span>{language}</span>
                     <button
-                      onClick={() => handleRemoveLanguage(language.name)}
+                      onClick={() => handleRemoveLanguage(language)}
                       className="hover:text-info-hover"
-                      aria-label={`Remove ${language.name}`}
+                      aria-label={`Remove ${language}`}
                     >
                       <X className="w-4 h-4" strokeWidth={2} />
                     </button>

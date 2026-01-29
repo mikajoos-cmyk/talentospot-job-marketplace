@@ -52,6 +52,7 @@ const Messages: React.FC = () => {
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [blockStatus, setBlockStatus] = useState<{ isBlocked: boolean; blockedByMe: boolean } | null>(null);
 
   const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString);
@@ -193,6 +194,14 @@ const Messages: React.FC = () => {
 
         // Mark all as read when messages are loaded
         await messagesService.markAllAsRead(selectedConversation, user.id);
+
+        // Check block status
+        const conversation = conversations.find(c => c.id === selectedConversation);
+        if (conversation) {
+          const partnerId = getPartnerId(conversation);
+          const blockInfo = await userActionsService.areUsersBlocked(user.id, partnerId);
+          setBlockStatus(blockInfo);
+        }
       } catch (error) {
         console.error('Error loading messages:', error);
       } finally {
@@ -405,15 +414,38 @@ const Messages: React.FC = () => {
         description: "You will no longer receive messages from this user.",
       });
       setBlockDialogOpen(false);
-      // Ideally refresh conversations or navigate away
-      const convData = await messagesService.getConversations(user.id);
-      setConversations(convData || []);
-      setSelectedConversation(null); // Deselect
+      // Update block status
+      setBlockStatus({ isBlocked: true, blockedByMe: true });
     } catch (error) {
       console.error('Error blocking user:', error);
       showToast({
         title: "Error",
         description: "Failed to block user.",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUnblockUser = async () => {
+    const partner = currentPartner;
+    if (!partner || !user.id) return;
+
+    setActionLoading(true);
+    try {
+      await userActionsService.unblockUser(user.id, partner.id);
+      showToast({
+        title: "User Unblocked",
+        description: "You can now send messages to this user again.",
+      });
+      // Update block status
+      setBlockStatus({ isBlocked: false, blockedByMe: false });
+    } catch (error) {
+      console.error('Error unblocking user:', error);
+      showToast({
+        title: "Error",
+        description: "Failed to unblock user.",
         variant: "destructive",
       });
     } finally {
@@ -487,15 +519,22 @@ const Messages: React.FC = () => {
                         className={`w-full p-4 flex items-start space-x-3 transition-all border-b border-border/50 hover:bg-muted/50 ${isSelected ? 'bg-primary/5 border-l-4 border-l-primary' : ''
                           }`}
                       >
-                        <Avatar className="w-12 h-12 flex-shrink-0">
-                          <AvatarImage src={partner?.avatar_url} alt={partner?.display_name} />
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            {partner?.display_name?.charAt(0) || partner?.full_name?.charAt(0) || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                          <Avatar className="w-12 h-12 flex-shrink-0">
+                            <AvatarImage src={partner?.avatar_url} alt={partner?.display_name} />
+                            <AvatarFallback className="bg-primary/10 text-primary">
+                              {partner?.display_name?.charAt(0) || partner?.full_name?.charAt(0) || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          {(conversation.unread_count || 0) > 0 && (
+                            <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 shadow-lg border-2 border-white">
+                              {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
+                            </div>
+                          )}
+                        </div>
                         <div className="flex-1 min-w-0 text-left">
                           <div className="flex items-center justify-between mb-1">
-                            <h4 className="text-sm font-semibold text-foreground truncate">
+                            <h4 className={`text-sm font-semibold truncate ${(conversation.unread_count || 0) > 0 ? 'text-foreground' : 'text-foreground'}`}>
                               {partner?.display_name || partner?.full_name || 'User'}
                               {partner?.contact_person && (
                                 <span className="text-xs font-normal text-muted-foreground ml-2">
@@ -507,7 +546,7 @@ const Messages: React.FC = () => {
                               {formatTimestamp(conversation.last_message_at || conversation.created_at)}
                             </span>
                           </div>
-                          <p className="text-xs truncate text-muted-foreground font-medium">
+                          <p className={`text-xs truncate font-medium ${(conversation.unread_count || 0) > 0 ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>
                             {conversation.last_message_content || 'No messages yet'}
                           </p>
                         </div>
@@ -580,10 +619,17 @@ const Messages: React.FC = () => {
                           <Flag className="w-4 h-4 mr-2" />
                           Report User
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setBlockDialogOpen(true)} className="text-red-500 focus:text-red-500 cursor-pointer">
-                          <Ban className="w-4 h-4 mr-2" />
-                          Block User
-                        </DropdownMenuItem>
+                        {blockStatus?.isBlocked && blockStatus?.blockedByMe ? (
+                          <DropdownMenuItem onClick={handleUnblockUser} className="text-green-600 focus:text-green-600 cursor-pointer">
+                            <Ban className="w-4 h-4 mr-2" />
+                            Unblock User
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => setBlockDialogOpen(true)} className="text-red-500 focus:text-red-500 cursor-pointer">
+                            <Ban className="w-4 h-4 mr-2" />
+                            Block User
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -666,50 +712,74 @@ const Messages: React.FC = () => {
 
                   {/* Message Input */}
                   <div className="p-4 border-t border-border bg-card shrink-0">
-                    <div className="flex items-end space-x-2 bg-muted/30 p-1.5 rounded-2xl border border-transparent focus-within:border-primary/20 transition-all bg-slate-50">
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        onChange={handleFileSelect}
-                        accept="image/*,application/pdf,.doc,.docx"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="rounded-full w-9 h-9 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/5"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                      >
-                        {isUploading ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                        ) : (
-                          <Paperclip className="w-4 h-4" />
+                    {blockStatus?.isBlocked ? (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Ban className="w-4 h-4 text-red-500" />
+                          <p className="text-sm text-red-700 font-medium">
+                            {blockStatus.blockedByMe
+                              ? "You have blocked this user. Unblock to send messages."
+                              : "This user has blocked you. You cannot send messages."}
+                          </p>
+                        </div>
+                        {blockStatus.blockedByMe && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleUnblockUser}
+                            disabled={actionLoading}
+                            className="text-xs"
+                          >
+                            {actionLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : "Unblock"}
+                          </Button>
                         )}
-                      </Button>
-                      <textarea
-                        ref={textareaRef}
-                        rows={1}
-                        placeholder="Type a message..."
-                        value={messageInput}
-                        onChange={(e) => setMessageInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSendMessage();
-                          }
-                        }}
-                        className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-1 resize-none max-h-32 min-h-[36px] overflow-y-auto custom-scrollbar font-medium"
-                      />
-                      <Button
-                        onClick={() => handleSendMessage()}
-                        disabled={!messageInput.trim() && !isUploading}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 w-9 h-9 rounded-full p-0 flex items-center justify-center shrink-0 shadow-sm disabled:opacity-50"
-                        aria-label="Send message"
-                      >
-                        <Send className="w-4 h-4" />
-                      </Button>
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-end space-x-2 bg-muted/30 p-1.5 rounded-2xl border border-transparent focus-within:border-primary/20 transition-all bg-slate-50">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          onChange={handleFileSelect}
+                          accept="image/*,application/pdf,.doc,.docx"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-full w-9 h-9 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/5"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                        >
+                          {isUploading ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                          ) : (
+                            <Paperclip className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <textarea
+                          ref={textareaRef}
+                          rows={1}
+                          placeholder="Type a message..."
+                          value={messageInput}
+                          onChange={(e) => setMessageInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage();
+                            }
+                          }}
+                          className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-1 resize-none max-h-32 min-h-[36px] overflow-y-auto custom-scrollbar font-medium"
+                        />
+                        <Button
+                          onClick={() => handleSendMessage()}
+                          disabled={!messageInput.trim() && !isUploading}
+                          className="bg-primary text-primary-foreground hover:bg-primary/90 w-9 h-9 rounded-full p-0 flex items-center justify-center shrink-0 shadow-sm disabled:opacity-50"
+                          aria-label="Send message"
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </>
               )}

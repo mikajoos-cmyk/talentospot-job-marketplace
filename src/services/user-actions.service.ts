@@ -42,6 +42,21 @@ export const userActionsService = {
         return !!data;
     },
 
+    // Check if users are blocked in either direction (bidirectional)
+    async areUsersBlocked(user1Id: string, user2Id: string) {
+        const { data, error } = await supabase
+            .from('user_blocks')
+            .select('id, blocker_id')
+            .or(`and(blocker_id.eq.${user1Id},blocked_id.eq.${user2Id}),and(blocker_id.eq.${user2Id},blocked_id.eq.${user1Id})`)
+            .maybeSingle();
+
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+        return {
+            isBlocked: !!data,
+            blockedByMe: data?.blocker_id === user1Id
+        };
+    },
+
     async reportUser(reporterId: string, reportedId: string, reason: string) {
         const { data, error } = await supabase
             .from('user_reports')

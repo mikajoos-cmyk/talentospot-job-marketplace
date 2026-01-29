@@ -184,7 +184,9 @@ const JobSearch: React.FC = () => {
         contractDuration: '',
         skills: (profile.skills || []).map((s: any) => s.name),
         qualifications: profile.qualifications || [],
-        languages: (profile.languages || []).map((l: any) => l.name),
+        languages: (profile.languages || []).map((l: any) =>
+          typeof l === 'string' ? l : { name: l.name, level: l.level || l.proficiency_level || 'B2' }
+        ),
         careerLevel: profile.careerLevel || '',
         experienceYears: typeof profile.yearsOfExperience === 'number' ? profile.yearsOfExperience : null,
         drivingLicenses: profile.drivingLicenses || [],
@@ -367,9 +369,9 @@ const JobSearch: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col layout-md:flex-row gap-8">
           {user.role === 'candidate' && (
-            <div className="w-full lg:w-80 flex-shrink-0">
+            <div className="w-full layout-md:w-96 flex-shrink-0">
               <JobFilters
                 filters={filters}
                 onFiltersChange={setFilters}
@@ -402,7 +404,7 @@ const JobSearch: React.FC = () => {
                       </p>
                     </Card>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 layout-sm:grid-cols-2 3xl:grid-cols-3 gap-6">
                       {filteredJobs.map((job) => (
                         <Card key={job.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 flex flex-col">
                           <div className="space-y-4">

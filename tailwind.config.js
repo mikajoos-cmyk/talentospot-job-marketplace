@@ -6,6 +6,11 @@ module.exports = {
   ],
   theme: {
     extend: {
+      screens: {
+        'layout-sm': '940px',
+        'layout-md': '1260px',
+        '3xl': '1771px',
+      },
       colors: {
         border: "hsl(220, 15%, 90%)",
         input: "hsl(220, 15%, 90%)",

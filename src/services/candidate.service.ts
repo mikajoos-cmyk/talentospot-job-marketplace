@@ -427,11 +427,14 @@ export const candidateService = {
 
     // --- Languages (Optimiert) ---
     if (updates.languages && Array.isArray(updates.languages)) {
+      console.log('Processing languages:', updates.languages);
       await supabase.from('candidate_languages').delete().eq('candidate_id', userId);
 
       for (const langItem of updates.languages) {
         const langName = typeof langItem === 'string' ? langItem : langItem.name;
-        const level = typeof langItem === 'object' ? (langItem.level || langItem.proficiency_level) : 'native';
+        const level = typeof langItem === 'object' ? (langItem.proficiency_level || langItem.level) : 'native';
+
+        console.log('Processing language:', { langName, level, langItem });
 
         if (!langName) continue;
 
@@ -461,11 +464,16 @@ export const candidateService = {
         }
 
         if (langId) {
-          await supabase.from('candidate_languages').insert({
+          const insertData = {
             candidate_id: userId,
             language_id: langId,
             proficiency_level: level
-          });
+          };
+          console.log('Inserting candidate_language:', insertData);
+          const { error: langError } = await supabase.from('candidate_languages').insert(insertData);
+          if (langError) {
+            console.error('Error inserting candidate_language:', langError);
+          }
         }
       }
     }

@@ -102,7 +102,9 @@ const CandidateSearch: React.FC = () => {
       jobTypes: job.employment_type ? [job.employment_type] : [],
       careerLevel: job.career_level ? [job.career_level] : [],
       yearsOfExperience: [0, job.experience_years || 30],
-      languages: job.required_languages || [],
+      languages: (job.required_languages || []).map((l: any) =>
+        typeof l === 'string' ? l : { name: l.name, level: l.level || 'B2' }
+      ),
       contractTerm: job.contract_terms || [],
       travelWillingness: [0, 100],
       drivingLicenses: job.driving_licenses || [],
@@ -274,12 +276,12 @@ const CandidateSearch: React.FC = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1">
+        <div className="grid grid-cols-1 layout-md:grid-cols-3 gap-6">
+          <div className="layout-md:col-span-1">
             <CandidateFilters filters={filters} onFiltersChange={setFilters} />
           </div>
 
-          <div className="lg:col-span-3">
+          <div className="layout-md:col-span-2">
             {loading ? (
               <div className="flex items-center justify-center min-h-[400px]">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -299,7 +301,7 @@ const CandidateSearch: React.FC = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 layout-sm:grid-cols-2 3xl:grid-cols-3 gap-6">
                     {candidates.map((candidate) => (
                       <CandidateCard
                         key={candidate.id}

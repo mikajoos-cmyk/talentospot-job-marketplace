@@ -150,7 +150,7 @@ const EditProfile: React.FC = () => {
   const [qualificationInput, setQualificationInput] = useState('');
   const [languages, setLanguages] = useState<{ name: string; level: string }[]>([]);
   const [languageInput, setLanguageInput] = useState('');
-  const [languageLevel, setLanguageLevel] = useState('b2');
+  const [languageLevel, setLanguageLevel] = useState('B2');
   const [drivingLicenses, setDrivingLicenses] = useState<string[]>([]);
 
   const [preferredLocations, setPreferredLocations] = useState<PreferredLocation[]>([]);
@@ -486,7 +486,7 @@ const EditProfile: React.FC = () => {
         experience: experience,
         education: education,
         qualifications: qualifications,
-        languages: languages,
+        languages: languages.map(l => ({ name: l.name, proficiency_level: l.level })),
         preferredLocations: preferredLocations,
 
         // Portfolio Bilder (Speichert nun das ganze Objekt)
@@ -962,12 +962,12 @@ const EditProfile: React.FC = () => {
                     <SelectValue placeholder="Level" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="a1">A1 (Beginner)</SelectItem>
-                    <SelectItem value="a2">A2 (Elementary)</SelectItem>
-                    <SelectItem value="b1">B1 (Intermediate)</SelectItem>
-                    <SelectItem value="b2">B2 (Upper Intermediate)</SelectItem>
-                    <SelectItem value="c1">C1 (Advanced)</SelectItem>
-                    <SelectItem value="c2">C2 (Proficient)</SelectItem>
+                    <SelectItem value="A1">A1 (Beginner)</SelectItem>
+                    <SelectItem value="A2">A2 (Elementary)</SelectItem>
+                    <SelectItem value="B1">B1 (Intermediate)</SelectItem>
+                    <SelectItem value="B2">B2 (Upper Intermediate)</SelectItem>
+                    <SelectItem value="C1">C1 (Advanced)</SelectItem>
+                    <SelectItem value="C2">C2 (Proficient)</SelectItem>
                     <SelectItem value="native">Native</SelectItem>
                   </SelectContent>
                 </Select>

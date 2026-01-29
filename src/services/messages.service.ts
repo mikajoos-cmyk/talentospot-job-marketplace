@@ -7,16 +7,16 @@ export const messagesService = {
       .select(`
         *,
         participant1:profiles!conversations_participant_1_fkey(
-          id, 
-          full_name, 
-          avatar_url, 
+          id,
+          full_name,
+          avatar_url,
           role,
           employer_profiles(company_name, logo_url, contact_person)
         ),
         participant2:profiles!conversations_participant_2_fkey(
-          id, 
-          full_name, 
-          avatar_url, 
+          id,
+          full_name,
+          avatar_url,
           role,
           employer_profiles(company_name, logo_url, contact_person)
         )
@@ -25,7 +25,25 @@ export const messagesService = {
       .order('last_message_at', { ascending: false });
 
     if (error) throw error;
-    return data;
+
+    // Add unread count to each conversation
+    const conversationsWithUnread = await Promise.all(
+      (data || []).map(async (conv) => {
+        const { count } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', conv.id)
+          .eq('is_read', false)
+          .neq('sender_id', userId);
+
+        return {
+          ...conv,
+          unread_count: count || 0
+        };
+      })
+    );
+
+    return conversationsWithUnread;
   },
 
   async getOrCreateConversation(participant1: string, participant2: string) {

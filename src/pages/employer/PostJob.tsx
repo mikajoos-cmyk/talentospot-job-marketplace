@@ -14,6 +14,7 @@ import { locationData } from '../../data/locationData';
 import { X, Plus, ArrowLeft, Loader2, Home } from 'lucide-react';
 import { Switch } from '../../components/ui/switch';
 import { Slider } from '../../components/ui/slider';
+import { getLanguageLevelOptions } from '../../utils/language-levels';
 
 const PostJob: React.FC = () => {
   const navigate = useNavigate();
@@ -42,8 +43,9 @@ const PostJob: React.FC = () => {
     contractTerms: [] as string[],
   });
 
-  const [languages, setLanguages] = useState<string[]>([]);
+  const [languages, setLanguages] = useState<{ name: string; level: string }[]>([]);
   const [languageInput, setLanguageInput] = useState('');
+  const [languageLevel, setLanguageLevel] = useState('B2');
   const [qualifications, setQualifications] = useState<string[]>([]);
   const [qualificationInput, setQualificationInput] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
@@ -56,14 +58,14 @@ const PostJob: React.FC = () => {
     : [];
 
   const handleAddLanguage = () => {
-    if (languageInput.trim() && !languages.includes(languageInput.trim())) {
-      setLanguages([...languages, languageInput.trim()]);
+    if (languageInput.trim() && !languages.some(l => l.name.toLowerCase() === languageInput.trim().toLowerCase())) {
+      setLanguages([...languages, { name: languageInput.trim(), level: languageLevel }]);
       setLanguageInput('');
     }
   };
 
-  const handleRemoveLanguage = (language: string) => {
-    setLanguages(languages.filter(l => l !== language));
+  const handleRemoveLanguage = (languageName: string) => {
+    setLanguages(languages.filter(l => l.name !== languageName));
   };
 
   const handleAddQualification = () => {
@@ -429,7 +431,7 @@ const PostJob: React.FC = () => {
               <Label className="text-body-sm font-medium text-foreground mb-2 block">
                 Required Languages
               </Label>
-              <div className="flex space-x-2 mb-3">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
                 <Input
                   type="text"
                   placeholder="Add language..."
@@ -438,10 +440,20 @@ const PostJob: React.FC = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleAddLanguage()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
+                <Select value={languageLevel} onValueChange={setLanguageLevel}>
+                  <SelectTrigger className="w-full sm:w-[150px] bg-background text-foreground border-border">
+                    <SelectValue placeholder="Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getLanguageLevelOptions().map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Button
                   size="icon"
                   onClick={handleAddLanguage}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal w-full sm:w-10"
                 >
                   <Plus className="w-5 h-5" strokeWidth={2} />
                 </Button>
@@ -449,14 +461,14 @@ const PostJob: React.FC = () => {
               <div className="flex flex-wrap gap-2">
                 {languages.map((language) => (
                   <div
-                    key={language}
+                    key={language.name}
                     className="flex items-center space-x-1 px-3 py-1 bg-info/10 text-info rounded-full text-body-sm"
                   >
-                    <span>{language}</span>
+                    <span className="capitalize">{language.name} ({language.level})</span>
                     <button
-                      onClick={() => handleRemoveLanguage(language)}
+                      onClick={() => handleRemoveLanguage(language.name)}
                       className="hover:text-info-hover"
-                      aria-label={`Remove ${language}`}
+                      aria-label={`Remove ${language.name}`}
                     >
                       <X className="w-4 h-4" strokeWidth={2} />
                     </button>

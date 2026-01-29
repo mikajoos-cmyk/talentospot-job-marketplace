@@ -150,7 +150,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
 
   return (
     <>
-      <Card className="p-6 pb-8 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 h-full min-h-[460px] flex flex-col">
+      <Card className="p-6 pb-8 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 h-full min-h-[550px] flex flex-col">
         <div className="flex flex-col space-y-5 h-full">
           <div
             className="flex items-start space-x-4 cursor-pointer hover:opacity-80 transition-opacity"
@@ -180,8 +180,8 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                 </h4>
                 {matchScore !== undefined && (
                   <div className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold ${matchScore >= 80 ? 'bg-success/20 text-success' :
-                      matchScore >= 50 ? 'bg-warning/20 text-warning' :
-                        'bg-muted text-muted-foreground'
+                    matchScore >= 50 ? 'bg-warning/20 text-warning' :
+                      'bg-muted text-muted-foreground'
                     }`}>
                     {matchScore}% Match
                   </div>
@@ -237,21 +237,66 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
             )}
           </div>
 
+          {candidate.languages && candidate.languages.length > 0 && (
+            <div className="space-y-1">
+              <span className="text-caption text-muted-foreground font-medium">Languages</span>
+              <div className="flex flex-wrap gap-2">
+                {candidate.languages.map((lang: any, index: number) => {
+                  const name = typeof lang === 'string' ? lang : lang.name;
+                  const level = typeof lang === 'string' ? '' : lang.level;
+                  return (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-info/10 text-info text-caption rounded-md border border-info/20"
+                    >
+                      {name}{level ? ` (${level})` : ''}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {candidate.qualifications && candidate.qualifications.length > 0 && (
+            <div className="space-y-1">
+              <span className="text-caption text-muted-foreground font-medium">Qualifications</span>
+              <div className="flex flex-wrap gap-2">
+                {candidate.qualifications.slice(0, 3).map((qual: string, index: number) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 bg-accent/10 text-accent text-caption rounded-md border border-accent/20 truncate max-w-[200px]"
+                    title={qual}
+                  >
+                    {qual}
+                  </span>
+                ))}
+                {candidate.qualifications.length > 3 && (
+                  <span className="px-2 py-1 bg-accent/10 text-accent text-caption rounded-md border border-accent/20">
+                    +{candidate.qualifications.length - 3}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {candidate.skills && candidate.skills.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {candidate.skills.slice(0, 3).map((skillItem: any, index: number) => (
-                <span
-                  key={index}
-                  className="px-2 py-1 bg-muted text-foreground text-caption rounded-md"
-                >
-                  {skillItem.name || 'Skill'}
-                </span>
-              ))}
-              {candidate.skills.length > 3 && (
-                <span className="px-2 py-1 bg-muted text-foreground text-caption rounded-md">
-                  +{candidate.skills.length - 3}
-                </span>
-              )}
+            <div className="space-y-1">
+              <span className="text-caption text-muted-foreground font-medium">Skills</span>
+              <div className="flex flex-wrap gap-2">
+                {candidate.skills.slice(0, 5).map((skillItem: any, index: number) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 bg-muted text-foreground text-caption rounded-md"
+                  >
+                    {skillItem.name || 'Skill'}
+                  </span>
+                ))}
+                {candidate.skills.length > 5 && (
+                  <span className="px-2 py-1 bg-muted text-foreground text-caption rounded-md">
+                    +{candidate.skills.length - 5}
+                  </span>
+                )}
+              </div>
             </div>
           )}
 

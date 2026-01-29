@@ -91,7 +91,7 @@ export interface CandidateFilters {
   jobTypes?: string[];
   careerLevel?: string[];
   yearsOfExperience?: number[];
-  languages?: string[];
+  languages?: { name: string; level: string }[] | string[]; // Support both formats
   contractTerm?: string[];
   travelWillingness?: number[];
   drivingLicenses?: string[];
