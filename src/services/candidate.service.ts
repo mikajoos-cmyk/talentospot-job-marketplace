@@ -57,7 +57,7 @@ export const candidateService = {
     return data;
   },
 
-  async respondToDataAccessRequest(requestId: string, status: 'accepted' | 'rejected') {
+  async respondToDataAccessRequest(requestId: string, status: 'approved' | 'rejected') {
     const { data, error } = await supabase
       .from('data_access_requests')
       .update({ status })
@@ -140,6 +140,8 @@ export const candidateService = {
         level: l.proficiency_level
       })) || [],
       drivingLicenses: data.driving_licenses || [],
+      contractTermPreference: data.contract_type || [],
+      yearsOfExperience: data.years_of_experience || 0,
 
       // Komplexe Objekte/Logik für Frontend-Struktur
       availableFrom: data.available_from,
@@ -283,7 +285,7 @@ export const candidateService = {
 
       // Arrays (Listen)
       job_type: updates.jobTypes ?? updates.job_type,
-      contract_type: updates.contractTypes ?? updates.contract_type,
+      contract_type: updates.contractTermPreference ?? updates.contract_type,
       driving_licenses: updates.drivingLicenses ?? updates.driving_licenses,
       portfolio_images: (updates.portfolioImages || updates.portfolio_images)?.map((p: any) =>
         typeof p === 'object' ? JSON.stringify(p) : p
@@ -533,39 +535,53 @@ export const candidateService = {
   },
 
   async searchCandidates(filters: any = {}) {
+    console.log('Searching candidates with filters:', filters);
+
+    // Build the dynamic select string based on active many-to-many filters
+    const selectString = `
+      id,
+      job_title,
+      city,
+      country,
+      is_refugee,
+      origin_country,
+      salary_expectation_min,
+      salary_expectation_max,
+      desired_entry_bonus,
+      available_from,
+      notice_period,
+      sector,
+      career_level,
+      employment_status,
+      profiles!inner(full_name, avatar_url, email),
+      candidate_preferred_locations(
+        id,
+        cities(name),
+        countries(name),
+        continents(name)
+      ),
+      candidate_skills${filters.skills?.length ? '!inner' : ''}(
+        id,
+        proficiency_percentage,
+        skills(name)
+      ),
+      candidate_languages${filters.languages?.length ? '!inner' : ''}(
+        proficiency_level,
+        languages(name)
+      ),
+      candidate_qualifications${filters.qualifications?.length ? '!inner' : ''}(
+        qualifications(name)
+      ),
+      driving_licenses,
+      work_radius_km
+    `;
+
     let query = supabase
       .from('candidate_profiles')
-      .select(`
-        id,
-        job_title,
-        city,
-        country,
-        is_refugee,
-        origin_country,
-        salary_expectation_min,
-        salary_expectation_max,
-        desired_entry_bonus,
-        available_from,
-        notice_period,
-        sector,
-        career_level,
-        employment_status,
-        profiles!inner(full_name, avatar_url, email),
-        candidate_skills(
-          id,
-          proficiency_percentage,
-          skills(id, name)
-        ),
-        candidate_preferred_locations(
-          id,
-          cities(name),
-          countries(name),
-          continents(name)
-        )
-      `);
+      .select(selectString);
 
     if (filters.job_title) {
-      query = query.ilike('job_title', `%${filters.job_title}%`);
+      query = query.ilike('job_title', `%${filters.job_title.trim()}%`);
     }
 
     if (filters.sector) {
@@ -581,7 +597,95 @@ export const candidateService = {
     }
 
     if (filters.career_level) {
-      query = query.eq('career_level', filters.career_level);
+      if (Array.isArray(filters.career_level) && filters.career_level.length > 0) {
+        query = query.in('career_level', filters.career_level);
+      } else if (typeof filters.career_level === 'string') {
+        query = query.eq('career_level', filters.career_level);
+      }
+    }
+
+    if (filters.job_types && Array.isArray(filters.job_types) && filters.job_types.length > 0) {
+      query = query.overlaps('job_type', filters.job_types);
+    }
+
+    if (filters.contract_term && Array.isArray(filters.contract_term) && filters.contract_term.length > 0) {
+      query = query.overlaps('contract_type', filters.contract_term);
+    }
+
+    if (filters.min_years_experience !== undefined) {
+      query = query.gte('years_of_experience', filters.min_years_experience);
+    }
+
+    if (filters.max_years_experience !== undefined) {
+      query = query.lte('years_of_experience', filters.max_years_experience);
+    }
+
+    if (filters.min_bonus !== undefined) {
+      query = query.gte('desired_entry_bonus', filters.min_bonus);
+    }
+
+    if (filters.max_bonus !== undefined) {
+      query = query.lte('desired_entry_bonus', filters.max_bonus);
+    }
+
+    if (filters.work_radius !== undefined) {
+      query = query.lte('work_radius_km', filters.work_radius);
+    }
+
+    if (filters.min_travel_willingness !== undefined) {
+      query = query.gte('travel_willingness', filters.min_travel_willingness);
+    }
+
+    if (filters.max_travel_willingness !== undefined) {
+      query = query.lte('travel_willingness', filters.max_travel_willingness);
+    }
+
+    // --- Complex Many-To-Many Filtering via ID pre-fetching ---
+    // This avoids the deeply nested relation filtering issues in PostgREST/Supabase
+
+    // 1. Languages
+    if (filters.languages?.length) {
+      const orStr = filters.languages.map((l: string) => `name.ilike.%${l.trim()}%`).join(',');
+      const { data: matchedLangs } = await supabase.from('languages').select('id').or(orStr);
+      const ids = matchedLangs?.map(m => m.id) || [];
+      if (ids.length > 0) {
+        query = query.in('candidate_languages.language_id', ids);
+      } else {
+        // Force no results if filter matches nothing
+        query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+      }
+    }
+
+    // 2. Skills
+    if (filters.skills?.length) {
+      const orStr = filters.skills.map((s: string) => `name.ilike.%${s.trim()}%`).join(',');
+      const { data: matchedSkills } = await supabase.from('skills').select('id').or(orStr);
+      const ids = matchedSkills?.map(m => m.id) || [];
+      if (ids.length > 0) {
+        query = query.in('candidate_skills.skill_id', ids);
+      } else {
+        query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+      }
+    }
+
+    // 3. Qualifications
+    if (filters.qualifications?.length) {
+      const orStr = filters.qualifications.map((q: string) => `name.ilike.%${q.trim()}%`).join(',');
+      const { data: matchedQuals } = await supabase.from('qualifications').select('id').or(orStr);
+      const ids = matchedQuals?.map(m => m.id) || [];
+      if (ids.length > 0) {
+        query = query.in('candidate_qualifications.qualification_id', ids);
+      } else {
+        query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+      }
+    }
+
+    if (filters.origin_country) {
+      query = query.eq('origin_country', filters.origin_country);
+    }
+
+    if (filters.driving_licenses && Array.isArray(filters.driving_licenses) && filters.driving_licenses.length > 0) {
+      query = query.overlaps('driving_licenses', filters.driving_licenses);
     }
 
     if (filters.min_salary) {
@@ -598,8 +702,13 @@ export const candidateService = {
 
     const { data, error } = await query;
 
-    if (error) throw error;
-    return data?.map(item => this.mapDbToProfile(item)) || [];
+    if (error) {
+      console.error('Search error details:', error);
+      throw error;
+    }
+
+    console.log(`Search returned ${data?.length || 0} candidates`);
+    return data?.map((item: any) => this.mapDbToProfile(item)) || [];
   },
 
   async getFeaturedTalent(limit: number = 6) {

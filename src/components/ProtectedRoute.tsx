@@ -4,7 +4,7 @@ import { useUser } from '@/contexts/UserContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'candidate' | 'employer';
+  requiredRole?: 'candidate' | 'employer' | 'admin';
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
@@ -23,7 +23,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
   }
 
   if (requiredRole && user.role !== requiredRole) {
-    const redirectPath = user.role === 'candidate' ? '/candidate/dashboard' : '/employer/dashboard';
+    let redirectPath = '/';
+    if (user.role === 'candidate') redirectPath = '/candidate/dashboard';
+    else if (user.role === 'employer') redirectPath = '/employer/dashboard';
+    else if (user.role === 'admin') redirectPath = '/admin/dashboard';
+
     return <Navigate to={redirectPath} replace />;
   }
 

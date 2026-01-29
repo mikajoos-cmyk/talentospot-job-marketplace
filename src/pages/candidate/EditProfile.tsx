@@ -11,7 +11,9 @@ import { useToast } from '../../contexts/ToastContext';
 import { useUser } from '../../contexts/UserContext';
 import { candidateService } from '../../services/candidate.service';
 import { storageService } from '../../services/storage.service';
-import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, GraduationCap, MapPin, Video, Car, Plane, Loader2 } from 'lucide-react';
+import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, GraduationCap, MapPin, Video, Car, Plane, Loader2, Globe } from 'lucide-react';
+import { Switch } from '../../components/ui/switch';
+import { refugeeOriginCountries } from '../../data/locationData';
 import { locationData } from '../../data/locationData';
 import {
   Dialog,
@@ -87,6 +89,10 @@ const EditProfile: React.FC = () => {
             description: profile.description || '',
             availableFrom: profile.availableFrom || '',
             currency: profile.currency || 'EUR',
+            isRefugee: profile.isRefugee || false,
+            originCountry: profile.originCountry || '',
+            contractTermPreference: profile.contractTermPreference || [],
+            yearsOfExperience: profile.yearsOfExperience || 0,
           });
           setExperience(profile.experience || []);
           setEducation(profile.education || []);
@@ -146,7 +152,6 @@ const EditProfile: React.FC = () => {
   const [languageInput, setLanguageInput] = useState('');
   const [languageLevel, setLanguageLevel] = useState('b2');
   const [drivingLicenses, setDrivingLicenses] = useState<string[]>([]);
-  const [licenseInput, setLicenseInput] = useState('');
 
   const [preferredLocations, setPreferredLocations] = useState<PreferredLocation[]>([]);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
@@ -354,16 +359,7 @@ const EditProfile: React.FC = () => {
     setLanguages(languages.filter(l => l.name !== languageName));
   };
 
-  const handleAddLicense = () => {
-    if (licenseInput.trim() && !drivingLicenses.includes(licenseInput.trim().toUpperCase())) {
-      setDrivingLicenses([...drivingLicenses, licenseInput.trim().toUpperCase()]);
-      setLicenseInput('');
-    }
-  };
 
-  const handleRemoveLicense = (license: string) => {
-    setDrivingLicenses(drivingLicenses.filter(l => l !== license));
-  };
 
   const handleAddLocation = () => {
     if (!newLocation.continent || !newLocation.country || !newLocation.city) {
@@ -498,7 +494,11 @@ const EditProfile: React.FC = () => {
           image: p.image,
           title: p.title,
           description: p.description
-        }))
+        })),
+        isRefugee: formData.isRefugee,
+        originCountry: formData.isRefugee ? formData.originCountry : null,
+        contractTermPreference: formData.contractTermPreference,
+        yearsOfExperience: formData.yearsOfExperience
       };
 
       await candidateService.updateCandidateProfile(user.id, updates);
@@ -690,10 +690,49 @@ const EditProfile: React.FC = () => {
                 <Input
                   id="location"
                   type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   className="bg-background text-foreground border-border"
                 />
+              </div>
+
+              <div className="md:col-span-2 space-y-4 pt-4 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-body font-medium text-foreground">
+                      Refugee / Immigrant Status
+                    </Label>
+                    <p className="text-caption text-muted-foreground">
+                      Indicate if you have a refugee or immigrant background
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.isRefugee}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isRefugee: checked })}
+                  />
+                </div>
+
+                {formData.isRefugee && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                    <Label htmlFor="originCountry" className="text-body-sm font-medium text-foreground mb-2 block">
+                      <Globe className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
+                      Origin Country
+                    </Label>
+                    <Select
+                      value={formData.originCountry}
+                      onValueChange={(value) => setFormData({ ...formData, originCountry: value })}
+                    >
+                      <SelectTrigger className="bg-background text-foreground border-border">
+                        <SelectValue placeholder="Select country of origin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {refugeeOriginCountries.sort().map((country) => (
+                          <SelectItem key={country} value={country}>
+                            {country}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -960,43 +999,60 @@ const EditProfile: React.FC = () => {
             </div>
 
             <div>
-              <Label className="text-body-sm font-medium text-foreground mb-2 block">
+              <Label className="text-body-sm font-medium text-foreground mb-4 block">
                 <Car className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
                 Driving Licenses
               </Label>
-              <div className="flex space-x-2 mb-3">
-                <Input
-                  type="text"
-                  placeholder="Add license class (e.g., B, A, C1)..."
-                  value={licenseInput}
-                  onChange={(e) => setLicenseInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddLicense()}
-                  className="flex-1 bg-background text-foreground border-border"
-                />
-                <Button
-                  size="icon"
-                  onClick={handleAddLicense}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                >
-                  <Plus className="w-5 h-5" strokeWidth={2} />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {drivingLicenses.map((license) => (
-                  <div
-                    key={license}
-                    className="flex items-center space-x-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-body-sm font-medium"
-                  >
-                    <span>Class {license}</span>
-                    <button
-                      onClick={() => handleRemoveLicense(license)}
-                      className="hover:text-primary-hover"
-                      aria-label={`Remove ${license}`}
-                    >
-                      <X className="w-4 h-4" strokeWidth={2} />
-                    </button>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-caption text-muted-foreground mb-2 block">General Licenses</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {['B', 'A', 'BE', 'AM'].map((lic) => (
+                      <button
+                        key={lic}
+                        type="button"
+                        onClick={() => {
+                          const current = drivingLicenses;
+                          const updated = current.includes(lic)
+                            ? current.filter((l: string) => l !== lic)
+                            : [...current, lic];
+                          setDrivingLicenses(updated);
+                        }}
+                        className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${drivingLicenses.includes(lic)
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-foreground hover:bg-muted/80'
+                          }`}
+                      >
+                        {lic}
+                      </button>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                <div>
+                  <Label className="text-caption text-muted-foreground mb-2 block">Truck Licenses</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {['C', 'CE', 'C1', 'C1E'].map((lic) => (
+                      <button
+                        key={lic}
+                        type="button"
+                        onClick={() => {
+                          const current = drivingLicenses;
+                          const updated = current.includes(lic)
+                            ? current.filter((l: string) => l !== lic)
+                            : [...current, lic];
+                          setDrivingLicenses(updated);
+                        }}
+                        className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${drivingLicenses.includes(lic)
+                          ? 'bg-warning text-warning-foreground border border-warning/30'
+                          : 'bg-muted text-foreground hover:bg-muted/80'
+                          }`}
+                      >
+                        {lic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1015,8 +1071,9 @@ const EditProfile: React.FC = () => {
                 {['full-time', 'part-time', 'contract', 'freelance', 'remote'].map((type) => (
                   <button
                     key={type}
+                    type="button"
                     onClick={() => handleJobTypeToggle(type)}
-                    className={`px-4 py-2 rounded-lg text-body-sm font-medium transition-all ${formData.jobTypes.includes(type)
+                    className={`px-4 py-2 rounded-full text-body-sm font-medium transition-all ${formData.jobTypes.includes(type)
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-foreground hover:bg-muted/80'
                       }`}
@@ -1075,6 +1132,54 @@ const EditProfile: React.FC = () => {
                     <SelectItem value="full">Full Remote</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-3 block">
+                Preferred Contract Terms
+              </Label>
+              <div className="flex flex-wrap gap-3">
+                {['permanent', 'temporary', 'contract', 'freelance', 'internship'].map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => {
+                      const current = formData.contractTermPreference || [];
+                      const updated = current.includes(term)
+                        ? current.filter((t: string) => t !== term)
+                        : [...current, term];
+                      setFormData({ ...formData, contractTermPreference: updated });
+                    }}
+                    className={`px-4 py-2 rounded-full text-body-sm font-medium transition-all ${(formData.contractTermPreference || []).includes(term)
+                      ? 'bg-info text-info-foreground'
+                      : 'bg-muted text-foreground hover:bg-muted/80'
+                      }`}
+                  >
+                    {term.charAt(0).toUpperCase() + term.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="yearsOfExperience" className="text-body-sm font-medium text-foreground mb-2 block">
+                  <Briefcase className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
+                  Years of Professional Experience
+                </Label>
+                <Input
+                  id="yearsOfExperience"
+                  type="number"
+                  min="0"
+                  max="50"
+                  value={formData.yearsOfExperience}
+                  onChange={(e) => setFormData({ ...formData, yearsOfExperience: parseInt(e.target.value) || 0 })}
+                  className="bg-background text-foreground border-border"
+                />
+                <p className="text-caption text-muted-foreground mt-2">
+                  Total years of professional work experience
+                </p>
               </div>
             </div>
 

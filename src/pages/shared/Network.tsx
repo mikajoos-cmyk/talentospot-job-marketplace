@@ -10,6 +10,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { followsService } from '@/services/follows.service';
 import { shortlistsService } from '@/services/shortlists.service';
 import { Loader2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const Network: React.FC = () => {
   const navigate = useNavigate();
@@ -147,7 +148,7 @@ const Network: React.FC = () => {
             )}
             <TabsTrigger value="followers" className="data-[state=active]:bg-background data-[state=active]:text-foreground">
               <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              {isCandidate ? `Followers (${followers.length})` : `Followers (${followers.length})`}
+              Followers ({followers.length})
             </TabsTrigger>
           </TabsList>
 
@@ -260,9 +261,12 @@ const Network: React.FC = () => {
                               className="flex items-center space-x-3 cursor-pointer flex-1"
                               onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
                             >
-                              <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-h4 font-heading">
-                                {candidate.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
-                              </div>
+                              <Avatar className="w-12 h-12">
+                                <AvatarImage src={candidate.profiles?.avatar_url} alt={candidate.profiles?.full_name} />
+                                <AvatarFallback className="bg-primary text-primary-foreground text-h4 font-heading">
+                                  {candidate.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
                               <div>
                                 <h3 className="text-h4 font-heading text-foreground hover:text-primary transition-colors">
                                   {candidate.profiles?.full_name || 'Anonymous'}
@@ -308,7 +312,7 @@ const Network: React.FC = () => {
           )}
 
           <TabsContent value="followers" className="mt-6">
-            {!isPremium ? (
+            {isCandidate && !isPremium ? (
               <Card className="p-12 border border-border bg-card text-center">
                 <div className="max-w-2xl mx-auto">
                   <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-warning/10 flex items-center justify-center">
@@ -330,43 +334,106 @@ const Network: React.FC = () => {
                   </Button>
                 </div>
               </Card>
+            ) : followers.length === 0 ? (
+              <Card className="p-12 border border-border bg-card text-center">
+                <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
+                <h3 className="text-h3 font-heading text-foreground mb-2">No Followers Yet</h3>
+                <p className="text-body text-muted-foreground">
+                  {isCandidate
+                    ? "When companies shortlist you, they will appear here."
+                    : "When candidates follow your company, they will appear here."}
+                </p>
+              </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {followers.map((shortlist) => {
-                  const company = shortlist.employer_profiles;
-                  if (!company) return null;
+                {followers.map((item) => {
+                  if (isCandidate) {
+                    // Item is a shortlist entry with employer_profiles
+                    const company = item.employer_profiles;
+                    if (!company) return null;
 
-                  return (
-                    <Card key={shortlist.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
-                      <div className="space-y-4">
-                        <div className="flex items-start space-x-4">
-                          <img
-                            src={company.logo_url || "https://via.placeholder.com/64"}
-                            alt={company.company_name}
-                            className="w-16 h-16 rounded-lg object-cover"
-                            loading="lazy"
-                          />
-                          <div className="flex-1">
-                            <h3 className="text-h4 font-heading text-foreground mb-1">{company.company_name}</h3>
-                            <p className="text-body-sm text-muted-foreground">{company.industry}</p>
+                    return (
+                      <Card key={item.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
+                        <div className="space-y-4">
+                          <div className="flex items-start space-x-4">
+                            <img
+                              src={company.logo_url || "https://via.placeholder.com/64"}
+                              alt={company.company_name}
+                              className="w-16 h-16 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                              loading="lazy"
+                              onClick={() => navigate(`/companies/${company.id}`)}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h3
+                                className="text-h4 font-heading text-foreground mb-1 truncate cursor-pointer hover:text-primary transition-colors"
+                                onClick={() => navigate(`/companies/${company.id}`)}
+                              >
+                                {company.company_name}
+                              </h3>
+                              <p className="text-body-sm text-muted-foreground truncate">{company.industry}</p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center text-caption text-muted-foreground">
-                          <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                          <span>Shortlisted {new Date(shortlist.created_at).toLocaleDateString()}</span>
-                        </div>
+                          <div className="flex items-center text-caption text-muted-foreground">
+                            <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                            <span>Interested since {new Date(item.created_at).toLocaleDateString()}</span>
+                          </div>
 
-                        <Button
-                          onClick={() => navigate(`/companies/${company.id}`)}
-                          className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                        >
-                          <Building2 className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                          View Company
-                        </Button>
-                      </div>
-                    </Card>
-                  );
+                          <Button
+                            onClick={() => navigate(`/companies/${company.id}`)}
+                            className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                          >
+                            <Building2 className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                            View Company
+                          </Button>
+                        </div>
+                      </Card>
+                    );
+                  } else {
+                    // User is Employer, item is a follow entry with candidate_profiles
+                    const candidate = item.candidate_profiles;
+                    if (!candidate) return null;
+
+                    return (
+                      <Card key={item.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
+                        <div className="space-y-4">
+                          <div className="flex items-start space-x-4">
+                            <Avatar
+                              className="w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
+                            >
+                              <AvatarImage src={candidate.profiles?.avatar_url} alt={candidate.profiles?.full_name} />
+                              <AvatarFallback className="bg-primary/10 text-primary text-h4 font-heading">
+                                {candidate.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'C'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <h3
+                                className="text-h4 font-heading text-foreground mb-1 truncate cursor-pointer hover:text-primary transition-colors"
+                                onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
+                              >
+                                {candidate.profiles?.full_name || 'Candidate'}
+                              </h3>
+                              <p className="text-body-sm text-muted-foreground truncate">{candidate.job_title || 'No Title'}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center text-caption text-muted-foreground">
+                            <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                            <span>Following since {new Date(item.followed_at || item.created_at).toLocaleDateString()}</span>
+                          </div>
+
+                          <Button
+                            onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
+                            className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                          >
+                            <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                            View Profile
+                          </Button>
+                        </div>
+                      </Card>
+                    );
+                  }
                 })}
               </div>
             )}

@@ -10,6 +10,9 @@ import { useUser } from '@/contexts/UserContext';
 import { jobsService } from '@/services/jobs.service';
 import { applicationsService } from '@/services/applications.service';
 import { employerService } from '@/services/employer.service';
+import { followsService } from '@/services/follows.service';
+import { analyticsService } from '@/services/analytics.service';
+import ProfileViewsChart from '@/components/candidate/ProfileViewsChart';
 import {
   Dialog,
   DialogContent,
@@ -30,11 +33,13 @@ const EmployerDashboard: React.FC = () => {
     activeJobs: 0,
     profileViews: 0,
     totalApplications: 0,
+    followers: 0,
   });
 
   const [jobs, setJobs] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
+  const [viewStats, setViewStats] = useState<any[]>([]);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -46,10 +51,15 @@ const EmployerDashboard: React.FC = () => {
         const employerProfile = user.profile || await employerService.getEmployerProfile(user.id);
         setProfile(employerProfile);
 
-        const [jobsData, applicationsData] = await Promise.all([
+        const [jobsData, applicationsData, followersCount, statsData, totalViewsCount] = await Promise.all([
           jobsService.getJobsByEmployer(employerProfile.id),
           applicationsService.getApplicationsByEmployer(employerProfile.id),
+          followsService.getFollowersCount(employerProfile.id),
+          analyticsService.getViewStats(user.id),
+          analyticsService.getTotalViews(user.id)
         ]);
+
+        setViewStats(statsData);
 
         setJobs(jobsData || []);
         setApplications(applicationsData || []);
@@ -59,8 +69,9 @@ const EmployerDashboard: React.FC = () => {
         setStats({
           totalCandidates: applicationsData?.length || 0,
           activeJobs: activeJobsCount,
-          profileViews: employerProfile?.profile_views || 0,
+          profileViews: totalViewsCount || 0,
           totalApplications: applicationsData?.length || 0,
+          followers: followersCount || 0,
         });
       } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -154,9 +165,20 @@ const EmployerDashboard: React.FC = () => {
             color="success"
             onClick={() => navigate('/candidates')}
           />
+          <DashboardStatsCard
+            icon={Users}
+            label="Followers"
+            value={stats.followers}
+            color="primary"
+            onClick={() => navigate('/employer/network')}
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="lg:col-span-2">
+            <ProfileViewsChart data={viewStats} />
+          </div>
+
           <Card className="p-6 border border-border bg-card">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-h3 font-heading text-foreground">Recent Applications</h3>
@@ -198,13 +220,13 @@ const EmployerDashboard: React.FC = () => {
                         e.stopPropagation();
                         navigate(`/employer/applications/${app.id}`);
                       }}
-                      variant="outline" 
-                    size="sm" 
-                    className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-                  >
-                    View
-                  </Button>
-                </div>
+                      variant="outline"
+                      size="sm"
+                      className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                    >
+                      View
+                    </Button>
+                  </div>
                 ))
               )}
             </div>
@@ -364,11 +386,10 @@ const EmployerDashboard: React.FC = () => {
                             <h4 className="text-h4 font-heading text-foreground">
                               {app.candidate_profiles?.profiles?.full_name || 'Candidate'}
                             </h4>
-                            <span className={`px-2 py-1 text-caption rounded-md border ${
-                              app.status === 'accepted' ? 'bg-success/10 text-success border-success/30' :
+                            <span className={`px-2 py-1 text-caption rounded-md border ${app.status === 'accepted' ? 'bg-success/10 text-success border-success/30' :
                               app.status === 'rejected' ? 'bg-destructive/10 text-destructive border-destructive/30' :
-                              'bg-muted text-muted-foreground border-border'
-                            }`}>
+                                'bg-muted text-muted-foreground border-border'
+                              }`}>
                               {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                             </span>
                           </div>

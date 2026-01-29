@@ -9,6 +9,8 @@ import { MapPin, DollarSign, Briefcase, Trash2, Building2, Eye, Loader2 } from '
 import { useToast } from '../../contexts/ToastContext';
 import { useUser } from '../../contexts/UserContext';
 import { savedJobsService } from '../../services/saved-jobs.service';
+import { applicationsService } from '../../services/applications.service';
+import { candidateService } from '../../services/candidate.service';
 import {
   Dialog,
   DialogContent,
@@ -26,22 +28,45 @@ const SavedJobs: React.FC = () => {
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
   const [coverLetter, setCoverLetter] = useState('');
+  const [appliedJobIds, setAppliedJobIds] = useState<string[]>([]);
+  const [applying, setApplying] = useState(false);
 
   React.useEffect(() => {
     const fetchSavedJobs = async () => {
       if (!user?.id) return;
       setLoading(true);
       try {
-        const data = await savedJobsService.getSavedJobs(user.id);
-        setSavedJobs(data);
+        const [savedData, appsData] = await Promise.all([
+          savedJobsService.getSavedJobs(user.id),
+          loadAppliedJobIds(user.id)
+        ]);
+        setSavedJobs(savedData);
+        setAppliedJobIds(appsData);
       } catch (error) {
-        console.error('Error fetching saved jobs:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
     fetchSavedJobs();
   }, [user?.id]);
+
+  const loadAppliedJobIds = async (userId: string) => {
+    try {
+      let profileId = user.profile?.id;
+      if (!profileId) {
+        const profile = await candidateService.getCandidateProfile(userId);
+        profileId = profile?.id;
+      }
+      if (profileId) {
+        const apps = await applicationsService.getApplicationsByCandidate(profileId);
+        return apps.map((a: any) => a.job_id);
+      }
+    } catch (e) {
+      console.error('Error loading applied jobs:', e);
+    }
+    return [];
+  };
 
   const handleRemove = (jobTitle: string) => {
     showToast({
@@ -65,7 +90,7 @@ const SavedJobs: React.FC = () => {
     );
   }
 
-  const handleSubmitApplication = () => {
+  const handleSubmitApplication = async () => {
     if (!coverLetter.trim()) {
       showToast({
         title: 'Error',
@@ -75,13 +100,39 @@ const SavedJobs: React.FC = () => {
       return;
     }
 
-    showToast({
-      title: 'Application Submitted',
-      description: `Your application for ${selectedJob?.title} has been submitted`,
-    });
-    setApplyDialogOpen(false);
-    setCoverLetter('');
-    setSelectedJob(null);
+    try {
+      setApplying(true);
+      let profileId = user.profile?.id;
+      if (!profileId) {
+        const profile = await candidateService.getCandidateProfile(user.id);
+        if (!profile) throw new Error('Candidate profile not found');
+        profileId = profile.id;
+      }
+
+      await applicationsService.applyToJob({
+        job_id: selectedJob.id,
+        candidate_id: profileId,
+        employer_id: selectedJob.employer_id,
+        cover_letter: coverLetter,
+      });
+
+      setAppliedJobIds([...appliedJobIds, selectedJob.id]);
+      showToast({
+        title: 'Application Submitted',
+        description: `Your application for ${selectedJob?.title} has been submitted`,
+      });
+      setApplyDialogOpen(false);
+      setCoverLetter('');
+      setSelectedJob(null);
+    } catch (error: any) {
+      showToast({
+        title: 'Error',
+        description: error?.message || 'Failed to submit application',
+        variant: 'destructive',
+      });
+    } finally {
+      setApplying(false);
+    }
   };
 
   return (
@@ -165,20 +216,24 @@ const SavedJobs: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       onClick={() => navigate(`/jobs/${job.job_id}`)}
                       variant="outline"
-                      className="flex-1 bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                      className="flex-1 min-w-[120px] bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
                     >
                       <Eye className="w-4 h-4 mr-2" strokeWidth={1.5} />
                       View Details
                     </Button>
                     <Button
                       onClick={() => handleApply(job.jobs)}
-                      className="flex-1 bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                      className={`flex-1 min-w-[120px] font-normal ${appliedJobIds.includes(job.job_id)
+                        ? 'bg-muted text-muted-foreground'
+                        : 'bg-primary text-primary-foreground hover:bg-primary-hover'
+                        }`}
+                      disabled={appliedJobIds.includes(job.job_id)}
                     >
-                      Apply Now
+                      {appliedJobIds.includes(job.job_id) ? 'Already Applied' : 'Apply Now'}
                     </Button>
                   </div>
                 </div>
@@ -235,10 +290,17 @@ const SavedJobs: React.FC = () => {
             </Button>
             <Button
               onClick={handleSubmitApplication}
-              disabled={!coverLetter.trim()}
+              disabled={!coverLetter.trim() || applying}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
-              Submit Application
+              {applying ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Application'
+              )}
             </Button>
           </div>
         </DialogContent>

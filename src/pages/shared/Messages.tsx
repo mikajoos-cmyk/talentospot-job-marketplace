@@ -1,19 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
-import { Send, Search, ArrowLeft, Loader2, Paperclip, Check, CheckCheck, Plus, X, Download, FileText, MoreVertical, Flag, Ban } from 'lucide-react';
+import { Send, Search, ArrowLeft, Loader2, Paperclip, Check, CheckCheck, X, Download, FileText, MoreVertical, Flag, Ban } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import { useToast } from '../../contexts/ToastContext';
-import { messagesService } from '../../services/messages.service';
-import { storageService } from '../../services/storage.service';
-import { candidateService } from '../../services/candidate.service';
-import { employerService } from '../../services/employer.service';
-
-import { Separator } from '../../components/ui/separator';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,10 +22,15 @@ import {
   DialogFooter,
   DialogDescription,
 } from '../../components/ui/dialog';
+import { messagesService } from '../../services/messages.service';
+import { storageService } from '../../services/storage.service';
 import { userActionsService } from '../../services/user-actions.service';
+import { MessageAttachment } from '@/components/shared/MessageAttachment';
 
 const Messages: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const partnerIdFromUrl = searchParams.get('conversationId');
   const { user } = useUser();
   const { showToast } = useToast();
   const [conversations, setConversations] = useState<any[]>([]);
@@ -44,10 +43,6 @@ const Messages: React.FC = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [previewFile, setPreviewFile] = useState<{ url: string; type: string; name: string } | null>(null);
-  const [isNewChatOpen, setIsNewChatOpen] = useState(false);
-  const [userSearchQuery, setUserSearchQuery] = useState('');
-  const [selectableUsers, setSelectableUsers] = useState<any[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -143,6 +138,47 @@ const Messages: React.FC = () => {
 
     loadConversations();
   }, [user.id]);
+
+  // Handle auto-selection of conversation from URL parameter
+  useEffect(() => {
+    const handleUrlPartner = async () => {
+      if (!partnerIdFromUrl || !user.id || conversations.length === 0) return;
+
+      // Check if we already have this conversation selected
+      const currentConv = conversations.find(c => c.id === selectedConversation);
+      if (currentConv) {
+        const currentPid = currentConv.participant_1 === user.id ? currentConv.participant_2 : currentConv.participant_1;
+        if (currentPid === partnerIdFromUrl) return;
+      }
+
+      try {
+        // Find if conversation already exists
+        const existingConv = conversations.find(conv => {
+          const pid = conv.participant_1 === user.id ? conv.participant_2 : conv.participant_1;
+          return pid === partnerIdFromUrl;
+        });
+
+        if (existingConv) {
+          setSelectedConversation(existingConv.id);
+          setShowMobileChat(true);
+        } else {
+          // If not found in current list, try to create/get it
+          const newConv = await messagesService.getOrCreateConversation(user.id, partnerIdFromUrl);
+          if (newConv) {
+            // Refresh conversations list to include the new one
+            const convData = await messagesService.getConversations(user.id);
+            setConversations(convData || []);
+            setSelectedConversation(newConv.id);
+            setShowMobileChat(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error handling URL partner:', error);
+      }
+    };
+
+    handleUrlPartner();
+  }, [partnerIdFromUrl, user.id, conversations, selectedConversation]);
 
   useEffect(() => {
     const loadMessages = async () => {
@@ -286,17 +322,17 @@ const Messages: React.FC = () => {
     if (!e.target.files || e.target.files.length === 0 || !selectedConversation) return;
 
     const file = e.target.files[0];
-    let fileType = 'document';
-    if (file.type.startsWith('image/')) {
-      fileType = 'image';
-    } else if (file.type === 'application/pdf') {
-      fileType = 'pdf';
-    }
+    const mimeType = file.type; // Use actual MIME type
 
     setIsUploading(true);
     try {
       const publicUrl = await storageService.uploadDocument(user.id, file);
-      await handleSendMessage(fileType === 'image' ? 'Sent an image' : `Sent a file: ${file.name}`, publicUrl, fileType, file.name);
+      await handleSendMessage(
+        mimeType.startsWith('image/') ? 'Sent an image' : `Sent a file: ${file.name}`,
+        publicUrl,
+        mimeType, // Pass MIME type instead of simplified string
+        file.name
+      );
     } catch (error) {
       console.error('Upload Error:', error);
       showToast({
@@ -330,36 +366,7 @@ const Messages: React.FC = () => {
     }
   };
 
-  const handleOpenNewChat = async () => {
-    setIsNewChatOpen(true);
-    setLoadingUsers(true);
-    try {
-      let users = [];
-      if (user.role === 'candidate') {
-        users = await employerService.searchEmployers();
-      } else {
-        users = await candidateService.searchCandidates();
-      }
-      setSelectableUsers(users || []);
-    } catch (error) {
-      console.error('Error loading users:', error);
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
 
-  const handleStartConversation = async (partnerId: string) => {
-    try {
-      const conversation = await messagesService.getOrCreateConversation(user.id, partnerId);
-      const convData = await messagesService.getConversations(user.id);
-      setConversations(convData || []);
-      setSelectedConversation(conversation.id);
-      setIsNewChatOpen(false);
-      setShowMobileChat(true);
-    } catch (error) {
-      console.error('Error starting conversation:', error);
-    }
-  };
 
   const handleReportUser = async () => {
     const partner = currentPartner;
@@ -414,10 +421,6 @@ const Messages: React.FC = () => {
     }
   };
 
-  const filteredUsers = selectableUsers.filter(u => {
-    const name = u.full_name || u.company_name || u.profiles?.full_name || '';
-    return name.toLowerCase().includes(userSearchQuery.toLowerCase());
-  });
 
   const filteredConversations = conversations.filter(conv => {
     const partner = getPartnerInfo(conv);
@@ -439,23 +442,17 @@ const Messages: React.FC = () => {
   }
 
   return (
-    <AppLayout>
-      <div className="h-[calc(100dvh-160px)] md:h-[calc(100vh-200px)]">
-        <Card className="h-full border border-border bg-card overflow-hidden shadow-sm">
+    <AppLayout fullHeight noPadding>
+      <div className="h-full w-full">
+        <Card className="h-full border-none rounded-none bg-card overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-3 h-full">
+
             {/* Conversation List */}
-            <div className={`flex flex-col border-r border-border ${showMobileChat ? 'hidden md:flex' : 'flex'}`}>
-              <div className="p-4 border-b border-border space-y-4">
+            <div className={`flex flex-col border-r border-border min-h-0 ${showMobileChat ? 'hidden md:flex' : 'flex'}`}>
+              <div className="p-4 border-b border-border space-y-4 shrink-0">
+
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold text-foreground">Messages</h2>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="rounded-full w-8 h-8"
-                    onClick={handleOpenNewChat}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
                 </div>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
@@ -473,7 +470,6 @@ const Messages: React.FC = () => {
                 {filteredConversations.length === 0 ? (
                   <div className="p-8 text-center space-y-2">
                     <p className="text-sm text-muted-foreground">No conversations yet</p>
-                    <Button variant="link" size="sm" onClick={handleOpenNewChat}>Start a new one</Button>
                   </div>
                 ) : (
                   filteredConversations.map((conversation) => {
@@ -523,9 +519,10 @@ const Messages: React.FC = () => {
             </div>
 
             {/* Chat Area */}
-            <div className={`md:col-span-2 flex flex-col bg-muted/10 ${showMobileChat ? 'flex' : 'hidden md:flex'}`}>
+            <div className={`md:col-span-2 flex flex-col bg-muted/10 min-h-0 ${showMobileChat ? 'flex' : 'hidden md:flex'}`}>
               {!selectedConversation ? (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-0">
+
                   <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4 text-muted-foreground/30">
                     <Send className="w-8 h-8" />
                   </div>
@@ -533,7 +530,6 @@ const Messages: React.FC = () => {
                   <p className="text-sm text-muted-foreground max-w-xs">
                     Connect with candidates and employers directly on the platform.
                   </p>
-                  <Button className="mt-4 rounded-full" onClick={handleOpenNewChat}>New Message</Button>
                 </div>
               ) : (
                 <>
@@ -593,7 +589,8 @@ const Messages: React.FC = () => {
                   </div>
 
                   {/* Messages Area */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-6 flex flex-col custom-scrollbar bg-slate-50/50">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-6 flex flex-col custom-scrollbar bg-slate-50/50 min-h-0">
+
                     {loadingMessages ? (
                       <div className="flex items-center justify-center h-full">
                         <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -626,45 +623,22 @@ const Messages: React.FC = () => {
                                   >
                                     {message.file_url ? (
                                       <div className="space-y-2">
-                                        {message.file_type === 'image' ? (
-                                          <div
-                                            className="rounded-lg overflow-hidden border border-black/5 cursor-pointer max-w-[280px]"
-                                            onClick={() => setPreviewFile({ url: message.file_url, type: 'image', name: message.file_name || 'Image' })}
-                                          >
-                                            <img
-                                              src={message.file_url}
-                                              alt={message.file_name}
-                                              className="w-full h-auto max-h-48 object-cover"
-                                            />
-                                          </div>
-                                        ) : (
-                                          <div
-                                            className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer border ${isMe ? 'bg-primary-foreground/10 border-primary-foreground/20' : 'bg-muted/50 border-border'
-                                              }`}
-                                            onClick={() => setPreviewFile({ url: message.file_url, type: message.file_type || 'document', name: message.file_name || 'File' })}
-                                          >
-                                            <div className={`p-2 rounded-full ${isMe ? 'bg-white/20' : 'bg-primary/10'}`}>
-                                              <FileText className={`w-4 h-4 ${isMe ? 'text-white' : 'text-primary'}`} />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                              <p className="text-xs font-semibold truncate">{message.file_name || 'Document'}</p>
-                                              <p className="text-[10px] opacity-70">Click to preview</p>
-                                            </div>
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              className={`w-7 h-7 rounded-full shrink-0 ${isMe ? 'hover:bg-white/20 text-white' : 'hover:bg-primary/10 text-primary'}`}
-                                              onClick={(e) => handleDownload(e, message.file_url, message.file_name || 'file')}
-                                            >
-                                              <Download className="w-3.5 h-3.5" />
-                                            </Button>
-                                          </div>
-                                        )}
+                                        {/* Hier wird die neue Komponente genutzt, die sich um Vorschau & Sicherheit kümmert */}
+                                        <div className={isMe ? 'items-end' : 'items-start'}>
+                                          <MessageAttachment
+                                            fileUrl={message.file_url}
+                                            fileType={message.file_type || 'application/octet-stream'}
+                                            fileName={message.file_name}
+                                          />
+                                        </div>
+
+                                        {/* Optionaler Text unter der Datei (wenn es kein Standard-Systemtext ist) */}
                                         {message.content && message.content !== 'Sent an image' && !message.content.startsWith('Sent a file:') && (
                                           <p className="text-sm font-medium leading-relaxed">{message.content}</p>
                                         )}
                                       </div>
                                     ) : (
+                                      /* Reine Textnachricht */
                                       <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">{message.content}</p>
                                     )}
                                     <div className={`flex items-center justify-end space-x-1 mt-1 opacity-70`}>
@@ -807,67 +781,6 @@ const Messages: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* New Chat Dialog */}
-      <Dialog open={isNewChatOpen} onOpenChange={setIsNewChatOpen}>
-        <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-3xl border-none shadow-2xl">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="text-xl font-bold">New Message</DialogTitle>
-          </DialogHeader>
-          <div className="px-6 pb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder={user.role === 'candidate' ? "Search for employers..." : "Search for candidates..."}
-                value={userSearchQuery}
-                onChange={(e) => setUserSearchQuery(e.target.value)}
-                className="pl-10 bg-muted/50 border-none rounded-2xl h-11 focus-visible:ring-1 focus-visible:ring-primary"
-                autoFocus
-              />
-            </div>
-          </div>
-          <Separator />
-          <div className="max-h-[350px] overflow-y-auto px-2 py-2 md:px-4 custom-scrollbar">
-            {loadingUsers ? (
-              <div className="flex items-center justify-center py-10">
-                <Loader2 className="w-8 h-8 animate-spin text-primary/50" />
-              </div>
-            ) : filteredUsers.length === 0 ? (
-              <div className="text-center py-10">
-                <p className="text-sm text-muted-foreground font-medium">No results found</p>
-              </div>
-            ) : (
-              filteredUsers.map((u) => {
-                const name = u.full_name || u.company_name || u.profiles?.full_name || 'Unknown User';
-                const avatar = u.logo_url || u.avatar_url || u.profiles?.avatar_url;
-                const subtext = u.industry || u.job_title || (u.role === 'candidate' ? 'Candidate' : 'Employer');
-
-                return (
-                  <button
-                    key={u.id}
-                    onClick={() => handleStartConversation(u.id)}
-                    className="w-full flex items-center space-x-3 p-3 rounded-2xl hover:bg-muted/50 transition-colors group text-left"
-                  >
-                    <Avatar className="w-11 h-11 border border-border shadow-sm group-hover:scale-105 transition-transform">
-                      <AvatarImage src={avatar} alt={name} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                        {name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">
-                        {name}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground font-medium truncate">
-                        {subtext}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Report Dialog */}
       <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>

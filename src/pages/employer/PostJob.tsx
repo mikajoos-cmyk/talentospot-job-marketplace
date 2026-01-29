@@ -36,12 +36,18 @@ const PostJob: React.FC = () => {
       city: '',
     },
     homeOfficeAvailable: false,
+    careerLevel: '',
+    experienceYears: 0,
+    drivingLicenses: [] as string[],
+    contractTerms: [] as string[],
   });
 
   const [languages, setLanguages] = useState<string[]>([]);
   const [languageInput, setLanguageInput] = useState('');
   const [qualifications, setQualifications] = useState<string[]>([]);
   const [qualificationInput, setQualificationInput] = useState('');
+  const [skills, setSkills] = useState<string[]>([]);
+  const [skillInput, setSkillInput] = useState('');
 
   const continents = Object.keys(locationData);
   const countries = formData.location.continent ? Object.keys(locationData[formData.location.continent] || {}) : [];
@@ -69,6 +75,17 @@ const PostJob: React.FC = () => {
 
   const handleRemoveQualification = (qualification: string) => {
     setQualifications(qualifications.filter(q => q !== qualification));
+  };
+
+  const handleAddSkill = () => {
+    if (skillInput.trim() && !skills.includes(skillInput.trim())) {
+      setSkills([...skills, skillInput.trim()]);
+      setSkillInput('');
+    }
+  };
+
+  const handleRemoveSkill = (skill: string) => {
+    setSkills(skills.filter(s => s !== skill));
   };
 
   const saveJob = async (status: 'draft' | 'active') => {
@@ -108,7 +125,12 @@ const PostJob: React.FC = () => {
         contract_duration: formData.contractDuration,
         required_languages: languages,
         required_qualifications: qualifications,
+        required_skills: skills,
         home_office_available: formData.homeOfficeAvailable,
+        career_level: formData.careerLevel,
+        experience_years: formData.experienceYears,
+        driving_licenses: formData.drivingLicenses,
+        contract_terms: formData.contractTerms,
         status: status,
       });
 
@@ -284,20 +306,58 @@ const PostJob: React.FC = () => {
               </div>
 
               <div>
-                <Label htmlFor="type" className="text-body-sm font-medium text-foreground mb-2 block">
+                <Label className="text-body-sm font-medium text-foreground mb-3 block">
                   Employment Type
                 </Label>
-                <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                  <SelectTrigger className="bg-background text-foreground border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="full_time">Full-time</SelectItem>
-                    <SelectItem value="part_time">Part-time</SelectItem>
-                    <SelectItem value="contract">Contract</SelectItem>
-                    <SelectItem value="freelance">Freelance</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'full_time', label: 'Full Time' },
+                    { id: 'part_time', label: 'Part Time' },
+                    { id: 'contract', label: 'Contract' },
+                    { id: 'freelance', label: 'Freelance' },
+                    { id: 'internship', label: 'Internship' },
+                    { id: 'remote', label: 'Remote' },
+                  ].map((type) => (
+                    <button
+                      key={type.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, type: type.id })}
+                      className={`px-4 py-2 rounded-full text-body-sm font-medium transition-all ${formData.type === type.id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-foreground hover:bg-muted/80'
+                        }`}
+                    >
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-body-sm font-medium text-foreground mb-3 block">
+                  Contract Terms
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {['permanent', 'temporary', 'contract', 'freelance', 'internship'].map((term) => (
+                    <button
+                      key={term}
+                      type="button"
+                      onClick={() => {
+                        const current = formData.contractTerms;
+                        const updated = current.includes(term)
+                          ? current.filter((t: string) => t !== term)
+                          : [...current, term];
+                        setFormData({ ...formData, contractTerms: updated });
+                      }}
+                      className={`px-4 py-2 rounded-full text-body-sm font-medium transition-all ${formData.contractTerms.includes(term)
+                        ? 'bg-info text-info-foreground'
+                        : 'bg-muted text-foreground hover:bg-muted/80'
+                        }`}
+                    >
+                      {term.charAt(0).toUpperCase() + term.slice(1)}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -326,6 +386,40 @@ const PostJob: React.FC = () => {
                   placeholder="e.g., Permanent, 12 months"
                   value={formData.contractDuration}
                   onChange={(e) => setFormData({ ...formData, contractDuration: e.target.value })}
+                  className="bg-background text-foreground border-border"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="careerLevel" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Career Level
+                </Label>
+                <Select value={formData.careerLevel} onValueChange={(value) => setFormData({ ...formData, careerLevel: value })}>
+                  <SelectTrigger className="bg-background text-foreground border-border">
+                    <SelectValue placeholder="Select Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="junior">Junior</SelectItem>
+                    <SelectItem value="mid">Mid-Level</SelectItem>
+                    <SelectItem value="senior">Senior</SelectItem>
+                    <SelectItem value="lead">Lead / Manager</SelectItem>
+                    <SelectItem value="entry">Entry Level</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="experienceYears" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Experience Years Required
+                </Label>
+                <Input
+                  id="experienceYears"
+                  type="number"
+                  placeholder="e.g., 3"
+                  value={formData.experienceYears}
+                  onChange={(e) => setFormData({ ...formData, experienceYears: parseInt(e.target.value) || 0 })}
                   className="bg-background text-foreground border-border"
                 />
               </div>
@@ -411,6 +505,103 @@ const PostJob: React.FC = () => {
               </div>
             </div>
 
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-4 block">
+                Required Driving Licenses
+              </Label>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-caption text-muted-foreground mb-2 block">General Licenses</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {['B', 'A', 'BE', 'AM'].map((lic) => (
+                      <button
+                        key={lic}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.drivingLicenses;
+                          const updated = current.includes(lic)
+                            ? current.filter((l: string) => l !== lic)
+                            : [...current, lic];
+                          setFormData({ ...formData, drivingLicenses: updated });
+                        }}
+                        className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${formData.drivingLicenses.includes(lic)
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-foreground hover:bg-muted/80'
+                          }`}
+                      >
+                        {lic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-caption text-muted-foreground mb-2 block">Truck Licenses</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {['C', 'CE', 'C1', 'C1E'].map((lic) => (
+                      <button
+                        key={lic}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.drivingLicenses;
+                          const updated = current.includes(lic)
+                            ? current.filter((l: string) => l !== lic)
+                            : [...current, lic];
+                          setFormData({ ...formData, drivingLicenses: updated });
+                        }}
+                        className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${formData.drivingLicenses.includes(lic)
+                          ? 'bg-warning text-warning-foreground border border-warning/30'
+                          : 'bg-muted text-foreground hover:bg-muted/80'
+                          }`}
+                      >
+                        {lic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                Required Skills
+              </Label>
+              <div className="flex space-x-2 mb-3">
+                <Input
+                  type="text"
+                  placeholder="Add skill..."
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
+                  className="flex-1 bg-background text-foreground border-border"
+                />
+                <Button
+                  size="icon"
+                  onClick={handleAddSkill}
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                >
+                  <Plus className="w-5 h-5" strokeWidth={2} />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {skills.map((skill) => (
+                  <div
+                    key={skill}
+                    className="flex items-center space-x-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-body-sm"
+                  >
+                    <span>{skill}</span>
+                    <button
+                      onClick={() => handleRemoveSkill(skill)}
+                      className="hover:text-primary-hover"
+                      aria-label={`Remove ${skill}`}
+                    >
+                      <X className="w-4 h-4" strokeWidth={2} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="flex items-center justify-between p-4 bg-muted rounded-lg border border-border">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
@@ -431,8 +622,8 @@ const PostJob: React.FC = () => {
                 onCheckedChange={(checked) => setFormData({ ...formData, homeOfficeAvailable: checked })}
               />
             </div>
-          </div>
-        </Card>
+          </div >
+        </Card >
 
         <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
           <Button
@@ -453,8 +644,8 @@ const PostJob: React.FC = () => {
             Publish Job
           </Button>
         </div>
-      </div>
-    </AppLayout>
+      </div >
+    </AppLayout >
   );
 };
 

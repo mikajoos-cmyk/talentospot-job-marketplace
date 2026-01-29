@@ -20,6 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import JobFilters, { JobFiltersState } from '@/components/candidate/JobFilters';
+import { calculateJobMatchScore } from '@/utils/match-utils';
 
 const JobSearch: React.FC = () => {
   const navigate = useNavigate();
@@ -32,20 +34,75 @@ const JobSearch: React.FC = () => {
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
   const [coverLetter, setCoverLetter] = useState('');
+  const [appliedJobIds, setAppliedJobIds] = useState<string[]>([]);
   const [applying, setApplying] = useState(false);
+
+  const [filters, setFilters] = useState<JobFiltersState>({
+    title: '',
+    continent: '',
+    country: '',
+    city: '',
+    employmentTypes: [],
+    salaryRange: [0, 250000],
+    minEntryBonus: 0,
+    contractDuration: '',
+    skills: [],
+    qualifications: [],
+    languages: [],
+    careerLevel: '',
+    experienceYears: null,
+    drivingLicenses: [],
+    contractTerms: [],
+    homeOffice: false,
+    enablePartialMatch: false,
+    minMatchThreshold: 50,
+  });
 
   useEffect(() => {
     loadJobs();
     if (user.role === 'candidate') {
       loadSavedJobs();
+      loadAppliedJobs();
     }
-  }, [user.role]);
+  }, [user.role, user.id]);
 
-  const loadJobs = async () => {
+  const loadJobs = async (currentFilters: JobFiltersState = filters) => {
     try {
       setLoading(true);
-      const data = await jobsService.searchJobs({});
-      setJobs(data || []);
+      const searchParams: any = {};
+
+      if (!currentFilters.enablePartialMatch) {
+        if (currentFilters.title) searchParams.title = currentFilters.title;
+        if (currentFilters.continent && currentFilters.continent !== 'all') searchParams.continent = currentFilters.continent;
+        if (currentFilters.country && currentFilters.country !== 'all') searchParams.country = currentFilters.country;
+        if (currentFilters.city && currentFilters.city !== 'all') searchParams.city = currentFilters.city;
+        if (currentFilters.employmentTypes.length > 0) searchParams.employment_type = currentFilters.employmentTypes;
+        if (currentFilters.salaryRange[0] > 0) searchParams.min_salary = currentFilters.salaryRange[0];
+        if (currentFilters.salaryRange[1] < 250000) searchParams.max_salary = currentFilters.salaryRange[1];
+        if (currentFilters.minEntryBonus > 0) searchParams.min_entry_bonus = currentFilters.minEntryBonus;
+        if (currentFilters.contractDuration) searchParams.contract_duration = currentFilters.contractDuration;
+        if (currentFilters.skills.length > 0) searchParams.required_skills = currentFilters.skills;
+        if (currentFilters.qualifications.length > 0) searchParams.required_qualifications = currentFilters.qualifications;
+        if (currentFilters.languages.length > 0) searchParams.required_languages = currentFilters.languages;
+        if (currentFilters.careerLevel && currentFilters.careerLevel !== 'all') searchParams.career_level = currentFilters.careerLevel;
+        if (currentFilters.experienceYears !== null) searchParams.experience_years = currentFilters.experienceYears;
+        if (currentFilters.drivingLicenses && currentFilters.drivingLicenses.length > 0) searchParams.driving_licenses = currentFilters.drivingLicenses;
+        if (currentFilters.contractTerms && currentFilters.contractTerms.length > 0) searchParams.contract_terms = currentFilters.contractTerms;
+        if (currentFilters.homeOffice) searchParams.home_office_available = true;
+      }
+
+      const data = await jobsService.searchJobs(searchParams);
+      let results = data || [];
+
+      if (currentFilters.enablePartialMatch) {
+        results = results.map(job => ({
+          ...job,
+          matchScore: calculateJobMatchScore(job, currentFilters)
+        })).filter(job => job.matchScore >= currentFilters.minMatchThreshold)
+          .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+      }
+
+      setJobs(results);
     } catch (error) {
       console.error('Error loading jobs:', error);
       showToast({
@@ -55,6 +112,113 @@ const JobSearch: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadJobs();
+  }, [filters]);
+
+  const handleMatchProfile = async () => {
+    if (user.role !== 'candidate') {
+      showToast({
+        title: 'Not Available',
+        description: 'Profile matching is only available for candidates.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      let profile = user.profile;
+      if (!profile) {
+        profile = await candidateService.getCandidateProfile(user.id);
+      }
+
+      if (!profile) {
+        showToast({
+          title: 'Profile Missing',
+          description: 'Please complete your profile to use this feature.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Map profile fields to filters
+      const matchedFilters: JobFiltersState = {
+        title: profile.title || '',
+        continent: profile.preferredLocations?.[0]?.continent || '',
+        country: profile.preferredLocations?.[0]?.country || '',
+        city: profile.preferredLocations?.[0]?.city || '',
+        employmentTypes: profile.jobTypes || [],
+        salaryRange: [profile.salary?.min || 0, 250000],
+        minEntryBonus: profile.conditions?.entryBonus || 0,
+        contractDuration: '',
+        skills: (profile.skills || []).map((s: any) => s.name),
+        qualifications: profile.qualifications || [],
+        languages: (profile.languages || []).map((l: any) => l.name),
+        careerLevel: profile.careerLevel || '',
+        experienceYears: typeof profile.yearsOfExperience === 'number' ? profile.yearsOfExperience : null,
+        drivingLicenses: profile.drivingLicenses || [],
+        contractTerms: profile.contractTermPreference || [],
+        homeOffice: profile.homeOfficePreference && profile.homeOfficePreference !== 'none' ? true : false,
+        enablePartialMatch: filters.enablePartialMatch,
+        minMatchThreshold: filters.minMatchThreshold,
+      };
+
+      setFilters(matchedFilters);
+      showToast({
+        title: 'Profile Matched',
+        description: 'Filters have been updated based on your profile settings.',
+      });
+    } catch (error) {
+      console.error('Error matching profile:', error);
+      showToast({
+        title: 'Error',
+        description: 'Failed to match profile settings.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      title: '',
+      continent: '',
+      country: '',
+      city: '',
+      employmentTypes: [],
+      salaryRange: [0, 250000],
+      minEntryBonus: 0,
+      contractDuration: '',
+      skills: [],
+      qualifications: [],
+      languages: [],
+      careerLevel: '',
+      experienceYears: null,
+      drivingLicenses: [],
+      contractTerms: [],
+      homeOffice: false,
+      enablePartialMatch: false,
+      minMatchThreshold: 50,
+    });
+    setSearchQuery('');
+  };
+
+  const loadAppliedJobs = async () => {
+    try {
+      if (!user.profile?.id) {
+        const candidateProfile = await candidateService.getCandidateProfile(user.id);
+        if (candidateProfile) {
+          const apps = await applicationsService.getApplicationsByCandidate(candidateProfile.id);
+          setAppliedJobIds(apps.map((a: any) => a.job_id));
+        }
+        return;
+      }
+      const apps = await applicationsService.getApplicationsByCandidate(user.profile.id);
+      setAppliedJobIds(apps.map((a: any) => a.job_id));
+    } catch (error) {
+      console.error('Error loading applied jobs:', error);
     }
   };
 
@@ -139,6 +303,7 @@ const JobSearch: React.FC = () => {
         cover_letter: coverLetter,
       });
 
+      setAppliedJobIds([...appliedJobIds, selectedJob.id]);
       showToast({
         title: 'Application Submitted',
         description: `Your application for ${selectedJob?.title} has been submitted`,
@@ -172,142 +337,161 @@ const JobSearch: React.FC = () => {
           </p>
         </div>
 
-        <div className="relative max-w-2xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
-          <Input
-            type="search"
-            placeholder="Search by job title or company..."
-            value={searchQuery}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-            className="pl-12 h-12 bg-background text-foreground border-border"
-          />
-        </div>
-
-        <div>
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex flex-col lg:flex-row gap-8">
+          {user.role === 'candidate' && (
+            <div className="w-full lg:w-80 flex-shrink-0">
+              <JobFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                onMatchProfile={handleMatchProfile}
+                onReset={handleResetFilters}
+              />
             </div>
-          ) : (
-            <>
-              <p className="text-body text-foreground mb-6">
-                <span className="font-medium">{filteredJobs.length}</span> jobs found
-              </p>
-
-              {filteredJobs.length === 0 ? (
-                <Card className="p-12 border border-border bg-card text-center">
-                  <Briefcase className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-h3 font-heading text-foreground mb-2">No jobs found</h3>
-                  <p className="text-body text-muted-foreground">
-                    Try adjusting your search criteria or check back later for new opportunities.
-                  </p>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredJobs.map((job) => (
-                    <Card key={job.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
-                      <div className="space-y-4">
-                        <div className="flex items-start justify-between">
-                          <div
-                            className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/companies/${job.employer_id}`);
-                            }}
-                          >
-                            {job.employer_profiles?.logo_url ? (
-                              <img
-                                src={job.employer_profiles.logo_url}
-                                alt={job.employer_profiles.company_name}
-                                className="w-full h-full rounded-lg object-cover"
-                              />
-                            ) : (
-                              <Building2 className="w-6 h-6 text-muted-foreground" />
-                            )}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleSaveJob(job.id)}
-                            className={`bg-transparent hover:bg-muted ${savedJobs.includes(job.id) ? 'text-accent' : 'text-muted-foreground'
-                              } hover:text-foreground`}
-                            aria-label={savedJobs.includes(job.id) ? 'Remove from saved' : 'Save job'}
-                          >
-                            <Bookmark className="w-5 h-5" strokeWidth={1.5} fill={savedJobs.includes(job.id) ? 'currentColor' : 'none'} />
-                          </Button>
-                        </div>
-
-                        <div>
-                          <h3 className="text-h4 font-heading text-foreground mb-1">{job.title}</h3>
-                          <p
-                            className="text-body-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/companies/${job.employer_id}`);
-                            }}
-                          >
-                            {job.employer_profiles?.company_name || 'Company'}
-                          </p>
-                        </div>
-
-                        <p className="text-body-sm text-foreground line-clamp-2">
-                          {job.description?.replace(/<[^>]*>/g, '').substring(0, 150) || 'No description available'}
-                        </p>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center text-body-sm text-muted-foreground">
-                            <MapPin className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                            <span>{job.city || job.country || 'Remote'}</span>
-                          </div>
-                          {(job.salary_min || job.salary_max) && (
-                            <div className="flex items-center text-body-sm text-muted-foreground">
-                              <DollarSign className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                              <span>
-                                {job.salary_min && job.salary_max
-                                  ? `${job.salary_currency || 'EUR'} ${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}`
-                                  : job.salary_min
-                                    ? `${job.salary_currency || 'EUR'} ${job.salary_min.toLocaleString()}+`
-                                    : `${job.salary_currency || 'EUR'} ${job.salary_max.toLocaleString()}`}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex items-center text-body-sm text-muted-foreground">
-                            <Briefcase className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                            <span className="capitalize">{job.employment_type?.replace(/_/g, ' ') || 'Full Time'}</span>
-                          </div>
-                        </div>
-
-                        {job.entry_bonus && job.entry_bonus > 0 && (
-                          <div className="bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
-                            <span className="text-body-sm font-medium text-warning">
-                              Entry Bonus: {job.salary_currency || 'EUR'} {job.entry_bonus.toLocaleString()}
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="flex space-x-2">
-                          <Button
-                            onClick={() => navigate(`/jobs/${job.id}`)}
-                            variant="outline"
-                            className="flex-1 bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-                          >
-                            View Details
-                          </Button>
-                          <Button
-                            onClick={() => handleApply(job)}
-                            className="flex-1 bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                            disabled={user.role !== 'candidate'}
-                          >
-                            Apply Now
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </>
           )}
+
+          <div className="flex-1 space-y-8">
+
+
+            <div>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <>
+                  <p className="text-body text-foreground mb-6">
+                    <span className="font-medium">{filteredJobs.length}</span> jobs found
+                  </p>
+
+                  {filteredJobs.length === 0 ? (
+                    <Card className="p-12 border border-border bg-card text-center">
+                      <Briefcase className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                      <h3 className="text-h3 font-heading text-foreground mb-2">No jobs found</h3>
+                      <p className="text-body text-muted-foreground">
+                        Try adjusting your search criteria or check back later for new opportunities.
+                      </p>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {filteredJobs.map((job) => (
+                        <Card key={job.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 flex flex-col">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div
+                                className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/companies/${job.employer_id}`);
+                                }}
+                              >
+                                {job.employer_profiles?.logo_url ? (
+                                  <img
+                                    src={job.employer_profiles.logo_url}
+                                    alt={job.employer_profiles.company_name}
+                                    className="w-full h-full rounded-lg object-cover"
+                                  />
+                                ) : (
+                                  <Building2 className="w-6 h-6 text-muted-foreground" />
+                                )}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleSaveJob(job.id)}
+                                className={`bg-transparent hover:bg-muted ${savedJobs.includes(job.id) ? 'text-accent' : 'text-muted-foreground'
+                                  } hover:text-foreground`}
+                                aria-label={savedJobs.includes(job.id) ? 'Remove from saved' : 'Save job'}
+                              >
+                                <Bookmark className="w-5 h-5" strokeWidth={1.5} fill={savedJobs.includes(job.id) ? 'currentColor' : 'none'} />
+                              </Button>
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <h3 className="text-h4 font-heading text-foreground">{job.title}</h3>
+                                {job.matchScore !== undefined && (
+                                  <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${job.matchScore >= 80 ? 'bg-success/20 text-success' :
+                                    job.matchScore >= 50 ? 'bg-warning/20 text-warning' :
+                                      'bg-muted text-muted-foreground'
+                                    }`}>
+                                    {job.matchScore}% Match
+                                  </div>
+                                )}
+                              </div>
+                              <p
+                                className="text-body-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/companies/${job.employer_id}`);
+                                }}
+                              >
+                                {job.employer_profiles?.company_name || 'Company'}
+                              </p>
+                            </div>
+
+                            <p className="text-body-sm text-foreground line-clamp-2">
+                              {job.description?.replace(/<[^>]*>/g, '').substring(0, 150) || 'No description available'}
+                            </p>
+
+                            <div className="space-y-2">
+                              <div className="flex items-center text-body-sm text-muted-foreground">
+                                <MapPin className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                                <span>{job.city || job.country || 'Remote'}</span>
+                              </div>
+                              {(job.salary_min || job.salary_max) && (
+                                <div className="flex items-center text-body-sm text-muted-foreground">
+                                  <DollarSign className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                                  <span>
+                                    {job.salary_min && job.salary_max
+                                      ? `${job.salary_currency || 'EUR'} ${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}`
+                                      : job.salary_min
+                                        ? `${job.salary_currency || 'EUR'} ${job.salary_min.toLocaleString()}+`
+                                        : `${job.salary_currency || 'EUR'} ${job.salary_max.toLocaleString()}`}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="flex items-center text-body-sm text-muted-foreground">
+                                <Briefcase className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                                <span className="capitalize">{job.employment_type?.replace(/_/g, ' ') || 'Full Time'}</span>
+                              </div>
+                            </div>
+
+                            {job.entry_bonus && job.entry_bonus > 0 && (
+                              <div className="bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
+                                <span className="text-body-sm font-medium text-warning">
+                                  Entry Bonus: {job.salary_currency || 'EUR'} {job.entry_bonus.toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                onClick={() => navigate(`/jobs/${job.id}`)}
+                                variant="outline"
+                                className="flex-1 min-w-[120px] bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                              >
+                                View Details
+                              </Button>
+                              <Button
+                                onClick={() => handleApply(job)}
+                                className={`flex-1 min-w-[120px] font-normal ${appliedJobIds.includes(job.id)
+                                  ? 'bg-muted text-muted-foreground'
+                                  : 'bg-primary text-primary-foreground hover:bg-primary-hover'
+                                  }`}
+                                disabled={user.role !== 'candidate' || appliedJobIds.includes(job.id)}
+                              >
+                                {appliedJobIds.includes(job.id) ? 'Already Applied' : 'Apply Now'}
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

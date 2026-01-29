@@ -11,72 +11,109 @@
     --color-ring: 217 33% 50%;
     --color-background: 0 0% 99%;
     --color-foreground: 220 15% 20%;
-    
+
     --color-primary: 217 33% 50%;
     --color-primary-foreground: 0 0% 100%;
     --color-primary-hover: 217 33% 45%;
     --color-primary-active: 217 33% 40%;
-    
+
     --color-secondary: 220 29% 10%;
     --color-secondary-foreground: 0 0% 98%;
     --color-secondary-hover: 220 29% 14%;
     --color-secondary-active: 220 29% 18%;
-    
+
     --color-tertiary: 0 0% 97%;
     --color-tertiary-foreground: 220 15% 20%;
-    
+
     --color-accent: 28 45% 60%;
     --color-accent-foreground: 0 0% 100%;
-    
+
     --color-success: 217 33% 50%;
     --color-success-foreground: 0 0% 100%;
-    
+
     --color-warning: 40 100% 50%;
     --color-warning-foreground: 0 0% 15%;
-    
+
     --color-error: 0 72% 50%;
     --color-error-foreground: 0 0% 98%;
-    
+
     --color-info: 210 90% 60%;
     --color-info-foreground: 0 0% 100%;
-    
+
     --color-muted: 0 0% 96%;
     --color-muted-foreground: 220 9% 46%;
-    
+
     --color-popover: 0 0% 100%;
     --color-popover-foreground: 220 15% 20%;
-    
+
     --color-card: 0 0% 100%;
     --color-card-foreground: 220 15% 20%;
-    
+
     --font-sans: "Inter", sans-serif;
     --font-heading: "DM Sans", sans-serif;
     --font-mono: "Fira Code", monospace;
-    
+
     --radius-sm: 8px;
     --radius-md: 10px;
     --radius-lg: 12px;
     --radius-full: 9999px;
-    
+
     --shadow-sm: 0 1px 3px hsla(220, 15%, 20%, 0.1);
     --shadow-md: 0 2px 6px hsla(220, 15%, 20%, 0.15);
     --shadow-lg: 0 6px 12px hsla(220, 15%, 20%, 0.18);
     --shadow-xl: 0 8px 24px hsla(220, 15%, 20%, 0.24);
   }
-  
+
   * {
     @apply border-border;
   }
-  
+
   html,
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
   }
-  
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading);
     letter-spacing: -0.025em;
+  }
+
+  /* Custom Scrollbar Styles */
+  /* For Webkit browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(0, 0%, 96%);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(217, 33%, 50%);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(217, 33%, 45%);
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: hsl(217, 33%, 40%);
+  }
+
+  /* For Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(217, 33%, 50%) hsl(0, 0%, 96%);
   }
 }
 
@@ -87,7 +124,7 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
+
   .text-gradient-accent {
     background: linear-gradient(135deg, hsl(28, 45%, 60%) 0%, hsl(28, 45%, 70%) 100%);
     -webkit-background-clip: text;
@@ -102,7 +139,7 @@
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
   }
-  
+
   .prose ol {
     list-style-type: decimal;
     margin-left: 1.5rem;

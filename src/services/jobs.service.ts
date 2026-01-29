@@ -19,8 +19,12 @@ export interface Job {
   home_office_available?: boolean;
   required_qualifications?: string[];
   required_skills?: string[];
+  career_level?: string;
+  experience_years?: number;
   status?: string;
   is_featured?: boolean;
+  driving_licenses?: string[];
+  contract_terms?: string[];
 }
 
 export const jobsService = {
@@ -218,20 +222,91 @@ export const jobsService = {
       query = query.eq('country', filters.country);
     }
 
-    if (filters.employment_type) {
-      query = query.eq('employment_type', filters.employment_type);
+    if (filters.continent) {
+      query = query.eq('continent', filters.continent);
     }
 
-    if (filters.min_salary) {
+    if (filters.employment_type) {
+      if (Array.isArray(filters.employment_type) && filters.employment_type.length > 0) {
+        query = query.in('employment_type', filters.employment_type);
+      } else if (typeof filters.employment_type === 'string') {
+        query = query.eq('employment_type', filters.employment_type);
+      }
+    }
+
+    if (filters.min_salary !== undefined && filters.min_salary !== null) {
       query = query.gte('salary_min', filters.min_salary);
     }
 
-    if (filters.max_salary) {
+    if (filters.max_salary !== undefined && filters.max_salary !== null) {
       query = query.lte('salary_max', filters.max_salary);
+    }
+
+    if (filters.min_entry_bonus !== undefined && filters.min_entry_bonus !== null) {
+      query = query.gte('entry_bonus', filters.min_entry_bonus);
+    }
+
+    // --- ID pre-fetching for many-to-many array filters ---
+    if (filters.required_skills && filters.required_skills.length > 0) {
+      const orStr = filters.required_skills.map((s: string) => `name.ilike.%${s.trim()}%`).join(',');
+      const { data: matchedSkills } = await supabase.from('skills').select('id').or(orStr);
+      const ids = matchedSkills?.map(m => m.id) || [];
+      if (ids.length > 0) {
+        query = query.overlaps('required_skills', ids);
+      } else {
+        query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+      }
+    }
+
+    if (filters.required_qualifications && filters.required_qualifications.length > 0) {
+      const orStr = filters.required_qualifications.map((q: string) => `name.ilike.%${q.trim()}%`).join(',');
+      const { data: matchedQuals } = await supabase.from('qualifications').select('id').or(orStr);
+      const ids = matchedQuals?.map(m => m.id) || [];
+      if (ids.length > 0) {
+        query = query.overlaps('required_qualifications', ids);
+      } else {
+        query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+      }
+    }
+
+    if (filters.required_languages && filters.required_languages.length > 0) {
+      const orStr = filters.required_languages.map((l: string) => `name.ilike.%${l.trim()}%`).join(',');
+      const { data: matchedLangs } = await supabase.from('languages').select('id').or(orStr);
+      const ids = matchedLangs?.map(m => m.id) || [];
+      if (ids.length > 0) {
+        query = query.overlaps('required_languages', ids);
+      } else {
+        query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+      }
+    }
+
+    if (filters.contract_duration) {
+      query = query.ilike('contract_duration', `%${filters.contract_duration}%`);
+    }
+
+    if (filters.career_level) {
+      query = query.eq('career_level', filters.career_level);
+    }
+
+    if (filters.experience_years !== undefined && filters.experience_years !== null) {
+      // Show jobs that require at most X years OR have no experience requirement set (NULL)
+      query = query.or(`experience_years.lte.${filters.experience_years},experience_years.is.null`);
+    }
+
+    if (filters.driving_licenses && Array.isArray(filters.driving_licenses) && filters.driving_licenses.length > 0) {
+      query = query.overlaps('driving_licenses', filters.driving_licenses);
+    }
+
+    if (filters.contract_terms && Array.isArray(filters.contract_terms) && filters.contract_terms.length > 0) {
+      query = query.overlaps('contract_terms', filters.contract_terms);
     }
 
     if (filters.is_featured) {
       query = query.eq('is_featured', true);
+    }
+
+    if (filters.home_office_available) {
+      query = query.eq('home_office_available', true);
     }
 
     query = query.order('posted_at', { ascending: false });

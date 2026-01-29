@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, DollarSign, Calendar, Clock, UserPlus } from 'lucide-react';
+import { MapPin, DollarSign, Calendar, Clock, UserPlus, Globe } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
 import { jobsService } from '@/services/jobs.service';
@@ -19,18 +19,18 @@ import {
 
 interface CandidateCardProps {
   candidate: any;
-  packageTier: 'free' | 'basic' | 'premium';
   accessStatus?: string;
+  matchScore?: number;
 }
 
-const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier, accessStatus }) => {
+const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, matchScore }) => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { showToast } = useToast();
   // Strict privacy: Blurred unless request accepted.
   // Package tier might still be relevant for *initiating* contact, but visibility depends on request.
-  const isBlurred = accessStatus !== 'accepted';
-  const canContact = !isBlurred && packageTier === 'premium'; // Only contact if revealed AND premium? Or revealed implies contact? User said "nach dem akzeptieren sollen alle infos angezeigt werden".
+  const isBlurred = accessStatus !== 'approved';
+  const canContact = accessStatus === 'approved';
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [requestPending, setRequestPending] = useState(accessStatus === 'pending');
@@ -38,7 +38,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier, a
 
   // Sync state with prop
   useEffect(() => {
-    setRequestPending(accessStatus === 'pending' || accessStatus === 'rejected');
+    setRequestPending(accessStatus === 'pending' || accessStatus === 'rejected' || accessStatus === 'approved');
   }, [accessStatus]);
 
   useEffect(() => {
@@ -56,13 +56,9 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier, a
   }, [inviteDialogOpen, user.role, user.profile]);
 
   const handleAction = async () => {
-    const candidateName = candidate.profiles?.full_name || 'candidate';
 
     if (canContact) {
-      showToast({
-        title: 'Contact Initiated',
-        description: `You can now contact ${candidateName}`,
-      });
+      navigate(`/employer/messages?conversationId=${candidate.id}`);
     } else if (isBlurred && accessStatus !== 'pending' && accessStatus !== 'rejected') {
       // Request Personal Data
       try {
@@ -154,8 +150,8 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier, a
 
   return (
     <>
-      <Card className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
-        <div className="flex flex-col space-y-4">
+      <Card className="p-6 pb-8 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 h-full min-h-[460px] flex flex-col">
+        <div className="flex flex-col space-y-5 h-full">
           <div
             className="flex items-start space-x-4 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
@@ -173,13 +169,24 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier, a
             </div>
             <div className="flex-1 min-w-0">
               {isRefugee && (
-                <span className="inline-block px-2 py-1 bg-accent/10 text-accent text-caption rounded-md mb-2">
+                <div className="flex items-center px-2 py-0.5 bg-accent/10 text-accent text-[10px] uppercase tracking-wider font-semibold rounded-md mb-2 w-fit border border-accent/20">
+                  <Globe className="w-2.5 h-2.5 mr-1" strokeWidth={2} />
                   Refugee/Immigrant
-                </span>
+                </div>
               )}
-              <h4 className={`text-h4 font-heading text-foreground truncate hover:text-primary transition-colors ${shouldBlurIdentity ? 'blur-sm' : ''}`}>
-                {displayName}
-              </h4>
+              <div className="flex items-center justify-between gap-2">
+                <h4 className={`text-h4 font-heading text-foreground truncate hover:text-primary transition-colors ${shouldBlurIdentity ? 'blur-sm' : ''}`}>
+                  {displayName}
+                </h4>
+                {matchScore !== undefined && (
+                  <div className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold ${matchScore >= 80 ? 'bg-success/20 text-success' :
+                      matchScore >= 50 ? 'bg-warning/20 text-warning' :
+                        'bg-muted text-muted-foreground'
+                    }`}>
+                    {matchScore}% Match
+                  </div>
+                )}
+              </div>
               <p className="text-body-sm text-muted-foreground">{candidateTitle}</p>
             </div>
           </div>
@@ -248,13 +255,13 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, packageTier, a
             </div>
           )}
 
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 mt-auto pt-2">
             <Button
               onClick={handleAction}
-              disabled={requestPending || accessStatus === 'rejected'}
+              disabled={requestPending && !canContact}
               className="flex-1 bg-primary text-primary-foreground hover:bg-primary-hover font-normal disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {canContact ? 'Contact' : accessStatus === 'rejected' ? 'Request Rejected' : requestPending ? 'Request Pending' : 'Request Data'}
+              {canContact ? 'Message' : accessStatus === 'rejected' ? 'Request Rejected' : requestPending ? 'Request Pending' : 'Request Data'}
             </Button>
             <Button
               onClick={() => setInviteDialogOpen(true)}

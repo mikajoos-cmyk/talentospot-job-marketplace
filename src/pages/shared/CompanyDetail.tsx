@@ -10,6 +10,7 @@ import ReviewCard from '../../components/shared/ReviewCard';
 // import ReviewModal from '../../components/shared/ReviewModal';
 import { useUser } from '../../contexts/UserContext';
 import { followsService } from '../../services/follows.service';
+import { analyticsService } from '../../services/analytics.service';
 
 const CompanyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +39,13 @@ const CompanyDetail: React.FC = () => {
         if (user?.profile?.id && user.role === 'candidate') {
           const following = await followsService.isFollowing(user.profile.id, id);
           setIsFollowing(following);
+
+          // Record profile view
+          try {
+            await analyticsService.recordView(user.id, id, 'employer');
+          } catch (analyticsError) {
+            console.error('Failed to record profile view:', analyticsError);
+          }
         }
 
       } catch (error) {

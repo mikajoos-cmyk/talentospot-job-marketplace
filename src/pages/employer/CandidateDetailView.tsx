@@ -8,13 +8,14 @@ import { Progress } from '../../components/ui/progress';
 import {
   MapPin, Mail, Phone, Briefcase, GraduationCap, Award, Video,
   Image as ImageIcon, DollarSign, Plane, ArrowLeft,
-  MessageSquare, UserPlus, Globe, Car, Star, Heart
+  MessageSquare, UserPlus, Globe, Car, Star, Heart, X
 } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import { useToast } from '../../contexts/ToastContext';
 import { candidateService } from '../../services/candidate.service';
 import { jobsService } from '../../services/jobs.service';
 import { shortlistsService } from '../../services/shortlists.service';
+import { analyticsService } from '../../services/analytics.service';
 import ReviewCard from '../../components/shared/ReviewCard';
 import ReviewModal from '../../components/shared/ReviewModal';
 import { Loader2 } from 'lucide-react';
@@ -39,6 +40,8 @@ const CandidateDetailView: React.FC = () => {
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [accessStatus, setAccessStatus] = useState<string>('none');
   const [isShortlisted, setIsShortlisted] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -59,6 +62,13 @@ const CandidateDetailView: React.FC = () => {
           // Check shortlist status
           const shortlisted = await shortlistsService.isInShortlist(user.profile.id, id);
           setIsShortlisted(shortlisted);
+
+          // Record profile view
+          try {
+            await analyticsService.recordView(user.id, id, 'candidate');
+          } catch (analyticsError) {
+            console.error('Failed to record profile view:', analyticsError);
+          }
         }
       } catch (error) {
         console.error('Error fetching candidate detail:', error);
@@ -71,8 +81,8 @@ const CandidateDetailView: React.FC = () => {
 
   // is_refugee etc. from DB
   // Strict privacy: Blurred unless request accepted.
-  const isBlurred = accessStatus !== 'accepted';
-  const canContact = !isBlurred && (user as any).packageTier === 'premium'; // Assuming premium unlocks contact AFTER reveal.
+  const isBlurred = accessStatus !== 'approved';
+  const canContact = accessStatus === 'approved';
 
   // Reviews placeholder
   const candidateReviews: any[] = [];
@@ -207,10 +217,13 @@ const CandidateDetailView: React.FC = () => {
 
             <div className="flex-1">
               {candidate.isRefugee && (
-                <span className="inline-block px-3 py-1 bg-accent/10 text-accent text-caption rounded-md mb-2">
-                  Refugee/Immigrant
-                  {candidate.originCountry && ` from ${candidate.originCountry}`}
-                </span>
+                <div className="flex items-center px-3 py-1 bg-accent/10 text-accent text-caption rounded-lg mb-4 w-fit border border-accent/20">
+                  <Globe className="w-3 h-3 mr-2" strokeWidth={2} />
+                  <span className="font-medium">
+                    Refugee/Immigrant
+                    {candidate.originCountry && ` from ${candidate.originCountry}`}
+                  </span>
+                </div>
               )}
               <h2
                 className="text-h2 font-heading text-foreground mb-2 cursor-pointer hover:text-primary transition-colors"
@@ -223,7 +236,7 @@ const CandidateDetailView: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
                 <div className="flex items-center text-body-sm text-foreground">
                   <Mail className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{isBlurred ? '••••••@••••.com' : 'sarah.j@example.com'}</span>
+                  <span>{isBlurred ? '••••••@••••.com' : (candidate.email || 'N/A')}</span>
                 </div>
                 <div className="flex items-center text-body-sm text-foreground">
                   <Phone className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
@@ -236,6 +249,10 @@ const CandidateDetailView: React.FC = () => {
                 <div className="flex items-center text-body-sm text-foreground">
                   <Globe className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
                   <span>{candidate.nationality || 'Not specified'}</span>
+                </div>
+                <div className="flex items-center text-body-sm text-foreground">
+                  <Briefcase className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
+                  <span>{candidate.yearsOfExperience || 0} years experience</span>
                 </div>
               </div>
 
@@ -286,10 +303,10 @@ const CandidateDetailView: React.FC = () => {
                 ) : (
                   <Button
                     onClick={handleRequestData}
-                    disabled={accessStatus === 'pending' || accessStatus === 'rejected'}
+                    disabled={accessStatus === 'pending' || accessStatus === 'rejected' || accessStatus === 'approved'}
                     className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                   >
-                    {accessStatus === 'pending' ? 'Request Pending' : accessStatus === 'rejected' ? 'Request Rejected' : 'Request Personal Data'}
+                    {accessStatus === 'pending' ? 'Request Pending' : accessStatus === 'rejected' ? 'Request Rejected' : accessStatus === 'approved' ? 'Request Approved' : 'Request Personal Data'}
                   </Button>
                 )}
               </div>
@@ -350,6 +367,21 @@ const CandidateDetailView: React.FC = () => {
                 <p className="text-h4 font-heading text-foreground">{candidate.conditions.noticePeriod}</p>
               </div>
             )}
+
+            <div className="p-4 bg-muted rounded-lg md:col-span-2">
+              <p className="text-caption text-muted-foreground mb-1">Preferred Contract Terms</p>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {candidate.contractTermPreference && candidate.contractTermPreference.length > 0 ? (
+                  candidate.contractTermPreference.map((term: string) => (
+                    <span key={term} className="px-2 py-1 bg-info/10 text-info text-caption rounded-md border border-info/20 capitalize">
+                      {term}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-body-sm text-foreground">Not specified</span>
+                )}
+              </div>
+            </div>
           </div>
         </Card>
 
@@ -384,17 +416,22 @@ const CandidateDetailView: React.FC = () => {
               {candidate.portfolioImages.map((item: any, index: number) => (
                 <div
                   key={index}
-                  className="aspect-square rounded-lg overflow-hidden bg-muted hover:shadow-lg transition-all duration-normal hover:-translate-y-1 cursor-pointer"
+                  className="group relative aspect-square rounded-lg overflow-hidden bg-muted hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                  onClick={() => {
+                    setSelectedProject(item);
+                    setIsProjectModalOpen(true);
+                  }}
                 >
                   <img
                     src={item.image || item}
                     alt={item.title || `Portfolio ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
                   />
-                  {item.title && (
-                    <div className="p-2 bg-white/90 absolute bottom-0 left-0 right-0">
-                      <p className="font-medium text-xs truncate">{item.title}</p>
+                  {(item.title || item.description) && (
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 text-left">
+                      <p className="text-white font-medium truncate">{item.title}</p>
+                      <p className="text-white/70 text-caption truncate">{item.description}</p>
                     </div>
                   )}
                 </div>
@@ -686,6 +723,42 @@ const CandidateDetailView: React.FC = () => {
         targetRole="candidate"
         onSubmit={handleSubmitReview}
       />
+
+      <Dialog open={isProjectModalOpen} onOpenChange={setIsProjectModalOpen}>
+        <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden bg-card border-border">
+          {selectedProject && (
+            <div className="flex flex-col">
+              <div className="relative aspect-video w-full overflow-hidden bg-muted">
+                <img
+                  src={selectedProject.image || selectedProject}
+                  alt={selectedProject.title}
+                  className="w-full h-full object-cover"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsProjectModalOpen(false)}
+                  className="absolute top-2 right-2 rounded-full bg-black/20 hover:bg-black/40 text-white border-none"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+              <div className="p-6 text-left">
+                <DialogHeader className="mb-4">
+                  <DialogTitle className="text-h3 font-heading text-foreground">
+                    {selectedProject.title || 'Untitled Project'}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
+                    {selectedProject.description || 'No description provided for this project.'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };

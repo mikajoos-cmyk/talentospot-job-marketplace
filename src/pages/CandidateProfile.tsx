@@ -130,10 +130,13 @@ const CandidateProfile: React.FC = () => {
 
             <div className="flex-1">
               {candidateData.isRefugee && (
-                <span className="inline-block px-3 py-1 bg-accent/10 text-accent text-caption rounded-md mb-2">
-                  Refugee/Immigrant
-                  {candidateData.originCountry && ` from ${candidateData.originCountry}`}
-                </span>
+                <div className="flex items-center px-3 py-1 bg-accent/10 text-accent text-caption rounded-lg mb-4 w-fit border border-accent/20">
+                  <Globe className="w-3 h-3 mr-2" strokeWidth={2} />
+                  <span className="font-medium">
+                    Refugee/Immigrant
+                    {candidateData.originCountry && ` from ${candidateData.originCountry}`}
+                  </span>
+                </div>
               )}
               <h2 className="text-h2 font-heading text-foreground mb-2">{user.name}</h2>
               <p className="text-body text-muted-foreground mb-4">
@@ -156,6 +159,10 @@ const CandidateProfile: React.FC = () => {
                 <div className="flex items-center text-body-sm text-foreground">
                   <Globe className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
                   <span>{candidateData.nationality || 'Not specified'}</span>
+                </div>
+                <div className="flex items-center text-body-sm text-foreground">
+                  <Briefcase className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
+                  <span>{candidateData.yearsOfExperience || 0} years of professional experience</span>
                 </div>
               </div>
 
@@ -248,6 +255,21 @@ const CandidateProfile: React.FC = () => {
                     ? `Up to ${candidateData.travelWillingness}%`
                     : 'Not specified'}
                 </span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-muted rounded-lg md:col-span-2">
+              <p className="text-caption text-muted-foreground mb-1">Preferred Contract Terms</p>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {candidateData.contractTermPreference && candidateData.contractTermPreference.length > 0 ? (
+                  candidateData.contractTermPreference.map((term: string) => (
+                    <span key={term} className="px-2 py-1 bg-info/10 text-info text-caption rounded-md border border-info/20 capitalize">
+                      {term}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-body-sm text-foreground">Not specified</span>
+                )}
               </div>
             </div>
           </div>

@@ -6,6 +6,7 @@ import { useUser } from '@/contexts/UserContext';
 import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
 import { candidateService } from '@/services/candidate.service';
 import { Loader2 } from 'lucide-react';
+import { calculateCandidateMatchScore } from '@/utils/match-utils';
 
 const CandidateSearch: React.FC = () => {
   const { user } = useUser();
@@ -22,9 +23,9 @@ const CandidateSearch: React.FC = () => {
       }
     }
     return {
-      salary: [30000, 120000],
-      bonus: [0, 50000],
-      workRadius: 50,
+      salary: [20000, 200000],
+      bonus: [0, 100000],
+      workRadius: 200,
       isRefugee: false,
       originCountry: '',
       skills: [],
@@ -34,6 +35,16 @@ const CandidateSearch: React.FC = () => {
         country: '',
         cities: [],
       },
+      jobTitle: '',
+      jobTypes: [],
+      careerLevel: [],
+      yearsOfExperience: [0, 30],
+      languages: [],
+      contractTerm: [],
+      travelWillingness: [0, 100],
+      drivingLicenses: [],
+      enablePartialMatch: false,
+      minMatchThreshold: 50,
     };
   });
 
@@ -45,30 +56,86 @@ const CandidateSearch: React.FC = () => {
     const loadCandidates = async () => {
       try {
         setLoading(true);
-        const searchFilters: any = {
-          min_salary: filters.salary[0],
-          max_salary: filters.salary[1],
-          work_radius: filters.workRadius,
-        };
+        const searchFilters: any = {};
 
-        if (filters.isRefugee) {
-          searchFilters.is_refugee = true;
-        }
+        if (!filters.enablePartialMatch) {
+          if (filters.salary[0] > 20000) searchFilters.min_salary = filters.salary[0];
+          if (filters.salary[1] < 200000) searchFilters.max_salary = filters.salary[1];
+          if (filters.bonus[0] > 0) searchFilters.min_bonus = filters.bonus[0];
+          if (filters.bonus[1] < 100000) searchFilters.max_bonus = filters.bonus[1];
+          if (filters.workRadius < 200) searchFilters.work_radius = filters.workRadius;
 
-        if (filters.originCountry) {
-          searchFilters.origin_country = filters.originCountry;
-        }
+          if (filters.jobTitle) {
+            searchFilters.job_title = filters.jobTitle;
+          }
 
-        if (filters.location.continent) {
-          searchFilters.continent = filters.location.continent;
-        }
+          if (filters.jobTypes && filters.jobTypes.length > 0) {
+            searchFilters.job_types = filters.jobTypes;
+          }
 
-        if (filters.location.country) {
-          searchFilters.country = filters.location.country;
+          if (filters.careerLevel && filters.careerLevel.length > 0) {
+            searchFilters.career_level = filters.careerLevel;
+          }
+
+          if (filters.yearsOfExperience) {
+            if (filters.yearsOfExperience[0] > 0) searchFilters.min_years_experience = filters.yearsOfExperience[0];
+            if (filters.yearsOfExperience[1] < 30) searchFilters.max_years_experience = filters.yearsOfExperience[1];
+          }
+
+          if (filters.contractTerm && filters.contractTerm.length > 0) {
+            searchFilters.contract_term = filters.contractTerm;
+          }
+
+          if (filters.travelWillingness) {
+            if (filters.travelWillingness[0] > 0) searchFilters.min_travel_willingness = filters.travelWillingness[0];
+            if (filters.travelWillingness[1] < 100) searchFilters.max_travel_willingness = filters.travelWillingness[1];
+          }
+
+          if (filters.languages && filters.languages.length > 0) {
+            searchFilters.languages = filters.languages;
+          }
+
+          if (filters.skills && filters.skills.length > 0) {
+            searchFilters.skills = filters.skills;
+          }
+
+          if (filters.drivingLicenses && filters.drivingLicenses.length > 0) {
+            searchFilters.driving_licenses = filters.drivingLicenses;
+          }
+
+          if (filters.isRefugee) {
+            searchFilters.is_refugee = true;
+          }
+
+          if (filters.originCountry) {
+            searchFilters.origin_country = filters.originCountry;
+          }
+
+          if (filters.qualifications && filters.qualifications.length > 0) {
+            searchFilters.qualifications = filters.qualifications;
+          }
+
+          if (filters.location.continent) {
+            searchFilters.continent = filters.location.continent;
+          }
+
+          if (filters.location.country) {
+            searchFilters.country = filters.location.country;
+          }
         }
 
         const data = await candidateService.searchCandidates(searchFilters);
-        setCandidates(data || []);
+        let results = data || [];
+
+        if (filters.enablePartialMatch) {
+          results = results.map(candidate => ({
+            ...candidate,
+            matchScore: calculateCandidateMatchScore(candidate, filters)
+          })).filter(candidate => candidate.matchScore >= (filters.minMatchThreshold || 50))
+            .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+        }
+
+        setCandidates(results);
 
         if (user?.role === 'employer' && user.profile?.id) {
           // Fetch access requests for this employer
@@ -88,7 +155,7 @@ const CandidateSearch: React.FC = () => {
     };
 
     loadCandidates();
-  }, [filters.salary, filters.workRadius, filters.isRefugee, filters.originCountry, filters.location]);
+  }, [filters]);
 
   return (
     <AppLayout>
@@ -130,10 +197,8 @@ const CandidateSearch: React.FC = () => {
                       <CandidateCard
                         key={candidate.id}
                         candidate={candidate}
-                        packageTier={user.subscription?.packages?.tier || 'free'}
-                        test-accessStatus={accessRequests[candidate.id]} // Using a temp prop name to avoid lint error if I haven't updated Child yet? No, I should update child first? Typescript will complain.
-                        // Actually, I can just pass it as 'accessStatus' assuming I update the child concurrently or handle the error.
                         accessStatus={accessRequests[candidate.id]}
+                        matchScore={candidate.matchScore}
                       />
                     ))}
                   </div>

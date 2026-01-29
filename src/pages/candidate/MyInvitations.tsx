@@ -36,12 +36,16 @@ const MyInvitations: React.FC = () => {
       if (!user?.id) return;
       setLoading(true);
       try {
-        const [invData, reqData] = await Promise.all([
+        const [invData, reqData, appsData] = await Promise.all([
           invitationsService.getInvitationsByCandidate(user.id),
-          candidateService.getDataAccessRequests(user.id)
+          candidateService.getDataAccessRequests(user.id),
+          applicationsService.getApplicationsByCandidate(user.id)
         ]);
 
-        setInvitations(invData.filter((inv: any) => inv.status === 'pending'));
+        const appliedJobIds = new Set(appsData?.map((app: any) => app.job_id) || []);
+        setInvitations(invData.filter((inv: any) =>
+          inv.status === 'pending' && !appliedJobIds.has(inv.job_id)
+        ));
         setDataRequests(reqData || []);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -75,13 +79,13 @@ const MyInvitations: React.FC = () => {
     }
   };
 
-  const handleRequestResponse = async (requestId: string, status: 'accepted' | 'rejected') => {
+  const handleRequestResponse = async (requestId: string, status: 'approved' | 'rejected') => {
     try {
       await candidateService.respondToDataAccessRequest(requestId, status);
       setDataRequests(dataRequests.filter(r => r.id !== requestId));
       showToast({
-        title: status === 'accepted' ? 'Request Accepted' : 'Request Declined',
-        description: status === 'accepted' ? 'Employer can now view your full profile.' : 'Request declined.',
+        title: status === 'approved' ? 'Request Approved' : 'Request Declined',
+        description: status === 'approved' ? 'Employer can now view your full profile.' : 'Request declined.',
       });
     } catch (e) {
       console.error(e);
@@ -270,12 +274,12 @@ const MyInvitations: React.FC = () => {
                         <div>
                           <h3 className="text-h4 font-heading text-foreground mb-1">{req.employer?.company_name}</h3>
                           <p className="text-body-sm text-muted-foreground mb-2">wants to view your full profile (contact info, name, photos).</p>
-                          <p className="text-caption text-muted-foreground">Requested on {new Date(req.created_at).toLocaleDateString()}</p>
+                          <p className="text-caption text-muted-foreground">Requested on {req.created_at ? new Date(req.created_at).toLocaleDateString() : 'Date N/A'}</p>
                         </div>
                       </div>
                       <div className="flex flex-col sm:flex-row gap-2">
                         <Button
-                          onClick={() => handleRequestResponse(req.id, 'accepted')}
+                          onClick={() => handleRequestResponse(req.id, 'approved')}
                           className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                         >
                           <Check className="w-4 h-4 mr-2" strokeWidth={2} />

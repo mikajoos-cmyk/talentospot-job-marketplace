@@ -45,6 +45,8 @@ export interface CandidateProfile {
   travelWillingness?: number;
   languages?: Array<{ name: string; level: string }>;
   drivingLicenses?: string[];
+  contractTermPreference?: string[];
+  yearsOfExperience?: number;
   conditions: CandidateConditions;
   preferredLocations: Array<{
     continent: string;
@@ -85,4 +87,14 @@ export interface CandidateFilters {
     country: string;
     cities: string[];
   };
+  jobTitle?: string;
+  jobTypes?: string[];
+  careerLevel?: string[];
+  yearsOfExperience?: number[];
+  languages?: string[];
+  contractTerm?: string[];
+  travelWillingness?: number[];
+  drivingLicenses?: string[];
+  enablePartialMatch?: boolean;
+  minMatchThreshold?: number;
 }

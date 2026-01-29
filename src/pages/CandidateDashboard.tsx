@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import DashboardStatsCard from '@/components/candidate/DashboardStatsCard';
 import ProfileViewsChart from '@/components/candidate/ProfileViewsChart';
 import ActivityFeed from '@/components/candidate/ActivityFeed';
-import { Briefcase, Eye, Star, CheckCircle, MapPin, DollarSign, Calendar, Building2, Loader2 } from 'lucide-react';
+import { Briefcase, Eye, Star, CheckCircle, MapPin, DollarSign, Calendar, Building2, Loader2, Users } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,6 +12,11 @@ import { useUser } from '@/contexts/UserContext';
 import { applicationsService } from '@/services/applications.service';
 import { invitationsService } from '@/services/invitations.service';
 import { candidateService } from '@/services/candidate.service';
+import { savedJobsService } from '@/services/saved-jobs.service';
+import { shortlistsService } from '@/services/shortlists.service';
+import { analyticsService } from '@/services/analytics.service';
+import { dataAccessService } from '@/services/data-access.service';
+import { Activity } from '@/components/candidate/ActivityFeed';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +29,7 @@ const CandidateDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState<'applied' | 'reviews' | 'views' | 'shortlisted' | 'invitations' | null>(null);
+  const [modalType, setModalType] = useState<'applied' | 'reviews' | 'views' | 'shortlisted' | 'invitations' | 'saved' | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [stats, setStats] = useState({
@@ -33,11 +38,15 @@ const CandidateDashboard: React.FC = () => {
     profileViews: 0,
     shortlisted: 0,
     invitations: 0,
+    savedJobs: 0,
   });
 
   const [applications, setApplications] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
+  const [savedJobs, setSavedJobs] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
+  const [viewStats, setViewStats] = useState<any[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -49,21 +58,73 @@ const CandidateDashboard: React.FC = () => {
         const candidateProfile = user.profile || await candidateService.getCandidateProfile(user.id);
         setProfile(candidateProfile);
 
-        const [appsData, invitationsData] = await Promise.all([
+        const [appsData, invitationsData, savedJobsData, followersData, dataRequests, statsData, totalViewsCount] = await Promise.all([
           applicationsService.getApplicationsByCandidate(candidateProfile.id),
           invitationsService.getInvitationsByCandidate(candidateProfile.id),
+          savedJobsService.getSavedJobs(candidateProfile.id),
+          shortlistsService.getCompaniesShortlistingCandidate(candidateProfile.id),
+          dataAccessService.getRequestsByCandidate(candidateProfile.id),
+          analyticsService.getViewStats(user.id),
+          analyticsService.getTotalViews(user.id)
         ]);
 
+        setViewStats(statsData);
         setApplications(appsData || []);
-        setInvitations(invitationsData || []);
+        const appliedJobIds = new Set(appsData?.map((app: any) => app.job_id) || []);
+        const filteredInvitations = invitationsData?.filter((inv: any) =>
+          inv.status === 'pending' && !appliedJobIds.has(inv.job_id)
+        ) || [];
+
+        setInvitations(filteredInvitations);
+        setSavedJobs(savedJobsData || []);
 
         setStats({
           appliedJobs: appsData?.length || 0,
           reviews: 0,
-          profileViews: candidateProfile?.profile_views || 0,
-          shortlisted: 0,
-          invitations: invitationsData?.filter((inv: any) => inv.status === 'pending').length || 0,
+          profileViews: totalViewsCount || 0,
+          shortlisted: followersData?.length || 0,
+          invitations: filteredInvitations.length,
+          savedJobs: savedJobsData?.length || 0,
         });
+
+        // Compute activities
+        const allActivities: Activity[] = [
+          ...(appsData || []).map((app: any) => ({
+            id: `app-${app.id}`,
+            type: 'application' as const,
+            title: app.jobs?.title || 'Job Application',
+            company: app.jobs?.employer_profiles?.company_name || 'Unknown Company',
+            time: app.applied_at,
+          })),
+          ...(invitationsData || []).map((inv: any) => ({
+            id: `inv-${inv.id}`,
+            type: 'invitation' as const,
+            title: inv.jobs?.title || 'Job Invitation',
+            company: inv.jobs?.employer_profiles?.company_name || 'Unknown Company',
+            time: inv.sent_at || inv.created_at,
+          })),
+          ...(followersData || []).map((folder: any) => ({
+            id: `short-${folder.id}`,
+            type: 'shortlist' as const,
+            title: 'Candidate Profile',
+            company: folder.employer_profiles?.company_name || 'Unknown Company',
+            time: folder.created_at,
+          })),
+          ...(dataRequests || []).map((req: any) => ({
+            id: `data-${req.id}`,
+            type: 'data_access' as const,
+            title: 'Personal Data',
+            company: req.employer_profiles?.company_name || 'Unknown Company',
+            time: req.requested_at,
+          })),
+        ];
+
+        // Sort by time descending and take most recent 10
+        const sortedActivities = allActivities
+          .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+          .slice(0, 10);
+
+        setActivities(sortedActivities);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
@@ -75,7 +136,7 @@ const CandidateDashboard: React.FC = () => {
   }, [user.id, user.role, user.profile]);
 
 
-  const handleOpenModal = (type: 'applied' | 'reviews' | 'views' | 'shortlisted' | 'invitations') => {
+  const handleOpenModal = (type: 'applied' | 'reviews' | 'views' | 'shortlisted' | 'invitations' | 'saved') => {
     setModalType(type);
     setModalOpen(true);
   };
@@ -87,6 +148,7 @@ const CandidateDashboard: React.FC = () => {
       case 'views': return 'Profile Views';
       case 'shortlisted': return 'Shortlisted';
       case 'invitations': return 'Job Invitations';
+      case 'saved': return 'Saved Jobs';
       default: return '';
     }
   };
@@ -144,7 +206,7 @@ const CandidateDashboard: React.FC = () => {
           <p className="text-body text-muted-foreground">Welcome back! Here's your activity overview.</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
           <DashboardStatsCard
             icon={Briefcase}
             label="Applied Jobs"
@@ -167,17 +229,24 @@ const CandidateDashboard: React.FC = () => {
             onClick={() => navigate('/candidate/profile')}
           />
           <DashboardStatsCard
+            icon={Users}
+            label="Shortlisted"
+            value={stats.shortlisted}
+            color="accent"
+            onClick={() => navigate('/candidate/network')}
+          />
+          <DashboardStatsCard
             icon={Star}
             label="Saved Jobs"
-            value={0}
+            value={stats.savedJobs || 0}
             color="accent"
-            onClick={() => navigate('/candidate/saved-jobs')}
+            onClick={() => handleOpenModal('saved')}
           />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <ProfileViewsChart />
+            <ProfileViewsChart data={viewStats} />
 
             <Card className="p-6 border border-border bg-card">
               <div className="flex items-center justify-between mb-4">
@@ -214,7 +283,7 @@ const CandidateDashboard: React.FC = () => {
             </Card>
           </div>
           <div>
-            <ActivityFeed />
+            <ActivityFeed activities={activities} />
           </div>
         </div>
       </div>
@@ -227,6 +296,7 @@ const CandidateDashboard: React.FC = () => {
             <DialogDescription className="text-body text-muted-foreground">
               {modalType === 'applied' && 'All jobs you have applied to'}
               {modalType === 'invitations' && 'Job invitations from employers'}
+              {modalType === 'saved' && 'Jobs you have saved for later'}
             </DialogDescription>
           </DialogHeader>
 
@@ -248,7 +318,12 @@ const CandidateDashboard: React.FC = () => {
                       }}
                     >
                       <div className="flex items-start space-x-4">
-                        <Building2 className="w-12 h-12 text-muted-foreground" />
+                        <Avatar className="w-12 h-12 rounded-lg">
+                          <AvatarImage src={application.jobs?.employer_profiles?.logo_url || ''} className="object-cover" />
+                          <AvatarFallback className="rounded-lg">
+                            <Building2 className="w-6 h-6 text-muted-foreground" />
+                          </AvatarFallback>
+                        </Avatar>
                         <div className="flex-1 min-w-0">
                           <h4 className="text-h4 font-heading text-foreground mb-1">
                             {application.jobs?.title || 'Job Title'}
@@ -277,65 +352,122 @@ const CandidateDashboard: React.FC = () => {
 
             {modalType === 'invitations' && (
               <div className="space-y-4">
-                {invitations.filter((i: any) => i.status === 'pending').length === 0 ? (
-                  <p className="text-body-sm text-muted-foreground text-center py-8">
-                    No invitations yet
-                  </p>
-                ) : (
-                  invitations.filter((i: any) => i.status === 'pending').map((invitation) => (
+                {(() => {
+                  const appliedJobIds = new Set(applications.map(app => app.job_id));
+                  const pendingInvitations = invitations.filter((i: any) => i.status === 'pending' && !appliedJobIds.has(i.job_id));
+
+                  if (pendingInvitations.length === 0) {
+                    return (
+                      <p className="text-body-sm text-muted-foreground text-center py-8">
+                        No invitations yet
+                      </p>
+                    );
+                  }
+
+                  return pendingInvitations.map((invitation) => (
                     <Card
                       key={invitation.id}
                       className="p-4 border border-border bg-background hover:shadow-md transition-all duration-normal"
                     >
                       <div className="flex items-start space-x-4">
-                        <div className="flex items-start space-x-4">
-                          <Avatar className="w-12 h-12 rounded-lg">
-                            <AvatarImage src={invitation.jobs?.employer_profiles?.logo_url || ''} className="object-cover" />
-                            <AvatarFallback className="rounded-lg">
-                              <Building2 className="w-6 h-6 text-muted-foreground" />
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <span className={`px-2 py-1 text-caption rounded-md border ${invitation.status === 'pending'
-                                ? 'bg-warning/10 text-warning border-warning/30'
-                                : invitation.status === 'accepted'
-                                  ? 'bg-success/10 text-success border-success/30'
-                                  : 'bg-error/10 text-error border-error/30'
-                                }`}>
-                                {invitation.status}
-                              </span>
-                            </div>
-                            <h4 className="text-h4 font-heading text-foreground mb-1">
-                              {invitation.jobs?.title || 'Job Title'}
-                            </h4>
-                            <p className="text-body-sm text-muted-foreground mb-2">
-                              {invitation.jobs?.employer_profiles?.company_name || 'Company'}
+                        <Avatar className="w-12 h-12 rounded-lg">
+                          <AvatarImage src={invitation.jobs?.employer_profiles?.logo_url || ''} className="object-cover" />
+                          <AvatarFallback className="rounded-lg">
+                            <Building2 className="w-6 h-6 text-muted-foreground" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-2">
+                            {getStatusBadge(invitation.status)}
+                          </div>
+                          <h4 className="text-h4 font-heading text-foreground mb-1">
+                            {invitation.jobs?.title || 'Job Title'}
+                          </h4>
+                          <p className="text-body-sm text-muted-foreground mb-2">
+                            {invitation.jobs?.employer_profiles?.company_name || 'Company'}
+                          </p>
+                          {invitation.message && (
+                            <p className="text-body-sm text-foreground italic mb-2">
+                              "{invitation.message}"
                             </p>
-                            {invitation.message && (
-                              <p className="text-body-sm text-foreground italic mb-2">
-                                "{invitation.message}"
-                              </p>
-                            )}
-                            <div className="flex flex-wrap gap-3 text-caption text-muted-foreground">
-                              <div className="flex items-center">
-                                <Calendar className="w-3 h-3 mr-1" strokeWidth={1.5} />
-                                {formatDate(invitation.sent_at || invitation.created_at || new Date().toISOString())}
-                              </div>
+                          )}
+                          <div className="flex flex-wrap gap-3 text-caption text-muted-foreground">
+                            <div className="flex items-center">
+                              <Calendar className="w-3 h-3 mr-1" strokeWidth={1.5} />
+                              {formatDate(invitation.sent_at || invitation.created_at || new Date().toISOString())}
                             </div>
-                            {invitation.status === 'pending' && (
-                              <div className="flex gap-2 mt-3">
-                                <Button
-                                  size="sm"
-                                  onClick={() => navigate('/candidate/invitations')}
-                                  className="bg-primary text-primary-foreground hover:bg-primary-hover"
-                                >
-                                  View Details
-                                </Button>
-                              </div>
-                            )}
+                          </div>
+                          {invitation.status === 'pending' && (
+                            <div className="flex gap-2 mt-3">
+                              <Button
+                                size="sm"
+                                onClick={() => navigate('/candidate/invitations')}
+                                className="bg-primary text-primary-foreground hover:bg-primary-hover"
+                              >
+                                View Details
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                })()}
+              </div>
+            )}
+
+            {modalType === 'saved' && (
+              <div className="space-y-4">
+                {savedJobs.length === 0 ? (
+                  <p className="text-body-sm text-muted-foreground text-center py-8">
+                    No saved jobs yet
+                  </p>
+                ) : (
+                  savedJobs.map((saved) => (
+                    <Card
+                      key={saved.id}
+                      className="p-4 border border-border bg-background hover:shadow-md transition-all duration-normal cursor-pointer"
+                      onClick={() => {
+                        setModalOpen(false);
+                        navigate(`/jobs/${saved.job_id}`);
+                      }}
+                    >
+                      <div className="flex items-start space-x-4">
+                        <Avatar className="w-12 h-12 rounded-lg">
+                          <AvatarImage src={saved.jobs?.employer_profiles?.logo_url || ''} className="object-cover" />
+                          <AvatarFallback className="rounded-lg">
+                            <Building2 className="w-6 h-6 text-muted-foreground" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-h4 font-heading text-foreground mb-1">
+                            {saved.jobs?.title || 'Job Title'}
+                          </h4>
+                          <p className="text-body-sm text-muted-foreground mb-2">
+                            {saved.jobs?.employer_profiles?.company_name || 'Company'}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-3 text-caption text-muted-foreground">
+                            <div className="flex items-center">
+                              <MapPin className="w-3 h-3 mr-1" strokeWidth={1.5} />
+                              {saved.jobs?.city || 'Location'}
+                            </div>
+                            <div className="flex items-center">
+                              <Calendar className="w-3 h-3 mr-1" strokeWidth={1.5} />
+                              Saved {formatDate(saved.saved_at)}
+                            </div>
                           </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-primary hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/jobs/${saved.job_id}`);
+                          }}
+                        >
+                          View Job
+                        </Button>
                       </div>
                     </Card>
                   ))

@@ -21,23 +21,23 @@ const AppHeader: React.FC = () => {
     <header className="sticky top-0 z-30 h-16 bg-card border-b border-border flex items-center px-6 md:px-8">
       <div className="flex items-center flex-1 space-x-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+          {/* <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
           <Input
             type="search"
             placeholder={user.role === 'candidate' ? 'Search jobs...' : 'Search candidates...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-background text-foreground border-border focus:border-primary"
-          />
+          /> */}
         </div>
       </div>
 
       <div className="flex items-center space-x-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="bg-transparent text-foreground hover:bg-muted hover:text-foreground"
               aria-label="Change language"
             >
@@ -45,13 +45,13 @@ const AppHeader: React.FC = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-card border-border">
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => setLanguage('en')}
               className={`cursor-pointer ${language === 'en' ? 'bg-primary/10 text-primary' : 'text-foreground'}`}
             >
               English (EN)
             </DropdownMenuItem>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => setLanguage('de')}
               className={`cursor-pointer ${language === 'de' ? 'bg-primary/10 text-primary' : 'text-foreground'}`}
             >
@@ -60,9 +60,9 @@ const AppHeader: React.FC = () => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           className="relative bg-transparent text-foreground hover:bg-muted hover:text-foreground"
           aria-label="Notifications"
         >
