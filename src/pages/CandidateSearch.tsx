@@ -5,14 +5,25 @@ import CandidateCard from '@/components/employer/CandidateCard';
 import { useUser } from '@/contexts/UserContext';
 import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
 import { candidateService } from '@/services/candidate.service';
-import { Loader2 } from 'lucide-react';
+import { jobsService, Job } from '@/services/jobs.service';
+import { Loader2, Briefcase } from 'lucide-react';
 import { calculateCandidateMatchScore } from '@/utils/match-utils';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const CandidateSearch: React.FC = () => {
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [accessRequests, setAccessRequests] = useState<Record<string, string>>({});
+  const [myJobs, setMyJobs] = useState<Job[]>([]);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [loadingJobs, setLoadingJobs] = useState(false);
   const [filters, setFilters] = useState<CandidateFiltersType>(() => {
     const savedFilters = sessionStorage.getItem('candidate_search_filters');
     if (savedFilters) {
@@ -51,6 +62,56 @@ const CandidateSearch: React.FC = () => {
   useEffect(() => {
     sessionStorage.setItem('candidate_search_filters', JSON.stringify(filters));
   }, [filters]);
+
+  // Load employer's jobs
+  useEffect(() => {
+    const loadJobs = async () => {
+      if (user?.role === 'employer' && user.profile?.id) {
+        setLoadingJobs(true);
+        try {
+          const jobs = await jobsService.getJobsByEmployer(user.profile.id);
+          setMyJobs(jobs.filter(job => job.status === 'active'));
+        } catch (error) {
+          console.error('Error loading jobs:', error);
+        } finally {
+          setLoadingJobs(false);
+        }
+      }
+    };
+    loadJobs();
+  }, [user]);
+
+  const handleSelectJob = (job: Job) => {
+    setSelectedJob(job);
+
+    // Map job requirements to candidate filters
+    const newFilters: CandidateFiltersType = {
+      salary: [job.salary_min || 20000, job.salary_max || 200000],
+      bonus: [0, job.entry_bonus || 100000],
+      workRadius: 200,
+      isRefugee: false,
+      originCountry: '',
+      skills: job.required_skills || [],
+      qualifications: job.required_qualifications || [],
+      location: {
+        continent: job.continent || '',
+        country: job.country || '',
+        cities: job.city ? [job.city] : [],
+      },
+      jobTitle: job.title || '',
+      jobTypes: job.employment_type ? [job.employment_type] : [],
+      careerLevel: job.career_level ? [job.career_level] : [],
+      yearsOfExperience: [0, job.experience_years || 30],
+      languages: job.required_languages || [],
+      contractTerm: job.contract_terms || [],
+      travelWillingness: [0, 100],
+      drivingLicenses: job.driving_licenses || [],
+      enablePartialMatch: true,
+      minMatchThreshold: 50,
+    };
+
+    setFilters(newFilters);
+  };
 
   useEffect(() => {
     const loadCandidates = async () => {
@@ -166,6 +227,52 @@ const CandidateSearch: React.FC = () => {
             Discover talented professionals for your team.
           </p>
         </div>
+
+        {/* Job Selection Button */}
+        {user?.role === 'employer' && (
+          <div className="space-y-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full sm:w-auto">
+                  <Briefcase className="w-4 h-4 mr-2" />
+                  Find Candidates for Job
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[300px] max-h-[400px] overflow-y-auto">
+                {loadingJobs ? (
+                  <div className="flex items-center justify-center p-4">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </div>
+                ) : myJobs.length === 0 ? (
+                  <div className="p-4 text-sm text-muted-foreground">
+                    No active jobs found
+                  </div>
+                ) : (
+                  myJobs.map((job) => (
+                    <DropdownMenuItem
+                      key={job.id}
+                      onClick={() => handleSelectJob(job)}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium">{job.title}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {job.city}, {job.country}
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {selectedJob && (
+              <p className="text-sm text-muted-foreground">
+                Searching candidates for: <span className="font-medium text-foreground">{selectedJob.title}</span>
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-1">

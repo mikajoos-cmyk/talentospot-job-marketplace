@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card } from '../../components/ui/card';
-import { ArrowLeft, User, Building2, Upload } from 'lucide-react';
+import { ArrowLeft, User, Building2, Upload, Eye, EyeOff } from 'lucide-react';
 
 import logoImg from '@/assets/logo.png';
 
@@ -20,6 +20,7 @@ const Register: React.FC = () => {
   const [step, setStep] = useState<RegistrationStep>('role');
   const [role, setRole] = useState<'candidate' | 'employer' | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -271,15 +272,28 @@ const Register: React.FC = () => {
                   <Label htmlFor="password" className="text-body-sm font-medium text-foreground mb-2 block">
                     Password <span className="text-error">*</span>
                   </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="bg-background text-foreground border-border"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="bg-background text-foreground border-border pr-10"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5" strokeWidth={1.5} />
+                      ) : (
+                        <Eye className="w-5 h-5" strokeWidth={1.5} />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {role === 'candidate' && (

@@ -37,26 +37,41 @@ const JobSearch: React.FC = () => {
   const [appliedJobIds, setAppliedJobIds] = useState<string[]>([]);
   const [applying, setApplying] = useState(false);
 
-  const [filters, setFilters] = useState<JobFiltersState>({
-    title: '',
-    continent: '',
-    country: '',
-    city: '',
-    employmentTypes: [],
-    salaryRange: [0, 250000],
-    minEntryBonus: 0,
-    contractDuration: '',
-    skills: [],
-    qualifications: [],
-    languages: [],
-    careerLevel: '',
-    experienceYears: null,
-    drivingLicenses: [],
-    contractTerms: [],
-    homeOffice: false,
-    enablePartialMatch: false,
-    minMatchThreshold: 50,
+  const [filters, setFilters] = useState<JobFiltersState>(() => {
+    const savedFilters = sessionStorage.getItem('job_search_filters');
+    if (savedFilters) {
+      try {
+        return JSON.parse(savedFilters);
+      } catch (e) {
+        console.error('Error parsing saved filters:', e);
+      }
+    }
+    return {
+      title: '',
+      continent: '',
+      country: '',
+      city: '',
+      employmentTypes: [],
+      salaryRange: [0, 250000],
+      minEntryBonus: 0,
+      contractDuration: '',
+      skills: [],
+      qualifications: [],
+      languages: [],
+      careerLevel: '',
+      experienceYears: null,
+      drivingLicenses: [],
+      contractTerms: [],
+      homeOffice: false,
+      enableFlexibleMatch: false,
+      enablePartialMatch: false,
+      minMatchThreshold: 50,
+    };
   });
+
+  useEffect(() => {
+    sessionStorage.setItem('job_search_filters', JSON.stringify(filters));
+  }, [filters]);
 
   useEffect(() => {
     loadJobs();
@@ -71,7 +86,10 @@ const JobSearch: React.FC = () => {
       setLoading(true);
       const searchParams: any = {};
 
-      if (!currentFilters.enablePartialMatch) {
+      // Only apply exact filters if neither flexible nor partial matching is enabled
+      const useClientSideFiltering = currentFilters.enableFlexibleMatch || currentFilters.enablePartialMatch;
+
+      if (!useClientSideFiltering) {
         if (currentFilters.title) searchParams.title = currentFilters.title;
         if (currentFilters.continent && currentFilters.continent !== 'all') searchParams.continent = currentFilters.continent;
         if (currentFilters.country && currentFilters.country !== 'all') searchParams.country = currentFilters.country;
@@ -94,12 +112,22 @@ const JobSearch: React.FC = () => {
       const data = await jobsService.searchJobs(searchParams);
       let results = data || [];
 
-      if (currentFilters.enablePartialMatch) {
+      // Apply client-side filtering/scoring if needed
+      if (useClientSideFiltering) {
+        const flexibleMode = currentFilters.enableFlexibleMatch;
+
         results = results.map(job => ({
           ...job,
-          matchScore: calculateJobMatchScore(job, currentFilters)
-        })).filter(job => job.matchScore >= currentFilters.minMatchThreshold)
-          .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+          matchScore: calculateJobMatchScore(job, currentFilters, flexibleMode)
+        }));
+
+        // Filter by threshold only if partial matching is enabled
+        if (currentFilters.enablePartialMatch) {
+          results = results.filter(job => job.matchScore >= currentFilters.minMatchThreshold);
+        }
+
+        // Sort by match score
+        results.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
       }
 
       setJobs(results);
@@ -162,6 +190,7 @@ const JobSearch: React.FC = () => {
         drivingLicenses: profile.drivingLicenses || [],
         contractTerms: profile.contractTermPreference || [],
         homeOffice: profile.homeOfficePreference && profile.homeOfficePreference !== 'none' ? true : false,
+        enableFlexibleMatch: filters.enableFlexibleMatch,
         enablePartialMatch: filters.enablePartialMatch,
         minMatchThreshold: filters.minMatchThreshold,
       };
@@ -199,6 +228,7 @@ const JobSearch: React.FC = () => {
       drivingLicenses: [],
       contractTerms: [],
       homeOffice: false,
+      enableFlexibleMatch: false,
       enablePartialMatch: false,
       minMatchThreshold: 50,
     });
