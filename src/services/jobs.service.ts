@@ -337,7 +337,10 @@ export const jobsService = {
     }
 
     if (filters.required_languages && filters.required_languages.length > 0) {
-      const orStr = filters.required_languages.map((l: string) => `name.ilike.%${l.trim()}%`).join(',');
+      const orStr = filters.required_languages.map((l: any) => {
+        const val = typeof l === 'string' ? l : (l.name || l.value || '');
+        return `name.ilike.%${val.trim()}%`;
+      }).join(',');
       const { data: matchedLangs } = await supabase.from('languages').select('id').or(orStr);
       const ids = matchedLangs?.map(m => m.id) || [];
       if (ids.length > 0) {
