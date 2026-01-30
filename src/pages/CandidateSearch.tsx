@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import CandidateFilters from '@/components/employer/CandidateFilters';
 import CandidateCard from '@/components/employer/CandidateCard';
+import Footer from '@/components/layout/Footer';
 import { useUser } from '@/contexts/UserContext';
 import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
 import { candidateService } from '@/services/candidate.service';
@@ -221,114 +222,117 @@ const CandidateSearch: React.FC = () => {
   }, [filters]);
 
   return (
-    <AppLayout isPublic={user.role === 'guest'}>
-      <div className="space-y-8">
-        {user.role === 'guest' ? (
-          <div className="text-center pt-8 mb-16">
-            <h1 className="text-5xl md:text-7xl font-heading text-foreground mb-6 font-bold tracking-tight">
-              Find the <span className="text-primary">Perfect Talent</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Connect with skilled professionals ready for their next challenge.
-            </p>
-          </div>
-        ) : (
-          <div>
-            <h1 className="text-h1 font-heading text-foreground mb-2">Find Candidates</h1>
-            <p className="text-body text-muted-foreground">
-              Discover talented professionals for your team.
-            </p>
-          </div>
-        )}
-
-        {/* Job Selection Button */}
-        {user?.role === 'employer' && (
-          <div className="space-y-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full sm:w-auto">
-                  <Briefcase className="w-4 h-4 mr-2" />
-                  Find Candidates for Job
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[300px] max-h-[400px] overflow-y-auto">
-                {loadingJobs ? (
-                  <div className="flex items-center justify-center p-4">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  </div>
-                ) : myJobs.length === 0 ? (
-                  <div className="p-4 text-sm text-muted-foreground">
-                    No active jobs found
-                  </div>
-                ) : (
-                  myJobs.map((job) => (
-                    <DropdownMenuItem
-                      key={job.id}
-                      onClick={() => handleSelectJob(job)}
-                      className="cursor-pointer"
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-medium">{job.title}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {job.city}, {job.country}
-                        </span>
-                      </div>
-                    </DropdownMenuItem>
-                  ))
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {selectedJob && (
-              <p className="text-sm text-muted-foreground">
-                Searching candidates for: <span className="font-medium text-foreground">{selectedJob.title}</span>
+    <>
+      <AppLayout isPublic={user.role === 'guest'}>
+        <div className="space-y-8">
+          {user.role === 'guest' ? (
+            <div className="text-center pt-8 mb-16">
+              <h1 className="text-5xl md:text-7xl font-heading text-foreground mb-6 font-bold tracking-tight">
+                Find the <span className="text-primary">Perfect Talent</span>
+              </h1>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                Connect with skilled professionals ready for their next challenge.
               </p>
-            )}
-          </div>
-        )}
+            </div>
+          ) : (
+            <div>
+              <h1 className="text-h1 font-heading text-foreground mb-2">Find Candidates</h1>
+              <p className="text-body text-muted-foreground">
+                Discover talented professionals for your team.
+              </p>
+            </div>
+          )}
 
-        <div className="grid grid-cols-1 layout-md:grid-cols-3 gap-6">
-          <div className="layout-md:col-span-1">
-            <CandidateFilters filters={filters} onFiltersChange={setFilters} />
-          </div>
+          {/* Job Selection Button */}
+          {user?.role === 'employer' && (
+            <div className="space-y-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    <Briefcase className="w-4 h-4 mr-2" />
+                    Find Candidates for Job
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-[300px] max-h-[400px] overflow-y-auto">
+                  {loadingJobs ? (
+                    <div className="flex items-center justify-center p-4">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </div>
+                  ) : myJobs.length === 0 ? (
+                    <div className="p-4 text-sm text-muted-foreground">
+                      No active jobs found
+                    </div>
+                  ) : (
+                    myJobs.map((job) => (
+                      <DropdownMenuItem
+                        key={job.id}
+                        onClick={() => handleSelectJob(job)}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">{job.title}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {job.city}, {job.country}
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-          <div className="layout-md:col-span-2">
-            {loading ? (
-              <div className="flex items-center justify-center min-h-[400px]">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <>
-                <div className="mb-4">
-                  <p className="text-body text-foreground">
-                    <span className="font-medium">{candidates.length}</span> candidates found
-                  </p>
+              {selectedJob && (
+                <p className="text-sm text-muted-foreground">
+                  Searching candidates for: <span className="font-medium text-foreground">{selectedJob.title}</span>
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 layout-md:grid-cols-3 gap-6">
+            <div className="layout-md:col-span-1">
+              <CandidateFilters filters={filters} onFiltersChange={setFilters} />
+            </div>
+
+            <div className="layout-md:col-span-2">
+              {loading ? (
+                <div className="flex items-center justify-center min-h-[400px]">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
-
-                {candidates.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-body text-muted-foreground">
-                      No candidates found matching your criteria.
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <p className="text-body text-foreground">
+                      <span className="font-medium">{candidates.length}</span> candidates found
                     </p>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 layout-sm:grid-cols-2 3xl:grid-cols-3 gap-6">
-                    {candidates.map((candidate) => (
-                      <CandidateCard
-                        key={candidate.id}
-                        candidate={candidate}
-                        accessStatus={accessRequests[candidate.id]}
-                        matchScore={candidate.matchScore}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
+
+                  {candidates.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-body text-muted-foreground">
+                        No candidates found matching your criteria.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 layout-sm:grid-cols-2 3xl:grid-cols-3 gap-6">
+                      {candidates.map((candidate) => (
+                        <CandidateCard
+                          key={candidate.id}
+                          candidate={candidate}
+                          accessStatus={accessRequests[candidate.id]}
+                          matchScore={candidate.matchScore}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </AppLayout>
+      </AppLayout>
+      <Footer />
+    </>
   );
 };
 

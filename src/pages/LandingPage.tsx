@@ -419,7 +419,7 @@ const LandingPage: React.FC = () => {
           </div>
           <div className="mt-8 pt-8 border-t border-secondary-hover text-center">
             <p className="text-caption text-muted-foreground">
-              © 2024 TalentoSpot. All rights reserved.
+              © 2026 TalentoSpot. All rights reserved.
             </p>
           </div>
         </div>
