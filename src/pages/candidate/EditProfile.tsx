@@ -11,7 +11,8 @@ import { useToast } from '../../contexts/ToastContext';
 import { useUser } from '../../contexts/UserContext';
 import { candidateService } from '../../services/candidate.service';
 import { storageService } from '../../services/storage.service';
-import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, GraduationCap, MapPin, Video, Car, Plane, Loader2, Globe } from 'lucide-react';
+import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, GraduationCap, MapPin, Video, Car, Plane, Loader2, Globe, Edit2 } from 'lucide-react';
+import { ProjectImageCarousel } from '../../components/shared/ProjectImageCarousel';
 import { Switch } from '../../components/ui/switch';
 import { refugeeOriginCountries } from '../../data/locationData';
 import { locationData } from '../../data/locationData';
@@ -27,7 +28,7 @@ interface PortfolioProject {
   id: string;
   title: string;
   description: string;
-  image: string;
+  images: string[];
 }
 
 interface PreferredLocation {
@@ -53,6 +54,7 @@ const EditProfile: React.FC = () => {
   const [education, setEducation] = useState<any[]>([]);
   const [skills, setSkills] = useState<any[]>([]);
   const [qualifications, setQualifications] = useState<any[]>([]);
+  const [requirements, setRequirements] = useState<string[]>([]);
   const [formData, setFormData] = useState<any>(null);
 
   React.useEffect(() => {
@@ -98,6 +100,7 @@ const EditProfile: React.FC = () => {
           setEducation(profile.education || []);
           setSkills(profile.skills || []);
           setQualifications(profile.qualifications || []);
+          setRequirements(profile.requirements || []);
           setLanguages(profile.languages || []);
           setDrivingLicenses(profile.drivingLicenses || []);
 
@@ -116,7 +119,7 @@ const EditProfile: React.FC = () => {
               id: i.toString(),
               title: p.title || `Project ${i + 1}`,
               description: p.description || '',
-              image: p.image || ''
+              images: p.images || (p.image ? [p.image] : [])
             })));
           }
         }
@@ -130,6 +133,9 @@ const EditProfile: React.FC = () => {
   }, [user?.id]);
   const [experienceModalOpen, setExperienceModalOpen] = useState(false);
   const [educationModalOpen, setEducationModalOpen] = useState(false);
+  const [editingExperienceId, setEditingExperienceId] = useState<string | null>(null);
+  const [editingEducationId, setEditingEducationId] = useState<string | null>(null);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [newExperience, setNewExperience] = useState({
     title: '',
     company: '',
@@ -148,6 +154,7 @@ const EditProfile: React.FC = () => {
 
   const [skillInput, setSkillInput] = useState('');
   const [qualificationInput, setQualificationInput] = useState('');
+  const [requirementInput, setRequirementInput] = useState('');
   const [languages, setLanguages] = useState<{ name: string; level: string }[]>([]);
   const [languageInput, setLanguageInput] = useState('');
   const [languageLevel, setLanguageLevel] = useState('B2');
@@ -167,7 +174,7 @@ const EditProfile: React.FC = () => {
   const [newProject, setNewProject] = useState({
     title: '',
     description: '',
-    image: '',
+    images: [] as string[],
   });
 
   const continents = Object.keys(locationData);
@@ -239,8 +246,8 @@ const EditProfile: React.FC = () => {
     setUploading(true);
     try {
       const publicUrl = await storageService.uploadPortfolioImage(user.id, file);
-      setNewProject({ ...newProject, image: publicUrl });
-      showToast({ title: 'Upload Success', description: 'Project image uploaded' });
+      setNewProject({ ...newProject, images: [...newProject.images, publicUrl] });
+      showToast({ title: 'Upload Success', description: 'Project image added' });
     } catch (error) {
       showToast({ title: 'Error', description: 'Image upload failed', variant: 'destructive' });
     } finally {
@@ -274,7 +281,7 @@ const EditProfile: React.FC = () => {
     }
 
     const exp = {
-      id: Date.now().toString(),
+      id: editingExperienceId || Date.now().toString(),
       title: newExperience.title,
       company: newExperience.company,
       startDate: newExperience.startDate,
@@ -284,13 +291,32 @@ const EditProfile: React.FC = () => {
       description: newExperience.description,
     };
 
-    setExperience([...experience, exp]);
+    if (editingExperienceId) {
+      setExperience(experience.map(e => e.id === editingExperienceId ? exp : e));
+    } else {
+      setExperience([...experience, exp]);
+    }
+
     setNewExperience({ title: '', company: '', startDate: '', endDate: '', isCurrent: false, description: '' });
+    setEditingExperienceId(null);
     setExperienceModalOpen(false);
     showToast({
-      title: 'Experience Added',
-      description: 'Work experience has been added successfully',
+      title: editingExperienceId ? 'Experience Updated' : 'Experience Added',
+      description: `Work experience has been ${editingExperienceId ? 'updated' : 'added'} successfully`,
     });
+  };
+
+  const handleEditExperience = (exp: any) => {
+    setNewExperience({
+      title: exp.title,
+      company: exp.company,
+      startDate: exp.startDate,
+      endDate: exp.endDate || '',
+      isCurrent: exp.isCurrent || false,
+      description: exp.description || '',
+    });
+    setEditingExperienceId(exp.id);
+    setExperienceModalOpen(true);
   };
 
   const handleDeleteExperience = (expId: string) => {
@@ -312,7 +338,7 @@ const EditProfile: React.FC = () => {
     }
 
     const edu = {
-      id: Date.now().toString(),
+      id: editingEducationId || Date.now().toString(),
       degree: newEducation.degree,
       institution: newEducation.institution,
       startDate: newEducation.startDate,
@@ -320,13 +346,31 @@ const EditProfile: React.FC = () => {
       period: `${newEducation.startDate} - ${newEducation.isCurrent ? 'Present' : (newEducation.endDate || 'Present')}`,
     };
 
-    setEducation([...education, edu]);
+    if (editingEducationId) {
+      setEducation(education.map(e => e.id === editingEducationId ? edu : e));
+    } else {
+      setEducation([...education, edu]);
+    }
+
     setNewEducation({ degree: '', institution: '', startDate: '', endDate: '', isCurrent: false });
+    setEditingEducationId(null);
     setEducationModalOpen(false);
     showToast({
-      title: 'Education Added',
-      description: 'Education has been added successfully',
+      title: editingEducationId ? 'Education Updated' : 'Education Added',
+      description: `Education has been ${editingEducationId ? 'updated' : 'added'} successfully`,
     });
+  };
+
+  const handleEditEducation = (edu: any) => {
+    setNewEducation({
+      degree: edu.degree,
+      institution: edu.institution,
+      startDate: edu.startDate,
+      endDate: edu.endDate || '',
+      isCurrent: !edu.endDate,
+    });
+    setEditingEducationId(edu.id);
+    setEducationModalOpen(true);
   };
 
   const handleDeleteEducation = (eduId: string) => {
@@ -342,6 +386,17 @@ const EditProfile: React.FC = () => {
       setQualifications([...qualifications, qualificationInput.trim()]);
       setQualificationInput('');
     }
+  };
+
+  const handleAddRequirement = () => {
+    if (requirementInput.trim() && !requirements.includes(requirementInput.trim())) {
+      setRequirements([...requirements, requirementInput.trim()]);
+      setRequirementInput('');
+    }
+  };
+
+  const handleRemoveRequirement = (requirement: string) => {
+    setRequirements(requirements.filter(r => r !== requirement));
   };
 
   const handleRemoveQualification = (qualification: string) => {
@@ -420,19 +475,35 @@ const EditProfile: React.FC = () => {
     }
 
     const project: PortfolioProject = {
-      id: Date.now().toString(),
+      id: editingProjectId || Date.now().toString(),
       title: newProject.title,
       description: newProject.description,
-      image: newProject.image || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400',
+      images: newProject.images,
     };
 
-    setPortfolioProjects([...portfolioProjects, project]);
-    setNewProject({ title: '', description: '', image: '' });
+    if (editingProjectId) {
+      setPortfolioProjects(portfolioProjects.map(p => p.id === editingProjectId ? project : p));
+    } else {
+      setPortfolioProjects([...portfolioProjects, project]);
+    }
+
+    setNewProject({ title: '', description: '', images: [] });
+    setEditingProjectId(null);
     setPortfolioModalOpen(false);
     showToast({
-      title: 'Project Added',
-      description: 'Your portfolio project has been added successfully',
+      title: editingProjectId ? 'Project Updated' : 'Project Added',
+      description: `Your portfolio project has been ${editingProjectId ? 'updated' : 'added'} successfully`,
     });
+  };
+
+  const handleEditProject = (project: PortfolioProject) => {
+    setNewProject({
+      title: project.title,
+      description: project.description,
+      images: project.images || [],
+    });
+    setEditingProjectId(project.id);
+    setPortfolioModalOpen(true);
   };
 
   const handleDeleteProject = (projectId: string) => {
@@ -486,12 +557,13 @@ const EditProfile: React.FC = () => {
         experience: experience,
         education: education,
         qualifications: qualifications,
+        requirements: requirements,
         languages: languages.map(l => ({ name: l.name, proficiency_level: l.level })),
         preferredLocations: preferredLocations,
 
         // Portfolio Bilder (Speichert nun das ganze Objekt)
         portfolioImages: portfolioProjects.map(p => ({
-          image: p.image,
+          images: p.images,
           title: p.title,
           description: p.description
         })),
@@ -946,6 +1018,46 @@ const EditProfile: React.FC = () => {
 
             <div>
               <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                Requirements
+              </Label>
+              <div className="flex space-x-2 mb-3">
+                <Input
+                  type="text"
+                  placeholder="Add requirement..."
+                  value={requirementInput}
+                  onChange={(e) => setRequirementInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddRequirement()}
+                  className="flex-1 bg-background text-foreground border-border"
+                />
+                <Button
+                  size="icon"
+                  onClick={handleAddRequirement}
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                >
+                  <Plus className="w-5 h-5" strokeWidth={2} />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {requirements.map((requirement) => (
+                  <div
+                    key={requirement}
+                    className="flex items-center space-x-1 px-3 py-1 bg-secondary/10 text-secondary-foreground rounded-full text-body-sm border border-secondary/20"
+                  >
+                    <span>{requirement}</span>
+                    <button
+                      onClick={() => handleRemoveRequirement(requirement)}
+                      className="hover:text-secondary-foreground/80"
+                      aria-label={`Remove ${requirement}`}
+                    >
+                      <X className="w-4 h-4" strokeWidth={2} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-2 block">
                 Languages
               </Label>
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
@@ -1345,7 +1457,11 @@ const EditProfile: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-h3 font-heading text-foreground">Work Experience</h3>
             <Button
-              onClick={() => setExperienceModalOpen(true)}
+              onClick={() => {
+                setEditingExperienceId(null);
+                setNewExperience({ title: '', company: '', startDate: '', endDate: '', isCurrent: false, description: '' });
+                setExperienceModalOpen(true);
+              }}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
               <Plus className="w-5 h-5 mr-2" strokeWidth={2} />
@@ -1375,14 +1491,24 @@ const EditProfile: React.FC = () => {
                       <p className="text-body-sm text-muted-foreground mb-2">{exp.company} • {exp.period}</p>
                       <p className="text-body-sm text-foreground">{exp.description}</p>
                     </div>
-                    <Button
-                      onClick={() => handleDeleteExperience(exp.id)}
-                      variant="ghost"
-                      size="icon"
-                      className="bg-transparent text-error hover:bg-error/10 hover:text-error"
-                    >
-                      <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={() => handleEditExperience(exp)}
+                        variant="ghost"
+                        size="icon"
+                        className="bg-transparent text-primary hover:bg-primary/10 hover:text-primary"
+                      >
+                        <Briefcase className="w-4 h-4" strokeWidth={1.5} />
+                      </Button>
+                      <Button
+                        onClick={() => handleDeleteExperience(exp.id)}
+                        variant="ghost"
+                        size="icon"
+                        className="bg-transparent text-error hover:bg-error/10 hover:text-error"
+                      >
+                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -1395,7 +1521,11 @@ const EditProfile: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-h3 font-heading text-foreground">Education</h3>
             <Button
-              onClick={() => setEducationModalOpen(true)}
+              onClick={() => {
+                setEditingEducationId(null);
+                setNewEducation({ degree: '', institution: '', startDate: '', endDate: '', isCurrent: false });
+                setEducationModalOpen(true);
+              }}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
               <Plus className="w-5 h-5 mr-2" strokeWidth={2} />
@@ -1424,14 +1554,24 @@ const EditProfile: React.FC = () => {
                       <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
                       <p className="text-body-sm text-muted-foreground">{edu.institution} • {edu.period}</p>
                     </div>
-                    <Button
-                      onClick={() => handleDeleteEducation(edu.id)}
-                      variant="ghost"
-                      size="icon"
-                      className="bg-transparent text-error hover:bg-error/10 hover:text-error"
-                    >
-                      <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={() => handleEditEducation(edu)}
+                        variant="ghost"
+                        size="icon"
+                        className="bg-transparent text-primary hover:bg-primary/10 hover:text-primary"
+                      >
+                        <GraduationCap className="w-4 h-4" strokeWidth={1.5} />
+                      </Button>
+                      <Button
+                        onClick={() => handleDeleteEducation(edu.id)}
+                        variant="ghost"
+                        size="icon"
+                        className="bg-transparent text-error hover:bg-error/10 hover:text-error"
+                      >
+                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -1467,27 +1607,38 @@ const EditProfile: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {portfolioProjects.map((project) => (
-                <Card key={project.id} className="overflow-hidden border border-border bg-background hover:shadow-lg transition-all duration-normal">
-                  <div className="aspect-video bg-muted relative">
-                    <img
-                      src={project.image}
-                      alt={project.title}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
+                <Card key={project.id} className="overflow-hidden border border-border bg-background hover:shadow-lg transition-all duration-normal group">
+                  <div className="aspect-video bg-muted relative overflow-hidden">
+                    {project.images && project.images.length > 0 ? (
+                      <ProjectImageCarousel images={project.images} title={project.title} />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
+                        <ImageIcon className="w-8 h-8" />
+                      </div>
+                    )}
                   </div>
                   <div className="p-4">
                     <h4 className="text-h4 font-heading text-foreground mb-2">{project.title}</h4>
                     <p className="text-body-sm text-muted-foreground line-clamp-2 mb-4">{project.description}</p>
-                    <Button
-                      onClick={() => handleDeleteProject(project.id)}
-                      variant="outline"
-                      size="sm"
-                      className="w-full bg-transparent text-error border-error hover:bg-error hover:text-error-foreground font-normal"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                      Delete
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={() => handleEditProject(project)}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 bg-transparent text-primary border-primary hover:bg-primary hover:text-primary-foreground font-normal"
+                      >
+                        <Edit2 className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                        Edit
+                      </Button>
+                      <Button
+                        onClick={() => handleDeleteProject(project.id)}
+                        variant="outline"
+                        size="sm"
+                        className="bg-transparent text-error border-error hover:bg-error hover:text-error-foreground font-normal px-3"
+                      >
+                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -1517,7 +1668,7 @@ const EditProfile: React.FC = () => {
       < Dialog open={experienceModalOpen} onOpenChange={setExperienceModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-h3 font-heading text-foreground">Add Work Experience</DialogTitle>
+            <DialogTitle className="text-h3 font-heading text-foreground">{editingExperienceId ? 'Update Work Experience' : 'Add Work Experience'}</DialogTitle>
             <DialogDescription className="text-body text-muted-foreground">
               Add your professional work experience
             </DialogDescription>
@@ -1614,6 +1765,7 @@ const EditProfile: React.FC = () => {
               variant="outline"
               onClick={() => {
                 setExperienceModalOpen(false);
+                setEditingExperienceId(null);
                 setNewExperience({ title: '', company: '', startDate: '', endDate: '', isCurrent: false, description: '' });
               }}
               className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
@@ -1625,7 +1777,7 @@ const EditProfile: React.FC = () => {
               disabled={!newExperience.title.trim() || !newExperience.company.trim()}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
-              Add Experience
+              {editingExperienceId ? 'Update Experience' : 'Add Experience'}
             </Button>
           </div>
         </DialogContent>
@@ -1635,7 +1787,7 @@ const EditProfile: React.FC = () => {
       < Dialog open={educationModalOpen} onOpenChange={setEducationModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-h3 font-heading text-foreground">Add Education</DialogTitle>
+            <DialogTitle className="text-h3 font-heading text-foreground">{editingEducationId ? 'Update Education' : 'Add Education'}</DialogTitle>
             <DialogDescription className="text-body text-muted-foreground">
               Add your educational background
             </DialogDescription>
@@ -1719,6 +1871,7 @@ const EditProfile: React.FC = () => {
               variant="outline"
               onClick={() => {
                 setEducationModalOpen(false);
+                setEditingEducationId(null);
                 setNewEducation({ degree: '', institution: '', startDate: '', endDate: '', isCurrent: false });
               }}
               className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
@@ -1730,7 +1883,7 @@ const EditProfile: React.FC = () => {
               disabled={!newEducation.degree?.trim() || !newEducation.institution?.trim() || !newEducation.startDate}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
-              Add Education
+              {editingEducationId ? 'Update Education' : 'Add Education'}
             </Button>
           </div>
         </DialogContent>
@@ -1835,9 +1988,11 @@ const EditProfile: React.FC = () => {
       < Dialog open={portfolioModalOpen} onOpenChange={setPortfolioModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-h3 font-heading text-foreground">Add Portfolio Project</DialogTitle>
+            <DialogTitle className="text-h3 font-heading text-foreground">
+              {editingProjectId ? 'Update Portfolio Project' : 'Add Portfolio Project'}
+            </DialogTitle>
             <DialogDescription className="text-body text-muted-foreground">
-              Showcase your work and achievements
+              {editingProjectId ? 'Modify your project details and images' : 'Showcase your work and achievements'}
             </DialogDescription>
           </DialogHeader>
 
@@ -1871,8 +2026,39 @@ const EditProfile: React.FC = () => {
 
             <div>
               <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                Project Image
+                Project Images
               </Label>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                {newProject.images.map((img, idx) => (
+                  <div key={idx} className="aspect-video rounded-lg overflow-hidden relative group border border-border">
+                    <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => setNewProject({ ...newProject, images: newProject.images.filter((_, i) => i !== idx) })}
+                      className="absolute top-1 right-1 p-1 bg-error text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => portfolioInputRef.current?.click()}
+                  className="aspect-video border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center hover:border-primary hover:bg-primary/5 transition-all"
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  ) : (
+                    <>
+                      <Plus className="w-6 h-6 text-muted-foreground mb-1" />
+                      <span className="text-caption text-muted-foreground">Add Image</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
               <input
                 type="file"
                 ref={portfolioInputRef}
@@ -1880,28 +2066,6 @@ const EditProfile: React.FC = () => {
                 accept="image/*"
                 onChange={handlePortfolioImageUpload}
               />
-              <div
-                onClick={() => portfolioInputRef.current?.click()}
-                className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors cursor-pointer overflow-hidden relative group min-h-[160px] flex flex-col items-center justify-center"
-              >
-                {uploading ? (
-                  <Loader2 className="w-8 h-8 mx-auto animate-spin" />
-                ) : newProject.image ? (
-                  <div className="absolute inset-0 w-full h-full">
-                    <img src={newProject.image} alt="Preview" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <p className="text-white text-body-sm font-medium">Click to change image</p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
-                    <p className="text-body-sm text-foreground">Click to upload image</p>
-                    <p className="text-caption text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
-                  </>
-                )}
-              </div>
-              {newProject.image && !uploading && <p className="text-xs text-green-600 mt-1">Image ready</p>}
             </div>
           </div>
 
@@ -1910,7 +2074,8 @@ const EditProfile: React.FC = () => {
               variant="outline"
               onClick={() => {
                 setPortfolioModalOpen(false);
-                setNewProject({ title: '', description: '', image: '' });
+                setEditingProjectId(null);
+                setNewProject({ title: '', description: '', images: [] });
               }}
               className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
             >
@@ -1921,7 +2086,7 @@ const EditProfile: React.FC = () => {
               disabled={!newProject.title.trim() || !newProject.description.trim()}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
-              Save Project
+              {editingProjectId ? 'Update Project' : 'Save Project'}
             </Button>
           </div>
         </DialogContent>

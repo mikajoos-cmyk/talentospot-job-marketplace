@@ -75,11 +75,11 @@ const JobSearch: React.FC = () => {
 
   useEffect(() => {
     loadJobs();
-    if (user.role === 'candidate') {
+    if (user && user.role === 'candidate') {
       loadSavedJobs();
       loadAppliedJobs();
     }
-  }, [user.role, user.id]);
+  }, [user?.role, user?.id]);
 
   const loadJobs = async (currentFilters: JobFiltersState = filters) => {
     try {
@@ -148,6 +148,11 @@ const JobSearch: React.FC = () => {
   }, [filters]);
 
   const handleMatchProfile = async () => {
+    if (user.role === 'guest') {
+      navigate('/login');
+      return;
+    }
+
     if (user.role !== 'candidate') {
       showToast({
         title: 'Not Available',
@@ -265,6 +270,11 @@ const JobSearch: React.FC = () => {
   };
 
   const handleSaveJob = async (jobId: string) => {
+    if (user.role === 'guest') {
+      navigate('/login');
+      return;
+    }
+
     if (user.role !== 'candidate') {
       showToast({
         title: 'Error',
@@ -299,6 +309,11 @@ const JobSearch: React.FC = () => {
   };
 
   const handleApply = (job: any) => {
+    if (user.role === 'guest') {
+      navigate('/login');
+      return;
+    }
+
     if (user.role !== 'candidate') {
       showToast({
         title: 'Error',
@@ -360,17 +375,28 @@ const JobSearch: React.FC = () => {
   );
 
   return (
-    <AppLayout>
+    <AppLayout isPublic={user.role === 'guest'}>
       <div className="space-y-8">
-        <div>
-          <h1 className="text-h1 font-heading text-foreground mb-2">Find Jobs</h1>
-          <p className="text-body text-muted-foreground">
-            Discover opportunities that match your skills and interests.
-          </p>
-        </div>
+        {user.role === 'guest' ? (
+          <div className="text-center pt-8 mb-16">
+            <h1 className="text-5xl md:text-7xl font-heading text-foreground mb-6 font-bold tracking-tight">
+              Find Your <span className="text-primary">Next Project</span>
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Browse current job openings from top employers.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <h1 className="text-h1 font-heading text-foreground mb-2">Find Jobs</h1>
+            <p className="text-body text-muted-foreground">
+              Discover opportunities that match your skills and interests.
+            </p>
+          </div>
+        )}
 
         <div className="flex flex-col layout-md:flex-row gap-8">
-          {user.role === 'candidate' && (
+          {(user.role === 'guest' || user.role === 'candidate') && (
             <div className="w-full layout-md:w-96 flex-shrink-0">
               <JobFilters
                 filters={filters}
@@ -510,7 +536,7 @@ const JobSearch: React.FC = () => {
                                   ? 'bg-muted text-muted-foreground'
                                   : 'bg-primary text-primary-foreground hover:bg-primary-hover'
                                   }`}
-                                disabled={user.role !== 'candidate' || appliedJobIds.includes(job.id)}
+                                disabled={appliedJobIds.includes(job.id)}
                               >
                                 {appliedJobIds.includes(job.id) ? 'Already Applied' : 'Apply Now'}
                               </Button>

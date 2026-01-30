@@ -44,11 +44,18 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
 
-  const menuItems = user.role === 'candidate'
-    ? candidateMenuItems
-    : user.role === 'admin'
-      ? adminMenuItems
-      : employerMenuItems;
+  const guestMenuItems = [
+    { icon: Briefcase, label: 'Find Jobs', path: '/jobs' },
+    { icon: Users, label: 'Find Candidates', path: '/candidates' },
+  ];
+
+  const menuItems = user.role === 'guest'
+    ? guestMenuItems
+    : user.role === 'candidate'
+      ? candidateMenuItems
+      : user.role === 'admin'
+        ? adminMenuItems
+        : employerMenuItems;
 
   return (
     <aside
@@ -113,12 +120,12 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
         <div className="p-4">
           <div className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-3'}`}>
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium">
-              {user.name.charAt(0)}
+              {user?.name ? user.name.charAt(0) : 'G'}
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-body-sm font-medium text-secondary-foreground truncate">{user.name}</p>
-                <p className="text-caption text-muted-foreground capitalize">{user.role}</p>
+                <p className="text-body-sm font-medium text-secondary-foreground truncate">{user?.name || 'Guest'}</p>
+                <p className="text-caption text-muted-foreground capitalize">{user?.role || 'Visitor'}</p>
               </div>
             )}
           </div>

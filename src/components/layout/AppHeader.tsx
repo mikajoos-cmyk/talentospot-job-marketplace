@@ -72,14 +72,14 @@ const AppHeader: React.FC = () => {
 
         <div className="flex items-center space-x-3">
           <Avatar className="w-10 h-10">
-            <AvatarImage src={user.avatar} alt={user.name} />
+            <AvatarImage src={user?.avatar} alt={user?.name || 'Guest'} />
             <AvatarFallback className="bg-primary text-primary-foreground">
-              {user.name.charAt(0)}
+              {user?.name ? user.name.charAt(0) : 'G'}
             </AvatarFallback>
           </Avatar>
           <div className="hidden md:block">
-            <p className="text-body-sm font-medium text-foreground">{user.name}</p>
-            <p className="text-caption text-muted-foreground capitalize">{user.role}</p>
+            <p className="text-body-sm font-medium text-foreground">{user?.name || 'Guest'}</p>
+            <p className="text-caption text-muted-foreground capitalize">{user?.role || 'Visitor'}</p>
           </div>
         </div>
       </div>

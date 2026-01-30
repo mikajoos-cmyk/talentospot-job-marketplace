@@ -104,6 +104,7 @@ export const candidateService = {
         percentage: item.proficiency_percentage
       })) || [],
       qualifications: data.candidate_qualifications?.map((q: any) => q.qualifications?.name) || [],
+      requirements: data.candidate_requirements?.map((r: any) => r.requirements?.name) || [],
       isRefugee: data.is_refugee,
       originCountry: data.origin_country,
       avatar: data.profiles?.avatar_url,
@@ -112,20 +113,20 @@ export const candidateService = {
         if (typeof item === 'string') {
           try {
             const parsed = JSON.parse(item);
-            if (parsed && typeof parsed === 'object' && parsed.image) {
+            if (parsed && typeof parsed === 'object') {
               return {
-                image: parsed.image,
+                images: parsed.images || (parsed.image ? [parsed.image] : []),
                 title: parsed.title || '',
                 description: parsed.description || ''
               };
             }
           } catch (e) {
-            // Not JSON, treat as plain image URL
+            // Not JSON
           }
-          return { image: item, title: '', description: '' };
+          return { images: [item], title: '', description: '' };
         }
         return {
-          image: item?.image || item?.url || '',
+          images: item?.images || (item?.image ? [item.image] : (item?.url ? [item.url] : [])),
           title: item?.title || '',
           description: item?.description || ''
         };
@@ -197,6 +198,7 @@ export const candidateService = {
         candidate_experience(*),
         candidate_education(*),
         candidate_qualifications(qualifications(id, name)),
+        candidate_requirements(requirements(id, name)),
         candidate_preferred_locations(
           id,
           cities(name),
@@ -421,6 +423,41 @@ export const candidateService = {
 
         if (qualId) {
           await supabase.from('candidate_qualifications').insert({ candidate_id: userId, qualification_id: qualId });
+        }
+      }
+    }
+
+    // --- Requirements (Optimiert) ---
+    if (updates.requirements && Array.isArray(updates.requirements)) {
+      await supabase.from('candidate_requirements').delete().eq('candidate_id', userId);
+
+      for (const reqName of updates.requirements) {
+        if (!reqName) continue;
+        let reqId;
+        const { data: existing } = await supabase
+          .from('requirements')
+          .select('id')
+          .ilike('name', reqName)
+          .maybeSingle();
+
+        if (existing) {
+          reqId = existing.id;
+        } else {
+          const { data: newReq, error: insertError } = await supabase
+            .from('requirements')
+            .insert({ name: reqName, category: 'Other' })
+            .select('id')
+            .single();
+
+          if (insertError) {
+            console.error('Error creating requirement:', insertError);
+            continue;
+          }
+          reqId = newReq?.id;
+        }
+
+        if (reqId) {
+          await supabase.from('candidate_requirements').insert({ candidate_id: userId, requirement_id: reqId });
         }
       }
     }

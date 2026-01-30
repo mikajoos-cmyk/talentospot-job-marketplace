@@ -1,25 +1,23 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import AppLayout from '../../components/layout/AppLayout';
-import { Card } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import RichTextEditor from '../../components/ui/rich-text-editor';
-import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2, Map, Globe, Award, Clock, Car, FileText, TrendingUp, Users } from 'lucide-react';
-import { jobsService } from '../../services/jobs.service';
-// import { employerService } from '../../services/employer.service';
-import { useToast } from '../../contexts/ToastContext';
-import { useUser } from '../../contexts/UserContext';
-import { applicationsService } from '../../services/applications.service';
-import { messagesService } from '../../services/messages.service';
-import { Loader2 } from 'lucide-react';
+import AppLayout from '@/components/layout/AppLayout';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import RichTextEditor from '@/components/ui/rich-text-editor';
+import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2, Map as MapIcon, Globe, Award, Clock, Car, FileText, TrendingUp, Users, Loader2 } from 'lucide-react';
+import { jobsService } from '@/services/jobs.service';
+import { useToast } from '@/contexts/ToastContext';
+import { useUser } from '@/contexts/UserContext';
+import { applicationsService } from '@/services/applications.service';
+import { messagesService } from '@/services/messages.service';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../../components/ui/dialog';
-import { Label } from '../../components/ui/label';
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 // import { Input } from '../../components/ui/input';
 
 const JobDetailView: React.FC = () => {
@@ -126,7 +124,7 @@ const JobDetailView: React.FC = () => {
 
   if (loading) {
     return (
-      <AppLayout>
+      <AppLayout isPublic={user.role === 'guest'}>
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
         </div>
@@ -136,7 +134,7 @@ const JobDetailView: React.FC = () => {
 
   if (!job) {
     return (
-      <AppLayout>
+      <AppLayout isPublic={user.role === 'guest'}>
         <div className="text-center py-12">
           <h2 className="text-h2 font-heading text-foreground mb-4">Job Not Found</h2>
           <Button onClick={() => navigate(-1)} className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal">
@@ -148,7 +146,7 @@ const JobDetailView: React.FC = () => {
   }
 
   return (
-    <AppLayout>
+    <AppLayout isPublic={user.role === 'guest'}>
       <div className="space-y-8 max-w-4xl mx-auto">
         <div className="flex items-center space-x-4">
           <Button
@@ -373,7 +371,7 @@ const JobDetailView: React.FC = () => {
           <div className="mt-8 pt-8 border-t border-border space-y-6">
             <div>
               <h3 className="text-h3 font-heading text-foreground mb-4 flex items-center">
-                <Map className="w-6 h-6 mr-2 text-primary" strokeWidth={1.5} />
+                <MapIcon className="w-6 h-6 mr-2 text-primary" strokeWidth={1.5} />
                 Location
               </h3>
               <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center border border-border">
@@ -389,8 +387,8 @@ const JobDetailView: React.FC = () => {
               onClick={() => setApplyDialogOpen(true)}
               disabled={hasApplied}
               className={`w-full md:w-auto font-normal h-12 px-8 ${hasApplied
-                  ? 'bg-muted text-muted-foreground'
-                  : 'bg-primary text-primary-foreground hover:bg-primary-hover'
+                ? 'bg-muted text-muted-foreground'
+                : 'bg-primary text-primary-foreground hover:bg-primary-hover'
                 }`}
             >
               {hasApplied ? 'Already Applied' : 'Apply for this Position'}

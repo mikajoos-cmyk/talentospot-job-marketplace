@@ -237,7 +237,10 @@ function App() {
               />
 
               <Route path="/jobs/:id" element={<JobDetailView />} />
+              <Route path="/jobs" element={<JobSearch />} />
               <Route path="/companies/:id" element={<CompanyDetail />} />
+              <Route path="/candidates" element={<CandidateSearch />} />
+              <Route path="/candidates/:id" element={<CandidateDetailView />} />
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

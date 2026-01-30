@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/card';
+import AppLayout from '../../components/layout/AppLayout';
 import { Button } from '../../components/ui/button';
 import { MapPin, Users, Building2, Globe, ArrowLeft, Briefcase, DollarSign, Calendar, Map, Heart, Send, Star, Loader2 } from 'lucide-react';
 import { employerService } from '../../services/employer.service';
@@ -95,44 +96,49 @@ const CompanyDetail: React.FC = () => {
         variant: 'destructive',
       });
     }
-  };
-
-  const handleMessage = () => {
+  }; const handleMessage = () => {
     navigate(`/candidate/messages?conversationId=${company?.id}`);
   };
 
-  const handleSubmitReview = (rating: number, comment: string) => {
+  const handleSubmitReview = (_rating: number, _comment: string) => {
     showToast({
       title: 'Review Submitted',
-      description: `Your review for ${company?.name} has been submitted`,
+      description: `Your review for ${company?.company_name} has been submitted`,
     });
+    setReviewModalOpen(false);
   };
+
+
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-      </div>
+      <AppLayout isPublic={user.role === 'guest'}>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </div>
+      </AppLayout>
     );
   }
 
   if (!company) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="text-center">
-          <h2 className="text-h2 font-heading text-foreground mb-4">Company Not Found</h2>
-          <Button onClick={() => navigate(-1)} className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal">
-            Go Back
-          </Button>
+      <AppLayout isPublic={user.role === 'guest'}>
+        <div className="min-h-screen flex items-center justify-center p-6">
+          <div className="text-center">
+            <h2 className="text-h2 font-heading text-foreground mb-4">Company Not Found</h2>
+            <Button onClick={() => navigate(-1)} className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal">
+              Go Back
+            </Button>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-card border-b border-border">
-        <div className="container mx-auto px-6 py-4">
+    <AppLayout isPublic={user.role === 'guest'}>
+      <div className="container mx-auto py-12 max-w-6xl">
+        <div className="flex items-center mb-8">
           <Button
             variant="ghost"
             onClick={() => navigate(-1)}
@@ -142,9 +148,6 @@ const CompanyDetail: React.FC = () => {
             Back to Jobs
           </Button>
         </div>
-      </header>
-
-      <div className="container mx-auto px-6 py-12 max-w-6xl">
         <div className="space-y-8">
           <Card className="p-8 md:p-12 border border-border bg-card">
             <div className="flex flex-col md:flex-row items-start md:items-center space-y-6 md:space-y-0 md:space-x-8">
@@ -164,39 +167,41 @@ const CompanyDetail: React.FC = () => {
                   )}
                 </div>
 
-                <div className="flex flex-wrap gap-3 mb-4">
-                  <Button
-                    onClick={handleFollow}
-                    variant={isFollowing ? 'default' : 'outline'}
-                    className={`font-normal ${isFollowing
-                      ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
-                      : 'bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground'
-                      }`}
-                  >
-                    <Heart
-                      className="w-4 h-4 mr-2"
-                      strokeWidth={1.5}
-                      fill={isFollowing ? 'currentColor' : 'none'}
-                    />
-                    {isFollowing ? 'Following' : 'Follow'}
-                  </Button>
-                  <Button
-                    onClick={handleMessage}
-                    variant="outline"
-                    className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-                  >
-                    <Send className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                    Send Message
-                  </Button>
-                  <Button
-                    onClick={() => setReviewModalOpen(true)}
-                    variant="outline"
-                    className="bg-transparent text-accent border-accent hover:bg-accent hover:text-accent-foreground font-normal"
-                  >
-                    <Star className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                    Write Review
-                  </Button>
-                </div>
+                {user.role !== 'guest' && (
+                  <div className="flex flex-wrap gap-3 mb-4">
+                    <Button
+                      onClick={handleFollow}
+                      variant={isFollowing ? 'default' : 'outline'}
+                      className={`font-normal ${isFollowing
+                        ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
+                        : 'bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground'
+                        }`}
+                    >
+                      <Heart
+                        className="w-4 h-4 mr-2"
+                        strokeWidth={1.5}
+                        fill={isFollowing ? 'currentColor' : 'none'}
+                      />
+                      {isFollowing ? 'Following' : 'Follow'}
+                    </Button>
+                    <Button
+                      onClick={handleMessage}
+                      variant="outline"
+                      className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                    >
+                      <Send className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                      Send Message
+                    </Button>
+                    <Button
+                      onClick={() => setReviewModalOpen(true)}
+                      variant="outline"
+                      className="bg-transparent text-accent border-accent hover:bg-accent hover:text-accent-foreground font-normal"
+                    >
+                      <Star className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                      Write Review
+                    </Button>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="flex items-center text-body text-foreground">
@@ -379,7 +384,7 @@ const CompanyDetail: React.FC = () => {
         targetRole="employer"
         onSubmit={handleSubmitReview}
       /> */}
-    </div>
+    </AppLayout>
   );
 };
 

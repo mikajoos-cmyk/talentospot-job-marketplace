@@ -32,12 +32,13 @@ export interface CandidateProfile {
   currency: string;
   skills: Array<{ name: string; percentage: number }>;
   qualifications: string[];
+  requirements: string[];
   isRefugee: boolean;
   originCountry?: string;
   description?: string;
   avatar?: string;
   videoUrl?: string;
-  portfolioImages?: Array<{ image: string; title?: string; description?: string }>;
+  portfolioImages?: Array<{ images: string[]; title?: string; description?: string }>;
   sector?: string;
   careerLevel?: string;
   employmentStatus?: string;

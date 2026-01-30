@@ -103,7 +103,7 @@ const CandidateSearch: React.FC = () => {
       careerLevel: job.career_level ? [job.career_level] : [],
       yearsOfExperience: [0, job.experience_years || 30],
       languages: (job.required_languages || []).map((l: any) =>
-        typeof l === 'string' ? l : { name: l.name, level: l.level || 'B2' }
+        typeof l === 'string' ? l : l.name
       ),
       contractTerm: job.contract_terms || [],
       travelWillingness: [0, 100],
@@ -200,7 +200,7 @@ const CandidateSearch: React.FC = () => {
 
         setCandidates(results);
 
-        if (user?.role === 'employer' && user.profile?.id) {
+        if (user && user.role === 'employer' && user.profile?.id) {
           // Fetch access requests for this employer
           const { data: requests } = await candidateService.getEmployerAccessRequests(user.profile.id);
           const requestMap: Record<string, string> = {};
@@ -221,14 +221,25 @@ const CandidateSearch: React.FC = () => {
   }, [filters]);
 
   return (
-    <AppLayout>
+    <AppLayout isPublic={user.role === 'guest'}>
       <div className="space-y-8">
-        <div>
-          <h1 className="text-h1 font-heading text-foreground mb-2">Find Candidates</h1>
-          <p className="text-body text-muted-foreground">
-            Discover talented professionals for your team.
-          </p>
-        </div>
+        {user.role === 'guest' ? (
+          <div className="text-center pt-8 mb-16">
+            <h1 className="text-5xl md:text-7xl font-heading text-foreground mb-6 font-bold tracking-tight">
+              Find the <span className="text-primary">Perfect Talent</span>
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Connect with skilled professionals ready for their next challenge.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <h1 className="text-h1 font-heading text-foreground mb-2">Find Candidates</h1>
+            <p className="text-body text-muted-foreground">
+              Discover talented professionals for your team.
+            </p>
+          </div>
+        )}
 
         {/* Job Selection Button */}
         {user?.role === 'employer' && (

@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from '../../components/ui/dialog';
 import { getYouTubeEmbedUrl } from '../../lib/utils';
+import { ProjectImageCarousel } from '../../components/shared/ProjectImageCarousel';
 
 const CandidateDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,7 +51,7 @@ const CandidateDetailView: React.FC = () => {
       try {
         const [candidateData, jobsData] = await Promise.all([
           candidateService.getCandidateProfile(id),
-          user.role === 'employer' ? jobsService.getJobsByEmployer(user.id) : Promise.resolve([])
+          (user.role === 'employer' && user.id) ? jobsService.getJobsByEmployer(user.id) : Promise.resolve([])
         ]);
         setCandidate(candidateData);
         setEmployerJobs(jobsData);
@@ -156,7 +157,7 @@ const CandidateDetailView: React.FC = () => {
 
   if (loading) {
     return (
-      <AppLayout>
+      <AppLayout isPublic={user.role === 'guest'}>
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
         </div>
@@ -166,7 +167,7 @@ const CandidateDetailView: React.FC = () => {
 
   if (!candidate) {
     return (
-      <AppLayout>
+      <AppLayout isPublic={user.role === 'guest'}>
         <div className="text-center py-12">
           <h2 className="text-h2 font-heading text-foreground mb-4">Candidate Not Found</h2>
           <Button onClick={() => navigate('/employer/candidates')} className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal">
@@ -181,13 +182,13 @@ const CandidateDetailView: React.FC = () => {
   const locationString = [candidate.city, candidate.country].filter(Boolean).join(', ');
 
   return (
-    <AppLayout>
+    <AppLayout isPublic={user.role === 'guest'}>
       <div className="space-y-8">
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/employer/candidates')}
+            onClick={() => navigate(user.role === 'guest' ? '/candidates' : '/employer/candidates')}
             className="bg-transparent text-foreground hover:bg-muted hover:text-foreground"
           >
             <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
@@ -200,10 +201,7 @@ const CandidateDetailView: React.FC = () => {
 
         <Card className="p-6 md:p-8 border border-border bg-card">
           <div className="flex flex-col md:flex-row gap-6">
-            <div
-              className="relative cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
-            >
+            <div className="relative">
               <Avatar className={`w-24 h-24 ${isBlurred ? 'blur-md' : ''}`}>
                 <AvatarImage src={candidate.avatar} alt={candidate.name} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-h3">
@@ -225,10 +223,7 @@ const CandidateDetailView: React.FC = () => {
                   </span>
                 </div>
               )}
-              <h2
-                className="text-h2 font-heading text-foreground mb-2 cursor-pointer hover:text-primary transition-colors"
-                onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
-              >
+              <h2 className="text-h2 font-heading text-foreground mb-2">
                 {displayName}
               </h2>
               <p className="text-body text-muted-foreground mb-4">{candidate.title}</p>
@@ -422,14 +417,12 @@ const CandidateDetailView: React.FC = () => {
                     setIsProjectModalOpen(true);
                   }}
                 >
-                  <img
-                    src={item.image || item}
-                    alt={item.title || `Portfolio ${index + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    loading="lazy"
+                  <ProjectImageCarousel
+                    images={item.images || (item.image ? [item.image] : [])}
+                    title={item.title || `Portfolio ${index + 1}`}
                   />
                   {(item.title || item.description) && (
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 text-left">
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 text-left pointer-events-none">
                       <p className="text-white font-medium truncate">{item.title}</p>
                       <p className="text-white/70 text-caption truncate">{item.description}</p>
                     </div>
@@ -729,10 +722,9 @@ const CandidateDetailView: React.FC = () => {
           {selectedProject && (
             <div className="flex flex-col">
               <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                <img
-                  src={selectedProject.image || selectedProject}
-                  alt={selectedProject.title}
-                  className="w-full h-full object-cover"
+                <ProjectImageCarousel
+                  images={selectedProject.images || (selectedProject.image ? [selectedProject.image] : [])}
+                  title={selectedProject.title}
                 />
                 <Button
                   variant="ghost"

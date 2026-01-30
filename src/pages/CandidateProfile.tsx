@@ -21,6 +21,7 @@ import {
 import { X } from 'lucide-react';
 import ReviewCard from '../components/shared/ReviewCard';
 import { getYouTubeEmbedUrl } from '../lib/utils';
+import { ProjectImageCarousel } from '../components/shared/ProjectImageCarousel';
 
 const CandidateProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -314,14 +315,12 @@ const CandidateProfile: React.FC = () => {
                   }}
                   className="group relative aspect-square rounded-lg overflow-hidden bg-muted hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                 >
-                  <img
-                    src={typeof project === 'string' ? project : project.image}
-                    alt={project.title || `Portfolio ${index + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    loading="lazy"
+                  <ProjectImageCarousel
+                    images={project.images || (project.image ? [project.image] : [])}
+                    title={project.title || `Portfolio ${index + 1}`}
                   />
                   {(project.title || project.description) && (
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 pointer-events-none">
                       <p className="text-white font-medium truncate">{project.title}</p>
                       <p className="text-white/70 text-caption truncate">{project.description}</p>
                     </div>
@@ -335,10 +334,9 @@ const CandidateProfile: React.FC = () => {
                 {selectedProject && (
                   <div className="flex flex-col">
                     <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                      <img
-                        src={selectedProject.image}
-                        alt={selectedProject.title}
-                        className="w-full h-full object-cover"
+                      <ProjectImageCarousel
+                        images={selectedProject.images || (selectedProject.image ? [selectedProject.image] : [])}
+                        title={selectedProject.title}
                       />
                       <Button
                         variant="ghost"

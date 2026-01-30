@@ -8,11 +8,12 @@ import { MapPin, DollarSign, ArrowRight, Users, Briefcase, TrendingUp, Calendar,
 import { jobsService } from '../services/jobs.service';
 import { employerService } from '../services/employer.service';
 import { candidateService } from '../services/candidate.service';
+import PublicHeader from '../components/layout/PublicHeader';
 import logoImg from '../assets/logo.png';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout } = useUser();
+  const { user, isAuthenticated } = useUser();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -82,54 +83,7 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-card border-b border-border">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <img
-            src={logoImg}
-            alt="TalentoSpot"
-            className="h-10 w-auto"
-          />
-          <div className="flex items-center space-x-4">
-            {isAuthenticated ? (
-              <>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    const dashboardPath = user.role === 'employer' ? '/employer/dashboard' : '/candidate/dashboard';
-                    navigate(dashboardPath);
-                  }}
-                  className="bg-transparent text-foreground hover:bg-muted hover:text-foreground font-normal"
-                >
-                  Dashboard
-                </Button>
-                <Button
-                  onClick={logout}
-                  variant="outline"
-                  className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-                >
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/login')}
-                  className="bg-transparent text-foreground hover:bg-muted hover:text-foreground font-normal"
-                >
-                  Sign In
-                </Button>
-                <Button
-                  onClick={() => navigate('/register')}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                >
-                  Get Started
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       <section className="py-20 md:py-32 bg-gradient-to-br from-primary/5 via-background to-accent/5">
         <div className="container mx-auto px-6 text-center">
@@ -143,7 +97,7 @@ const LandingPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
               size="lg"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/candidates')}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal h-12 px-8"
             >
               Start Hiring <ArrowRight className="ml-2 w-5 h-5" strokeWidth={2} />
@@ -151,7 +105,7 @@ const LandingPage: React.FC = () => {
             <Button
               size="lg"
               variant="outline"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/jobs')}
               className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal h-12 px-8"
             >
               Find Jobs
@@ -256,7 +210,7 @@ const LandingPage: React.FC = () => {
           <div className="text-center mt-12">
             <Button
               size="lg"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/jobs')}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
               View All Jobs <ArrowRight className="ml-2 w-5 h-5" strokeWidth={2} />
@@ -391,7 +345,7 @@ const LandingPage: React.FC = () => {
           <div className="text-center mt-12">
             <Button
               size="lg"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/candidates')}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
               View All Candidates <ArrowRight className="ml-2 w-5 h-5" strokeWidth={2} />
@@ -418,7 +372,7 @@ const LandingPage: React.FC = () => {
               <ul className="space-y-2">
                 <li>
                   <button
-                    onClick={() => navigate('/register')}
+                    onClick={() => navigate('/candidates')}
                     className="text-body-sm text-muted-foreground hover:text-secondary-foreground transition-colors"
                   >
                     Find Talent
@@ -426,7 +380,7 @@ const LandingPage: React.FC = () => {
                 </li>
                 <li>
                   <button
-                    onClick={() => navigate('/register')}
+                    onClick={() => navigate('/jobs')}
                     className="text-body-sm text-muted-foreground hover:text-secondary-foreground transition-colors"
                   >
                     Find Jobs

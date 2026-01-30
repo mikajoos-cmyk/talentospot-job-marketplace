@@ -27,10 +27,10 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   const navigate = useNavigate();
   const { user } = useUser();
   const { showToast } = useToast();
-  // Strict privacy: Blurred unless request accepted.
+  // Strict privacy: Blurred unless request accepted or guest.
   // Package tier might still be relevant for *initiating* contact, but visibility depends on request.
-  const isBlurred = accessStatus !== 'approved';
-  const canContact = accessStatus === 'approved';
+  const isBlurred = user.role === 'guest' || accessStatus !== 'approved';
+  const canContact = user.role !== 'guest' && accessStatus === 'approved';
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [requestPending, setRequestPending] = useState(accessStatus === 'pending');
@@ -56,6 +56,10 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   }, [inviteDialogOpen, user.role, user.profile]);
 
   const handleAction = async () => {
+    if (user.role === 'guest') {
+      navigate('/login');
+      return;
+    }
 
     if (canContact) {
       navigate(`/employer/messages?conversationId=${candidate.id}`);
@@ -88,6 +92,10 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   };
 
   const handleInvite = async (jobId: string, jobTitle: string) => {
+    if (user.role === 'guest') {
+      navigate('/login');
+      return;
+    }
     try {
       const candidateName = candidate.profiles?.full_name || 'candidate';
 
@@ -154,7 +162,13 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
         <div className="flex flex-col space-y-5 h-full">
           <div
             className="flex items-start space-x-4 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
+            onClick={() => {
+              if (user.role === 'guest') {
+                navigate(`/candidates/${candidate.id}`);
+              } else {
+                navigate(`/employer/candidates/${candidate.id}`);
+              }
+            }}
           >
             <div className="relative">
               <Avatar className={`w-16 h-16 ${shouldBlurIdentity ? 'blur-md' : ''}`}>
@@ -309,7 +323,13 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
               {canContact ? 'Message' : accessStatus === 'rejected' ? 'Request Rejected' : requestPending ? 'Request Pending' : 'Request Data'}
             </Button>
             <Button
-              onClick={() => setInviteDialogOpen(true)}
+              onClick={() => {
+                if (user.role === 'guest') {
+                  navigate('/login');
+                } else {
+                  setInviteDialogOpen(true);
+                }
+              }}
               variant="outline"
               className="flex-1 bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
             >
