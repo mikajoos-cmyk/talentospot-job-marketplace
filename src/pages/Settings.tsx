@@ -12,7 +12,7 @@ import { useToast } from '@/contexts/ToastContext';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
-  const { user, switchRole, logout } = useUser();
+  const { user, logout } = useUser();
   const { showToast } = useToast();
 
   const handleSaveSettings = () => {
@@ -22,14 +22,7 @@ const Settings: React.FC = () => {
     });
   };
 
-  const handleRoleSwitch = () => {
-    const newRole = user.role === 'candidate' ? 'employer' : 'candidate';
-    switchRole(newRole);
-    showToast({
-      title: 'Role Switched',
-      description: `You are now viewing as ${newRole}`,
-    });
-  };
+
 
   const handleLogout = () => {
     logout();
@@ -38,6 +31,25 @@ const Settings: React.FC = () => {
       description: 'You have been successfully logged out',
     });
     navigate('/');
+  };
+
+  const handleChangePassword = () => {
+    showToast({
+      title: 'Password Updated',
+      description: 'Your password has been changed successfully',
+    });
+  };
+
+  const handleDeleteAccount = () => {
+    const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.');
+    if (confirmed) {
+      logout();
+      showToast({
+        title: 'Account Deleted',
+        description: 'Your account has been successfully removed',
+      });
+      navigate('/');
+    }
   };
 
   return (
@@ -50,7 +62,7 @@ const Settings: React.FC = () => {
 
         <Card className="p-6 md:p-8 border border-border bg-card">
           <h2 className="text-h3 font-heading text-foreground mb-6">Account Information</h2>
-          
+
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -92,8 +104,61 @@ const Settings: React.FC = () => {
         </Card>
 
         <Card className="p-6 md:p-8 border border-border bg-card">
+          <h2 className="text-h3 font-heading text-foreground mb-6">Password Settings</h2>
+
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="current-password" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Current Password
+                </Label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  placeholder="••••••••"
+                  className="bg-background text-foreground border-border"
+                />
+              </div>
+              <div className="hidden md:block" />
+              <div>
+                <Label htmlFor="new-password" className="text-body-sm font-medium text-foreground mb-2 block">
+                  New Password
+                </Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="••••••••"
+                  className="bg-background text-foreground border-border"
+                />
+              </div>
+              <div>
+                <Label htmlFor="confirm-password" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Confirm New Password
+                </Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="••••••••"
+                  className="bg-background text-foreground border-border"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-start">
+              <Button
+                onClick={handleChangePassword}
+                variant="outline"
+                className="bg-transparent text-primary border-primary hover:bg-primary/10 font-normal"
+              >
+                Update Password
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 md:p-8 border border-border bg-card">
           <h2 className="text-h3 font-heading text-foreground mb-6">Notifications</h2>
-          
+
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -127,7 +192,7 @@ const Settings: React.FC = () => {
 
         <Card className="p-6 md:p-8 border border-border bg-card">
           <h2 className="text-h3 font-heading text-foreground mb-6">Privacy</h2>
-          
+
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -149,31 +214,9 @@ const Settings: React.FC = () => {
           </div>
         </Card>
 
-        <Card className="p-6 md:p-8 border border-border bg-card">
-          <h2 className="text-h3 font-heading text-foreground mb-6">Demo Settings</h2>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-body-sm font-medium text-foreground">Current Role</p>
-                <p className="text-caption text-muted-foreground capitalize">
-                  You are viewing as {user.role}
-                </p>
-              </div>
-              <Button 
-                onClick={handleRoleSwitch}
-                variant="outline"
-                className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-              >
-                Switch to {user.role === 'candidate' ? 'Employer' : 'Candidate'}
-              </Button>
-            </div>
-          </div>
-        </Card>
-
         <Card className="p-6 md:p-8 border border-error/20 bg-error/5">
           <h2 className="text-h3 font-heading text-foreground mb-6">Danger Zone</h2>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <p className="text-body-sm font-medium text-foreground">Logout</p>
@@ -181,7 +224,7 @@ const Settings: React.FC = () => {
                 Sign out of your account
               </p>
             </div>
-            <Button 
+            <Button
               onClick={handleLogout}
               variant="outline"
               className="bg-transparent text-error border-error hover:bg-error hover:text-error-foreground font-normal"
@@ -189,16 +232,34 @@ const Settings: React.FC = () => {
               Logout
             </Button>
           </div>
+
+          <Separator className="bg-error/10 my-6" />
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-body-sm font-medium text-foreground">Delete Account</p>
+              <p className="text-caption text-muted-foreground">
+                Permanently delete your account and all associated data
+              </p>
+            </div>
+            <Button
+              onClick={handleDeleteAccount}
+              variant="destructive"
+              className="bg-error text-error-foreground hover:bg-error-hover font-normal"
+            >
+              Delete Profile
+            </Button>
+          </div>
         </Card>
 
         <div className="flex justify-end space-x-4">
-          <Button 
+          <Button
             variant="outline"
             className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleSaveSettings}
             className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
           >
@@ -206,7 +267,7 @@ const Settings: React.FC = () => {
           </Button>
         </div>
       </div>
-    </AppLayout>
+    </AppLayout >
   );
 };
 

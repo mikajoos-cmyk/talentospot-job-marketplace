@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
-import { LayoutDashboard, User, Briefcase, Settings, Users, Building2, ChevronLeft, ChevronRight, CreditCard, Bookmark, Mail, MessageSquare, Network as NetworkIcon } from 'lucide-react';
+import { LayoutDashboard, User, Briefcase, Settings, Users, Building2, ChevronLeft, ChevronRight, CreditCard, Bookmark, Mail, MessageSquare, Network as NetworkIcon, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import logoImg from '@/assets/logo.png';
@@ -19,6 +19,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/candidate/dashboard' },
     { icon: User, label: 'My Profile', path: '/candidate/profile' },
     { icon: Briefcase, label: 'Find Jobs', path: '/candidate/jobs' },
+    { icon: Bell, label: 'Job Alerts', path: '/candidate/settings#notifications' },
     { icon: Bookmark, label: 'Saved Jobs', path: '/candidate/saved' },
     { icon: Mail, label: 'Invitations', path: '/candidate/invitations' },
     { icon: MessageSquare, label: 'Messages', path: '/candidate/messages' },

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, DollarSign, Calendar, Clock, UserPlus, Globe } from 'lucide-react';
+import { MapPin, DollarSign, Calendar, UserPlus, Briefcase, Award } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
 import { jobsService } from '@/services/jobs.service';
@@ -28,7 +28,6 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   const { user } = useUser();
   const { showToast } = useToast();
   // Strict privacy: Blurred unless request accepted or guest.
-  // Package tier might still be relevant for *initiating* contact, but visibility depends on request.
   const isBlurred = user.role === 'guest' || accessStatus !== 'approved';
   const canContact = user.role !== 'guest' && accessStatus === 'approved';
 
@@ -64,7 +63,6 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
     if (canContact) {
       navigate(`/employer/messages?conversationId=${candidate.id}`);
     } else if (isBlurred && accessStatus !== 'pending' && accessStatus !== 'rejected') {
-      // Request Personal Data
       try {
         if (!user.profile?.id) return;
         const result = await candidateService.requestDataAccess(candidate.id, user.profile.id);
@@ -82,7 +80,6 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
         showToast({ title: 'Error', description: 'Failed to send request.', variant: 'destructive' });
       }
     } else {
-      // Pending or Rejected state
       const statusText = accessStatus === 'rejected' ? 'rejected' : 'pending';
       showToast({
         title: `Request ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}`,
@@ -130,197 +127,195 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
     }
   };
 
-  // Always show anonymized name in search results
   const displayName = isBlurred
     ? `Candidate #${String(candidate.id).slice(-3).padStart(3, '0')}`
-    : candidate.name || 'Candidate';
+    : candidate.profiles?.full_name || candidate.name || 'Candidate';
 
-  // Always blur avatar in search results until access is granted
   const shouldBlurIdentity = isBlurred;
+  const candidateAvatar = candidate.profiles?.avatar_url || candidate.avatar;
+  const candidateTitle = candidate.job_title || candidate.title || 'Professional';
+  const location = candidate.city && candidate.country ? `${candidate.city}, ${candidate.country}` : candidate.location || 'Location not specified';
+  const minSalary = candidate.salary_expectation_min || candidate.salary?.min || 0;
+  const maxSalary = candidate.salary_expectation_max || candidate.salary?.max || 0;
+  const isRefugee = candidate.is_refugee === true || candidate.isRefugee === true;
+  const employmentStatus = candidate.employment_status || candidate.employmentStatus || 'Available';
+  const entryBonus = candidate.desired_entry_bonus || candidate.conditions?.entryBonus;
+  const sector = candidate.sector || candidate.industry || 'General';
+  const careerLevel = candidate.career_level || candidate.careerLevel || 'Not specified';
 
-  const candidateAvatar = candidate.avatar;
-  const candidateTitle = candidate.title || 'Professional';
-  const candidateLocation = candidate.location || 'Location not specified';
-  const minSalary = candidate.salary?.min || 0;
-  const maxSalary = candidate.salary?.max || 0;
-  const isRefugee = candidate.isRefugee || false;
-  const entryBonus = candidate.conditions?.entryBonus;
-  const availableFrom = candidate.availableFrom;
-  const noticePeriod = candidate.conditions?.noticePeriod;
+  // Robust availability parsing
+  const rawAvailability = candidate.available_from || candidate.availableFrom || candidate.conditions?.startDate;
+  const availability = rawAvailability ? new Date(rawAvailability).toLocaleDateString() : 'Immediate';
 
-  // Format preferred locations
-  const preferredLocationsString = candidate.preferredLocations?.map((loc: any) => {
-    const parts = [];
-    if (loc.city) parts.push(loc.city);
-    if (loc.country) parts.push(loc.country);
-    return parts.join(', ');
-  }).filter(Boolean).join('; ');
+  const skills = candidate.candidate_skills || candidate.skills || [];
+  const languages = candidate.candidate_languages || candidate.languages || [];
+  const qualifications = candidate.candidate_qualifications || candidate.qualifications || [];
+  const nationalityCode = candidate.nationality_code || candidate.nationalityCode;
 
   return (
     <>
-      <Card className="p-6 pb-8 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 h-full min-h-[550px] flex flex-col">
-        <div className="flex flex-col space-y-5 h-full">
-          <div
-            className="flex items-start space-x-4 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => {
-              if (user.role === 'guest') {
-                navigate(`/candidates/${candidate.id}`);
-              } else {
-                navigate(`/employer/candidates/${candidate.id}`);
-              }
-            }}
-          >
-            <div className="relative">
-              <Avatar className={`w-16 h-16 ${shouldBlurIdentity ? 'blur-md' : ''}`}>
-                <AvatarImage src={candidateAvatar} alt={displayName} />
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {displayName.split(' ').map((n: string) => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              {shouldBlurIdentity && (
-                <div className="absolute inset-0 bg-white/30 backdrop-blur-sm rounded-full"></div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              {isRefugee && (
-                <div className="flex items-center px-2 py-0.5 bg-accent/10 text-accent text-[10px] uppercase tracking-wider font-semibold rounded-md mb-2 w-fit border border-accent/20">
-                  <Globe className="w-2.5 h-2.5 mr-1" strokeWidth={2} />
-                  Refugee/Immigrant
+      <Card className="group p-0 overflow-hidden border border-border bg-card hover:shadow-xl transition-all duration-300">
+        <div className="flex flex-col md:flex-row">
+          {/* Left Section: Profile Info */}
+          <div className="p-6 md:w-72 flex flex-col items-center text-center border-b md:border-b-0 md:border-r border-border bg-muted/5 shrink-0">
+            <div className="relative mb-4">
+              <div className="relative">
+                <Avatar className={`w-24 h-24 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-500 ${shouldBlurIdentity ? 'blur-md' : ''}`}>
+                  <AvatarImage src={candidateAvatar} alt={displayName} className="object-cover" />
+                  <AvatarFallback className="text-2xl bg-primary text-white">
+                    {displayName.split(' ').map((n: string) => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                {shouldBlurIdentity && (
+                  <div className="absolute inset-0 bg-white/30 backdrop-blur-sm rounded-full"></div>
+                )}
+              </div>
+              {nationalityCode && (
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-md">
+                  <img
+                    src={`https://flagcdn.com/w40/${nationalityCode.toLowerCase()}.png`}
+                    alt={candidate.nationality}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
-              <div className="flex items-center justify-between gap-2">
-                <h4 className={`text-h4 font-heading text-foreground truncate hover:text-primary transition-colors ${shouldBlurIdentity ? 'blur-sm' : ''}`}>
-                  {displayName}
-                </h4>
+            </div>
+            <h4 className={`text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors ${shouldBlurIdentity ? 'blur-sm' : ''}`}>
+              {displayName}
+            </h4>
+            <p className="text-sm font-medium text-muted-foreground mb-4">{candidateTitle}</p>
+
+            <div className="w-full pt-4 border-t border-border/50 space-y-3">
+              <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider">
+                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                  {employmentStatus}
+                </span>
+                {isRefugee && (
+                  <span className="px-2 py-0.5 rounded-full bg-accent/20 text-accent">
+                    Refugee/Immigrant
+                  </span>
+                )}
                 {matchScore !== undefined && (
-                  <div className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold ${matchScore >= 80 ? 'bg-success/20 text-success' :
+                  <span className={`px-2 py-0.5 rounded-full ${matchScore >= 80 ? 'bg-success/20 text-success' :
                     matchScore >= 50 ? 'bg-warning/20 text-warning' :
                       'bg-muted text-muted-foreground'
                     }`}>
                     {matchScore}% Match
-                  </div>
-                )}
-              </div>
-              <p className="text-body-sm text-muted-foreground">{candidateTitle}</p>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center text-body-sm text-muted-foreground">
-              <MapPin className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              <span>{candidateLocation}</span>
-            </div>
-            {minSalary > 0 && maxSalary > 0 && (
-              <div className="flex items-center text-body-sm text-muted-foreground">
-                <DollarSign className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                <span>
-                  {candidate.currency || 'EUR'} {minSalary.toLocaleString()} - {maxSalary.toLocaleString()}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {preferredLocationsString && (
-            <div className="text-body-sm text-muted-foreground mt-1">
-              <span className="font-medium text-foreground">Preferred: </span>
-              {preferredLocationsString}
-            </div>
-          )}
-
-          {entryBonus && (
-            <div className="bg-warning/10 border border-warning/30 rounded-lg p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-body-sm font-medium text-warning">Entry Bonus</span>
-                <span className="text-h4 font-heading text-warning">{candidate.currency || 'EUR'} {entryBonus.toLocaleString()}</span>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-2">
-            {availableFrom && (
-              <div className="flex items-center px-2 py-1 bg-info/10 text-info text-caption rounded-md">
-                <Calendar className="w-3 h-3 mr-1" strokeWidth={1.5} />
-                <span>Available: {new Date(availableFrom).toLocaleDateString()}</span>
-              </div>
-            )}
-            {noticePeriod && (
-              <div className="flex items-center px-2 py-1 bg-muted text-foreground text-caption rounded-md">
-                <Clock className="w-3 h-3 mr-1" strokeWidth={1.5} />
-                <span>{noticePeriod}</span>
-              </div>
-            )}
-          </div>
-
-          {candidate.languages && candidate.languages.length > 0 && (
-            <div className="space-y-1">
-              <span className="text-caption text-muted-foreground font-medium">Languages</span>
-              <div className="flex flex-wrap gap-2">
-                {candidate.languages.map((lang: any, index: number) => {
-                  const name = typeof lang === 'string' ? lang : lang.name;
-                  const level = typeof lang === 'string' ? '' : lang.level;
-                  return (
-                    <span
-                      key={index}
-                      className="px-2 py-1 bg-info/10 text-info text-caption rounded-md border border-info/20"
-                    >
-                      {name}{level ? ` (${level})` : ''}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {candidate.qualifications && candidate.qualifications.length > 0 && (
-            <div className="space-y-1">
-              <span className="text-caption text-muted-foreground font-medium">Qualifications</span>
-              <div className="flex flex-wrap gap-2">
-                {candidate.qualifications.slice(0, 3).map((qual: string, index: number) => (
-                  <span
-                    key={index}
-                    className="px-2 py-1 bg-accent/10 text-accent text-caption rounded-md border border-accent/20 truncate max-w-[200px]"
-                    title={qual}
-                  >
-                    {qual}
-                  </span>
-                ))}
-                {candidate.qualifications.length > 3 && (
-                  <span className="px-2 py-1 bg-accent/10 text-accent text-caption rounded-md border border-accent/20">
-                    +{candidate.qualifications.length - 3}
                   </span>
                 )}
               </div>
             </div>
-          )}
+          </div>
 
-          {candidate.skills && candidate.skills.length > 0 && (
-            <div className="space-y-1">
-              <span className="text-caption text-muted-foreground font-medium">Skills</span>
-              <div className="flex flex-wrap gap-2">
-                {candidate.skills.slice(0, 5).map((skillItem: any, index: number) => (
-                  <span
-                    key={index}
-                    className="px-2 py-1 bg-muted text-foreground text-caption rounded-md"
-                  >
-                    {skillItem.name || 'Skill'}
-                  </span>
-                ))}
-                {candidate.skills.length > 5 && (
-                  <span className="px-2 py-1 bg-muted text-foreground text-caption rounded-md">
-                    +{candidate.skills.length - 5}
-                  </span>
-                )}
+          {/* Middle Section: Details */}
+          <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-8 min-w-0">
+            {/* Column 1: Core Details */}
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/5 text-primary">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Location</p>
+                  <p className="text-sm font-semibold">{location}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/5 text-primary">
+                  <Briefcase className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Sector</p>
+                  <p className="text-sm font-semibold">{sector}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/5 text-primary">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Career Level</p>
+                  <p className="text-sm font-semibold capitalize">{careerLevel}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/5 text-primary">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Salary Expectation</p>
+                  <p className="text-sm font-semibold">
+                    {candidate.currency || 'EUR'} {minSalary.toLocaleString()} - {maxSalary.toLocaleString()}
+                  </p>
+                  {entryBonus && <p className="text-xs font-bold text-warning">Entry Bonus: €{entryBonus.toLocaleString()}</p>}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-muted-foreground pt-2">
+                <Calendar className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-bold uppercase tracking-wide">Available: {availability}</span>
               </div>
             </div>
-          )}
 
-          <div className="flex space-x-2 mt-auto pt-2">
+            {/* Column 2: Skills & Langs */}
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Top Skills</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {skills.slice(0, 5).map((s: any, index: number) => {
+                    const skillName = s.skills?.name || s.name || 'Skill';
+                    return (
+                      <span key={index} className="px-2 py-1 bg-muted text-foreground text-[11px] font-semibold rounded-md border border-border/50">
+                        {skillName}
+                      </span>
+                    );
+                  })}
+                  {skills.length > 5 && <span className="text-[10px] text-muted-foreground font-bold">+{skills.length - 5} more</span>}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Qualifications</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {qualifications.slice(0, 3).map((q: any, index: number) => {
+                    const qualName = typeof q === 'string' ? q : (q.qualifications?.name || q.name || 'Qualification');
+                    return (
+                      <span key={index} className="px-2 py-0.5 bg-accent/10 text-accent text-[11px] font-bold rounded-md border border-accent/20">
+                        {qualName}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Languages</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {languages.slice(0, 3).map((l: any, index: number) => {
+                    const name = l.languages?.name || (typeof l === 'string' ? l : l.name);
+                    const level = l.proficiency_level || l.level || '';
+                    return (
+                      <span key={index} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[11px] font-bold rounded-full border border-blue-100">
+                        {name}{level ? ` (${level})` : ''}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Section: Action */}
+          <div className="p-6 md:w-48 flex flex-col justify-center items-center gap-3 bg-muted/5 border-t md:border-t-0 md:border-l border-border">
             <Button
               onClick={handleAction}
               disabled={requestPending && !canContact}
-              className="flex-1 bg-primary text-primary-foreground hover:bg-primary-hover font-normal disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-11 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {canContact ? 'Message' : accessStatus === 'rejected' ? 'Request Rejected' : requestPending ? 'Request Pending' : 'Request Data'}
+              {canContact ? 'Message' : accessStatus === 'rejected' ? 'Rejected' : requestPending ? 'Pending' : 'Request Data'}
             </Button>
             <Button
               onClick={() => {
@@ -331,10 +326,21 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                 }
               }}
               variant="outline"
-              className="flex-1 bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+              className="w-full border-primary/20 text-primary hover:bg-primary/5 font-bold h-11"
             >
-              <UserPlus className="w-4 h-4 mr-2" strokeWidth={1.5} />
+              <UserPlus className="w-4 h-4 mr-2" />
               Invite
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const path = user.role === 'guest' ? `/candidates/${candidate.id}` : `/employer/candidates/${candidate.id}`;
+                navigate(path);
+              }}
+              className="text-[11px] text-muted-foreground hover:text-primary font-bold uppercase tracking-wider"
+            >
+              View Full Profile
             </Button>
           </div>
         </div>
@@ -370,7 +376,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                     <div className="flex-1">
                       <h4 className="text-body font-medium text-foreground mb-1">{job.title}</h4>
                       <p className="text-body-sm text-muted-foreground mb-2">
-                        {job.location || 'Location not specified'}
+                        {job.city || job.location || 'Location not specified'}
                       </p>
                       <div className="flex items-center space-x-4 text-caption text-muted-foreground">
                         <span>{job.employment_type || 'Full-time'}</span>

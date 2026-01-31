@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { masterDataService } from './master-data.service';
 
 export interface JobLanguageRequirement {
   name: string;
@@ -30,11 +31,14 @@ export interface Job {
   is_featured?: boolean;
   driving_licenses?: string[];
   contract_terms?: string[];
+  benefits?: string[];
+  vacation_days?: number;
 }
 
 export const jobsService = {
   async resolveEntities(names: string[], table: string, category: string = 'Other'): Promise<string[]> {
     if (!names || names.length === 0) return [];
+
 
     const ids: string[] = [];
     for (const name of names) {
@@ -104,6 +108,19 @@ export const jobsService = {
     // Now insert language requirements with levels into junction table
     if (languagesWithLevels && languagesWithLevels.length > 0 && data.id) {
       await this.saveJobLanguageRequirements(data.id, languagesWithLevels);
+    }
+
+    // Sync Master Data
+    try {
+      if (job.title) await masterDataService.syncMasterData('job_titles', [job.title]);
+      if (job.required_skills) await masterDataService.syncMasterData('skills', job.required_skills);
+      if (job.required_qualifications) await masterDataService.syncMasterData('qualifications', job.required_qualifications);
+      if (languagesWithLevels) {
+        const langNames = languagesWithLevels.map((l: any) => typeof l === 'string' ? l : l.name);
+        await masterDataService.syncMasterData('languages', langNames);
+      }
+    } catch (e) {
+      console.error('Error syncing job master data:', e);
     }
 
     return data;
@@ -177,6 +194,20 @@ export const jobsService = {
     // Update language requirements if provided
     if (languagesWithLevels !== undefined) {
       await this.saveJobLanguageRequirements(jobId, languagesWithLevels as any);
+    }
+
+    // Sync Master Data
+    try {
+      if (updates.title) await masterDataService.syncMasterData('job_titles', [updates.title]);
+      if (updates.required_skills) await masterDataService.syncMasterData('skills', updates.required_skills);
+      if (updates.required_qualifications) await masterDataService.syncMasterData('qualifications', updates.required_qualifications);
+      if (languagesWithLevels) {
+        const langNames = (languagesWithLevels as any).map((l: any) => typeof l === 'string' ? l : l.name);
+        await masterDataService.syncMasterData('languages', langNames);
+      }
+    } catch (e) {
+      // Ignore master data sync errors (permission issues) to prevent blocking job updates
+      console.warn('Warning: Could not sync master data (permissions may be missing):', e);
     }
 
     return data;
@@ -281,6 +312,10 @@ export const jobsService = {
       query = query.ilike('title', `%${filters.title}%`);
     }
 
+    if (filters.sector) {
+      query = query.eq('employer_profiles.industry', filters.sector);
+    }
+
     if (filters.city) {
       query = query.eq('city', filters.city);
     }
@@ -311,6 +346,10 @@ export const jobsService = {
 
     if (filters.min_entry_bonus !== undefined && filters.min_entry_bonus !== null) {
       query = query.gte('entry_bonus', filters.min_entry_bonus);
+    }
+
+    if (filters.benefits && filters.benefits.length > 0) {
+      query = query.overlaps('benefits', filters.benefits);
     }
 
     // --- ID pre-fetching for many-to-many array filters ---
@@ -369,6 +408,10 @@ export const jobsService = {
 
     if (filters.contract_terms && Array.isArray(filters.contract_terms) && filters.contract_terms.length > 0) {
       query = query.overlaps('contract_terms', filters.contract_terms);
+    }
+
+    if (filters.min_vacation_days !== undefined && filters.min_vacation_days !== null) {
+      query = query.gte('vacation_days', filters.min_vacation_days);
     }
 
     if (filters.is_featured) {

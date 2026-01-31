@@ -30,6 +30,16 @@ export const calculateJobMatchScore = (job: any, filters: any, flexibleMode: boo
         }
     }
 
+    // Sector
+    if (filters.sector && filters.sector !== '' && filters.sector !== 'all') {
+        total += 1;
+        if (job.company?.industry === filters.sector) {
+            matched += 1;
+        } else if (!job.company?.industry) {
+            matched += 0.5;
+        }
+    }
+
     // Range-based matches (Salary) - Only if not at defaults
     if (filters.salaryRange && (filters.salaryRange[0] > 0 || filters.salaryRange[1] < 250000)) {
         total += 1;
@@ -213,6 +223,16 @@ export const calculateJobMatchScore = (job: any, filters: any, flexibleMode: boo
         }
     }
 
+    // Vacation Days
+    if (filters.minVacationDays && filters.minVacationDays > 0) {
+        total += 1;
+        if ((job.vacation_days || 0) >= filters.minVacationDays) {
+            matched += 1;
+        } else if (!job.vacation_days) {
+            matched += 0.5;
+        }
+    }
+
     // Driving Licenses - Same logic as skills
     if (filters.drivingLicenses && filters.drivingLicenses.length > 0) {
         const jobLicenses = job.driving_licenses || [];
@@ -261,6 +281,18 @@ export const calculateJobMatchScore = (job: any, filters: any, flexibleMode: boo
         }
     }
 
+    // Benefits
+    if (filters.benefits && filters.benefits.length > 0) {
+        total += filters.benefits.length;
+        const jobBenefits = (job.benefits || []).map((b: string) => b.toLowerCase());
+
+        filters.benefits.forEach((benefit: string) => {
+            if (jobBenefits.some((b: string) => b.includes(benefit.toLowerCase()) || benefit.toLowerCase().includes(b))) {
+                matched += 1;
+            }
+        });
+    }
+
     if (total === 0) return 100;
     return Math.round((matched / total) * 100);
 };
@@ -281,6 +313,24 @@ export const calculateCandidateMatchScore = (candidate: any, filters: any): numb
         }
     }
 
+    // Sector match
+    if (filters.sector && filters.sector !== '') {
+        total += 1;
+        const candidateSector = candidate.sector || '';
+        if (candidateSector.toLowerCase() === filters.sector.toLowerCase()) {
+            matched += 1;
+        }
+    }
+
+    // Candidate Status match
+    if (filters.candidateStatus && filters.candidateStatus.length > 0) {
+        total += 1;
+        const candidateStatus = candidate.employment_status || candidate.employmentStatus || '';
+        if (filters.candidateStatus.includes(candidateStatus)) {
+            matched += 1;
+        }
+    }
+
     // Salary Recommendation
     if (filters.salary && (filters.salary[0] > 20000 || filters.salary[1] < 200000)) {
         total += 1;
@@ -298,6 +348,16 @@ export const calculateCandidateMatchScore = (candidate: any, filters: any): numb
         const [min, max] = filters.bonus;
         const candidateBonus = candidate.desired_entry_bonus || candidate.conditions?.entryBonus || 0;
         if (candidateBonus >= min && candidateBonus <= max) {
+            matched += 1;
+        }
+    }
+
+    // Vacation Days
+    if (filters.vacationDays && (filters.vacationDays[0] > 0 || filters.vacationDays[1] < 50)) {
+        total += 1;
+        const [min, max] = filters.vacationDays;
+        const candidateVacation = candidate.vacation_days || candidate.conditions?.vacationDays || 0;
+        if (candidateVacation >= min && candidateVacation <= max) {
             matched += 1;
         }
     }
@@ -387,11 +447,29 @@ export const calculateCandidateMatchScore = (candidate: any, filters: any): numb
         }
     }
 
+    // Notice Period
+    if (filters.noticePeriod && filters.noticePeriod.length > 0) {
+        total += 1;
+        const candidateNotice = candidate.notice_period || candidate.conditions?.noticePeriod || '';
+        if (filters.noticePeriod.includes(candidateNotice)) {
+            matched += 1;
+        }
+    }
+
     // Contract Term
     if (filters.contractTerm && filters.contractTerm.length > 0) {
         total += 1;
         const candContractTypes = candidate.contract_type || candidate.contractTermPreference || [];
         if (filters.contractTerm.some((t: string) => candContractTypes.includes(t))) {
+            matched += 1;
+        }
+    }
+
+    // Home Office Preference
+    if (filters.homeOfficePreference && filters.homeOfficePreference.length > 0) {
+        total += 1;
+        const candidateHomeOffice = candidate.home_office_preference || candidate.conditions?.homeOfficePreference || '';
+        if (filters.homeOfficePreference.includes(candidateHomeOffice)) {
             matched += 1;
         }
     }
@@ -417,6 +495,31 @@ export const calculateCandidateMatchScore = (candidate: any, filters: any): numb
         });
     }
 
+    // Preferred Work Locations
+    if (filters.preferredWorkLocations && filters.preferredWorkLocations.length > 0) {
+        total += 1;
+        const candidateLocations = candidate.preferred_work_locations || candidate.preferredLocations || [];
+        // Match if ANY filter location overlaps with ANY candidate location
+        const hasMatch = filters.preferredWorkLocations.some((filterLoc: any) =>
+            candidateLocations.some((candLoc: any) => {
+                // Simple city match for now (radius calculation would require geocoding)
+                return candLoc.city?.toLowerCase() === filterLoc.city?.toLowerCase();
+            })
+        );
+        if (hasMatch) matched += 1;
+    }
+
+    // Custom Tags - Each tag must match individually
+    if (filters.customTags && filters.customTags.length > 0) {
+        total += filters.customTags.length;
+        const candidateTags = candidate.tags || [];
+        filters.customTags.forEach((tag: string) => {
+            if (candidateTags.some((t: string) => t.toLowerCase() === tag.toLowerCase())) {
+                matched += 1;
+            }
+        });
+    }
+
     // Refugee Status
     if (filters.isRefugee === true) {
         total += 1;
@@ -436,3 +539,4 @@ export const calculateCandidateMatchScore = (candidate: any, filters: any): numb
     if (total === 0) return 100;
     return Math.round((matched / total) * 100);
 };
+

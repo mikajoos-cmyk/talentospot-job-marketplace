@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 // Wir nutzen den globalen Typ, um Konflikte zu vermeiden
 import { CandidateProfile } from '../types/candidate';
+import { masterDataService } from './master-data.service';
 
 // Wandelt leere Strings in NULL um, damit Constraints nicht verletzt werden
 const val = (v: any) => (v === '' ? null : v);
@@ -91,9 +92,16 @@ export const candidateService = {
       city: data.city || '',
       country: data.country || '',
       address: data.address || '',
+      street: data.street || '',
+      houseNumber: data.house_number || '',
+      postalCode: data.postal_code || '',
+      state: data.state || '',
+      tags: data.tags || [],
+      cvUrl: data.cv_url || '',
       dateOfBirth: data.date_of_birth || '',
       nationality: data.nationality || '',
       gender: data.gender || '',
+      nationalityCode: data.nationality_code || '',
       salary: {
         min: data.salary_expectation_min || 0,
         max: data.salary_expectation_max || 0
@@ -182,7 +190,8 @@ export const candidateService = {
         institution: edu.institution,
         startDate: edu.start_date,
         endDate: edu.end_date,
-        period: `${edu.start_date} - ${edu.end_date || 'Present'}`
+        period: `${edu.start_date} - ${edu.end_date || 'Present'}`,
+        description: edu.description || ''
       })) || []
     };
   },
@@ -255,12 +264,17 @@ export const candidateService = {
       gender: val(updates.gender),
       nationality: val(updates.nationality),
       address: val(updates.address),
+      street: val(updates.street),
+      house_number: val(updates.houseNumber ?? updates.house_number),
+      state: val(updates.state),
+      postal_code: val(updates.postalCode ?? updates.postal_code),
       city: val(updates.city),
       country: val(updates.country),
-      postal_code: val(updates.postalCode ?? updates.postal_code),
       is_refugee: updates.isRefugee ?? updates.is_refugee,
       origin_country: val(updates.originCountry ?? updates.origin_country),
       description: val(updates.description),
+      tags: updates.tags || [],
+      nationality_code: val(updates.nationalityCode ?? updates.nationality_code),
 
       // Berufliche Daten
       job_title: val(updates.jobTitle ?? updates.job_title ?? updates.title),
@@ -310,6 +324,19 @@ export const candidateService = {
     if (profileError) {
       console.error('Fehler beim Upsert von candidate_profiles:', profileError);
       throw profileError;
+    }
+    console.log('Update der "candidate_profiles" Tabelle erfolgreich');
+
+    // Sync Master Data
+    try {
+      if (dbUpdates.job_title) {
+        await masterDataService.syncMasterData('job_titles', [dbUpdates.job_title]);
+      }
+      if (dbUpdates.tags && dbUpdates.tags.length > 0) {
+        await masterDataService.syncMasterData('tags', dbUpdates.tags);
+      }
+    } catch (e) {
+      console.error('Error syncing master data tags/titles:', e);
     }
 
     // 3. Relationen speichern
@@ -588,6 +615,8 @@ export const candidateService = {
       job_title,
       city,
       country,
+      nationality,
+      nationality_code,
       is_refugee,
       origin_country,
       salary_expectation_min,
@@ -745,6 +774,30 @@ export const candidateService = {
       query = query.eq('is_refugee', filters.is_refugee);
     }
 
+    if (filters.employment_status && filters.employment_status.length > 0) {
+      query = query.in('employment_status', filters.employment_status);
+    }
+
+    if (filters.notice_period && filters.notice_period.length > 0) {
+      query = query.in('notice_period', filters.notice_period);
+    }
+
+    if (filters.home_office_preference && filters.home_office_preference.length > 0) {
+      query = query.in('home_office_preference', filters.home_office_preference);
+    }
+
+    if (filters.min_vacation_days !== undefined) {
+      query = query.gte('vacation_days', filters.min_vacation_days);
+    }
+
+    if (filters.max_vacation_days !== undefined) {
+      query = query.lte('vacation_days', filters.max_vacation_days);
+    }
+
+    if (filters.tags && filters.tags.length > 0) {
+      query = query.overlaps('tags', filters.tags);
+    }
+
     const { data, error } = await query;
 
     if (error) {
@@ -764,6 +817,13 @@ export const candidateService = {
         profiles(full_name, avatar_url),
         candidate_skills(
           skills(name)
+        ),
+        candidate_languages(
+          proficiency_level,
+          languages(name)
+        ),
+        candidate_qualifications(
+          qualifications(name)
         )
       `)
       .order('created_at', { ascending: false })

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Search, Bell, Globe } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Bell, Globe, User, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser } from '@/contexts/UserContext';
@@ -13,9 +13,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const AppHeader: React.FC = () => {
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const { language, setLanguage } = useLanguage();
-  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-card border-b border-border flex items-center px-6 md:px-8">
@@ -70,18 +70,48 @@ const AppHeader: React.FC = () => {
           <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
         </Button>
 
-        <div className="flex items-center space-x-3">
-          <Avatar className="w-10 h-10">
-            <AvatarImage src={user?.avatar} alt={user?.name || 'Guest'} />
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {user?.name ? user.name.charAt(0) : 'G'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="hidden md:block">
-            <p className="text-body-sm font-medium text-foreground">{user?.name || 'Guest'}</p>
-            <p className="text-caption text-muted-foreground capitalize">{user?.role || 'Visitor'}</p>
-          </div>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center space-x-3 cursor-pointer hover:bg-muted p-1 rounded-lg transition-colors">
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={user?.avatar} alt={user?.name || 'Guest'} />
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {user?.name ? user.name.charAt(0) : 'G'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="hidden md:block">
+                <p className="text-body-sm font-medium text-foreground">{user?.name || 'Guest'}</p>
+                <p className="text-caption text-muted-foreground capitalize">{user?.role || 'Visitor'}</p>
+              </div>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-card border-border w-48">
+            <DropdownMenuItem
+              onClick={() => navigate(user.role === 'candidate' ? '/candidate/profile' : '/employer/profile')}
+              className="cursor-pointer text-foreground hover:bg-muted"
+            >
+              <User className="w-4 h-4 mr-2" />
+              <span>My Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => navigate(user.role === 'candidate' ? '/candidate/settings' : '/employer/settings')}
+              className="cursor-pointer text-foreground hover:bg-muted"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                logout();
+                navigate('/');
+              }}
+              className="cursor-pointer text-error hover:bg-error/10"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              <span>Logout</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

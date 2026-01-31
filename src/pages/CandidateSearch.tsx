@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import CandidateFilters from '@/components/employer/CandidateFilters';
 import CandidateCard from '@/components/employer/CandidateCard';
@@ -25,7 +26,59 @@ const CandidateSearch: React.FC = () => {
   const [myJobs, setMyJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [loadingJobs, setLoadingJobs] = useState(false);
+  const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState<CandidateFiltersType>(() => {
+    // 1. First, check if there are URL parameters (these should override everything)
+    const urlTitle = searchParams.get('title');
+    const urlLocation = searchParams.get('location');
+    const urlRadius = searchParams.get('radius');
+    const urlStatus = searchParams.get('status');
+    const urlSector = searchParams.get('sector');
+    const urlSalaryMin = searchParams.get('salaryMin');
+    const urlBonusMin = searchParams.get('bonusMin');
+    const urlPkwClasses = searchParams.get('pkwClasses');
+    const urlLkwClasses = searchParams.get('lkwClasses');
+
+    const hasUrlParams = urlTitle || urlLocation || urlRadius || urlStatus || urlSector || urlSalaryMin || urlBonusMin;
+
+    if (hasUrlParams) {
+      return {
+        salary: [urlSalaryMin ? parseInt(urlSalaryMin) : 20000, 200000],
+        bonus: [urlBonusMin ? parseInt(urlBonusMin) : 0, 100000],
+        workRadius: urlRadius ? parseInt(urlRadius) : 200,
+        isRefugee: false,
+        originCountry: '',
+        skills: [],
+        qualifications: [],
+        location: {
+          continent: '',
+          country: '',
+          cities: urlLocation ? [urlLocation] : [],
+        },
+        jobTitle: urlTitle || '',
+        jobTypes: [],
+        careerLevel: [],
+        yearsOfExperience: [0, 30],
+        languages: [],
+        contractTerm: [],
+        travelWillingness: [0, 100],
+        drivingLicenses: [
+          ...(urlPkwClasses ? urlPkwClasses.split(',') : []),
+          ...(urlLkwClasses ? urlLkwClasses.split(',') : [])
+        ],
+        candidateStatus: urlStatus !== 'any' ? [urlStatus as any] : [],
+        sector: urlSector !== 'any' ? urlSector || '' : '',
+        enablePartialMatch: false,
+        minMatchThreshold: 50,
+        homeOfficePreference: [],
+        vacationDays: [0, 50],
+        noticePeriod: [],
+        preferredWorkLocations: [],
+        customTags: [],
+      };
+    }
+
+    // 2. fall back to session storage
     const savedFilters = sessionStorage.getItem('candidate_search_filters');
     if (savedFilters) {
       try {
@@ -34,6 +87,8 @@ const CandidateSearch: React.FC = () => {
         console.error('Error parsing saved filters:', e);
       }
     }
+
+    // 3. Default state
     return {
       salary: [20000, 200000],
       bonus: [0, 100000],
@@ -57,6 +112,13 @@ const CandidateSearch: React.FC = () => {
       drivingLicenses: [],
       enablePartialMatch: false,
       minMatchThreshold: 50,
+      sector: '',
+      candidateStatus: [],
+      homeOfficePreference: [],
+      vacationDays: [0, 50],
+      noticePeriod: [],
+      preferredWorkLocations: [],
+      customTags: [],
     };
   });
 
@@ -175,6 +237,31 @@ const CandidateSearch: React.FC = () => {
             searchFilters.origin_country = filters.originCountry;
           }
 
+          if (filters.sector) {
+            searchFilters.sector = filters.sector;
+          }
+
+          if (filters.candidateStatus && filters.candidateStatus.length > 0) {
+            searchFilters.employment_status = filters.candidateStatus;
+          }
+
+          if (filters.homeOfficePreference && filters.homeOfficePreference.length > 0) {
+            searchFilters.home_office_preference = filters.homeOfficePreference;
+          }
+
+          if (filters.vacationDays) {
+            if (filters.vacationDays[0] > 0) searchFilters.min_vacation_days = filters.vacationDays[0];
+            if (filters.vacationDays[1] < 50) searchFilters.max_vacation_days = filters.vacationDays[1];
+          }
+
+          if (filters.noticePeriod && filters.noticePeriod.length > 0) {
+            searchFilters.notice_period = filters.noticePeriod;
+          }
+
+          if (filters.customTags && filters.customTags.length > 0) {
+            searchFilters.tags = filters.customTags;
+          }
+
           if (filters.qualifications && filters.qualifications.length > 0) {
             searchFilters.qualifications = filters.qualifications;
           }
@@ -289,12 +376,12 @@ const CandidateSearch: React.FC = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 layout-md:grid-cols-3 gap-6">
-            <div className="layout-md:col-span-1">
+          <div className="flex flex-col layout-md:flex-row gap-8">
+            <div className="w-full layout-md:w-96 shrink-0">
               <CandidateFilters filters={filters} onFiltersChange={setFilters} />
             </div>
 
-            <div className="layout-md:col-span-2">
+            <div className="flex-1 min-w-0">
               {loading ? (
                 <div className="flex items-center justify-center min-h-[400px]">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -314,7 +401,7 @@ const CandidateSearch: React.FC = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 layout-sm:grid-cols-2 3xl:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 gap-6">
                       {candidates.map((candidate) => (
                         <CandidateCard
                           key={candidate.id}

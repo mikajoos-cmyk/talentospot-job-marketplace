@@ -16,6 +16,7 @@ import { ProjectImageCarousel } from '../../components/shared/ProjectImageCarous
 import { Switch } from '../../components/ui/switch';
 import { refugeeOriginCountries } from '../../data/locationData';
 import { locationData } from '../../data/locationData';
+import { AutocompleteInput } from '../../components/shared/AutocompleteInput';
 import {
   Dialog,
   DialogContent,
@@ -49,6 +50,8 @@ const EditProfile: React.FC = () => {
   // Refs for Datei-Uploads
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const portfolioInputRef = useRef<HTMLInputElement>(null);
+  const cvInputRef = useRef<HTMLInputElement>(null);
+  const [tagInput, setTagInput] = useState('');
 
   const [experience, setExperience] = useState<any[]>([]);
   const [education, setEducation] = useState<any[]>([]);
@@ -56,6 +59,7 @@ const EditProfile: React.FC = () => {
   const [qualifications, setQualifications] = useState<any[]>([]);
   const [requirements, setRequirements] = useState<string[]>([]);
   const [formData, setFormData] = useState<any>(null);
+  const [selectedCountryId, setSelectedCountryId] = useState<string | null>(null);
 
   React.useEffect(() => {
     const fetchProfile = async () => {
@@ -72,11 +76,17 @@ const EditProfile: React.FC = () => {
             nationality: profile.nationality || '',
             gender: profile.gender || '',
             address: profile.address || '',
+            street: profile.street || '',
+            houseNumber: profile.houseNumber || '',
+            postalCode: profile.postalCode || '',
+            state: profile.state || '',
+            tags: profile.tags || [],
+            cvUrl: profile.cvUrl || '',
             location: profile.location || '',
             videoUrl: profile.videoUrl || '',
             avatar: profile.avatar || '',
             title: profile.title || '',
-            sector: profile.sector || '',
+            sector: profile.sector === 'Technology' ? 'IT' : (profile.sector || ''),
             careerLevel: profile.careerLevel || '',
             status: profile.employmentStatus || '',
             jobTypes: profile.jobTypes || [],
@@ -87,14 +97,15 @@ const EditProfile: React.FC = () => {
             entryBonus: profile.conditions.entryBonus || 0,
             vacationDays: profile.conditions.vacationDays || 0,
             workRadius: profile.conditions.workRadius || 0,
-            homeOfficePreference: profile.conditions.homeOfficePreference || 'none',
+            homeOfficePreference: (!profile.conditions.homeOfficePreference || profile.conditions.homeOfficePreference === 'none') ? 'no' : (profile.conditions.homeOfficePreference === 'full' ? 'yes' : profile.conditions.homeOfficePreference),
             description: profile.description || '',
             availableFrom: profile.availableFrom || '',
             currency: profile.currency || 'EUR',
             isRefugee: profile.isRefugee || false,
             originCountry: profile.originCountry || '',
-            contractTermPreference: profile.contractTermPreference || [],
+            contractTermPreference: (profile.contractTermPreference || []).map((t: string) => t === 'permanent' ? 'unlimited' : t),
             yearsOfExperience: profile.yearsOfExperience || 0,
+            nationalityCode: profile.nationalityCode || '',
           });
           setExperience(profile.experience || []);
           setEducation(profile.education || []);
@@ -150,6 +161,7 @@ const EditProfile: React.FC = () => {
     startDate: '',
     endDate: '',
     isCurrent: false,
+    description: '',
   });
 
   const [skillInput, setSkillInput] = useState('');
@@ -255,6 +267,42 @@ const EditProfile: React.FC = () => {
     }
   };
 
+  const handleCVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !user?.id) return;
+    const file = files[0];
+
+    setUploading(true);
+    try {
+      const publicUrl = await storageService.uploadCV(user.id, file);
+      setFormData((prev: any) => ({ ...prev, cvUrl: publicUrl }));
+      showToast({ title: 'Success', description: 'CV uploaded successfully' });
+    } catch (error) {
+      console.error('CV upload failed:', error);
+      showToast({ title: 'Error', description: 'CV upload failed', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (event.target) event.target.value = '';
+    }
+  };
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
+      setFormData({
+        ...formData,
+        tags: [...formData.tags, tagInput.trim()]
+      });
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setFormData({
+      ...formData,
+      tags: formData.tags.filter((t: string) => t !== tag)
+    });
+  };
+
   const handleAddSkill = () => {
     if (skillInput.trim() && !skills.some(s => s.name === skillInput.trim())) {
       setSkills([...skills, { name: skillInput.trim(), percentage: 50 }]);
@@ -352,7 +400,7 @@ const EditProfile: React.FC = () => {
       setEducation([...education, edu]);
     }
 
-    setNewEducation({ degree: '', institution: '', startDate: '', endDate: '', isCurrent: false });
+    setNewEducation({ degree: '', institution: '', startDate: '', endDate: '', isCurrent: false, description: '' });
     setEditingEducationId(null);
     setEducationModalOpen(false);
     showToast({
@@ -368,6 +416,7 @@ const EditProfile: React.FC = () => {
       startDate: edu.startDate,
       endDate: edu.endDate || '',
       isCurrent: !edu.endDate,
+      description: edu.description || '',
     });
     setEditingEducationId(edu.id);
     setEducationModalOpen(true);
@@ -531,8 +580,12 @@ const EditProfile: React.FC = () => {
         gender: formData.gender,
         nationality: formData.nationality,
         address: formData.address,
-        city: formData.location.split(', ')[0] || '',
-        country: formData.location.split(', ')[1]?.trim() || '',
+        street: formData.street,
+        house_number: formData.houseNumber,
+        postal_code: formData.postalCode,
+        state: formData.state,
+        city: formData.city,
+        country: formData.country,
         job_title: formData.title,
         sector: formData.sector,
         career_level: formData.careerLevel,
@@ -547,8 +600,10 @@ const EditProfile: React.FC = () => {
         home_office_preference: formData.homeOfficePreference,
         available_from: formData.availableFrom,
         video_url: formData.videoUrl,
+        cv_url: formData.cvUrl,
         description: formData.description,
         currency: formData.currency,
+        tags: formData.tags,
 
         // --- Arrays & Listen ---
         jobTypes: formData.jobTypes,
@@ -570,7 +625,8 @@ const EditProfile: React.FC = () => {
         isRefugee: formData.isRefugee,
         originCountry: formData.isRefugee ? formData.originCountry : null,
         contractTermPreference: formData.contractTermPreference,
-        yearsOfExperience: formData.yearsOfExperience
+        yearsOfExperience: formData.yearsOfExperience,
+        nationalityCode: formData.nationalityCode
       };
 
       await candidateService.updateCandidateProfile(user.id, updates);
@@ -716,11 +772,32 @@ const EditProfile: React.FC = () => {
                 <Label htmlFor="nationality" className="text-body-sm font-medium text-foreground mb-2 block">
                   Nationality
                 </Label>
-                <Input
+                <AutocompleteInput
+                  category="nationalities"
                   id="nationality"
-                  type="text"
+                  placeholder="e.g., German"
                   value={formData.nationality}
-                  onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
+                  onChange={(val) => setFormData({ ...formData, nationality: val })}
+                  onSelect={(suggestion: any) => {
+                    // Map nationality to country code for flag display
+                    const nationalityToCode: Record<string, string> = {
+                      'German': 'DE', 'French': 'FR', 'Spanish': 'ES', 'Italian': 'IT',
+                      'British': 'GB', 'English': 'GB', 'Dutch': 'NL', 'Austrian': 'AT',
+                      'Swiss': 'CH', 'Belgian': 'BE', 'Polish': 'PL', 'Portuguese': 'PT',
+                      'Greek': 'GR', 'Swedish': 'SE', 'Norwegian': 'NO', 'Danish': 'DK',
+                      'Finnish': 'FI', 'Irish': 'IE', 'Czech': 'CZ', 'Hungarian': 'HU',
+                      'Romanian': 'RO', 'Bulgarian': 'BG', 'Croatian': 'HR', 'Slovak': 'SK',
+                      'Slovenian': 'SI', 'American': 'US', 'Canadian': 'CA', 'Mexican': 'MX',
+                      'Brazilian': 'BR', 'Argentine': 'AR', 'Argentinian': 'AR',
+                      'Chinese': 'CN', 'Japanese': 'JP', 'Korean': 'KR', 'Indian': 'IN',
+                      'Turkish': 'TR', 'Russian': 'RU', 'Ukrainian': 'UA', 'Syrian': 'SY',
+                      'Afghan': 'AF', 'Iraqi': 'IQ', 'Iranian': 'IR', 'Lebanese': 'LB',
+                      'Egyptian': 'EG', 'Moroccan': 'MA', 'Algerian': 'DZ', 'Tunisian': 'TN',
+                      'Nigerian': 'NG', 'South African': 'ZA', 'Australian': 'AU', 'New Zealander': 'NZ'
+                    };
+                    const code = nationalityToCode[suggestion.name] || '';
+                    setFormData({ ...formData, nationality: suggestion.name, nationalityCode: code });
+                  }}
                   className="bg-background text-foreground border-border"
                 />
               </div>
@@ -742,26 +819,92 @@ const EditProfile: React.FC = () => {
                 </Select>
               </div>
 
-              <div className="md:col-span-2">
-                <Label htmlFor="address" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Address
-                </Label>
-                <Input
-                  id="address"
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="bg-background text-foreground border-border"
-                />
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2">
+                  <Label htmlFor="street" className="text-body-sm font-medium text-foreground mb-2 block">
+                    Street
+                  </Label>
+                  <Input
+                    id="street"
+                    type="text"
+                    placeholder="e.g., Main Street"
+                    value={formData.street}
+                    onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                    className="bg-background text-foreground border-border"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="houseNumber" className="text-body-sm font-medium text-foreground mb-2 block">
+                    House Number
+                  </Label>
+                  <Input
+                    id="houseNumber"
+                    type="text"
+                    placeholder="e.g., 12A"
+                    value={formData.houseNumber}
+                    onChange={(e) => setFormData({ ...formData, houseNumber: e.target.value })}
+                    className="bg-background text-foreground border-border"
+                  />
+                </div>
+              </div>
+
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <Label htmlFor="postalCode" className="text-body-sm font-medium text-foreground mb-2 block">
+                    ZIP Code
+                  </Label>
+                  <Input
+                    id="postalCode"
+                    type="text"
+                    placeholder="e.g., 10115"
+                    value={formData.postalCode}
+                    onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                    className="bg-background text-foreground border-border"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="city" className="text-body-sm font-medium text-foreground mb-2 block">
+                    City
+                  </Label>
+                  <Input
+                    id="city"
+                    type="text"
+                    placeholder="e.g., Berlin"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="bg-background text-foreground border-border"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="state" className="text-body-sm font-medium text-foreground mb-2 block">
+                    State / Bundesland
+                  </Label>
+                  <AutocompleteInput
+                    category="states"
+                    id="state"
+                    placeholder="e.g., Berlin"
+                    value={formData.state}
+                    filterId={selectedCountryId || undefined}
+                    onChange={(val) => setFormData({ ...formData, state: val })}
+                    className="bg-background text-foreground border-border"
+                  />
+                </div>
               </div>
 
               <div>
-                <Label htmlFor="location" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Current Location
+                <Label htmlFor="country" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Country
                 </Label>
-                <Input
-                  id="location"
-                  type="text"
+                <AutocompleteInput
+                  category="countries"
+                  id="country"
+                  placeholder="e.g., Germany"
+                  value={formData.country}
+                  onChange={(val) => setFormData({ ...formData, country: val })}
+                  onSelect={(suggestion: any) => {
+                    setSelectedCountryId(suggestion.id);
+                    setFormData({ ...formData, country: suggestion.name, state: '', countryCode: suggestion.code });
+                  }}
                   className="bg-background text-foreground border-border"
                 />
               </div>
@@ -832,6 +975,51 @@ const EditProfile: React.FC = () => {
                 Add a YouTube video to introduce yourself to potential employers
               </p>
             </div>
+
+            <div className="pt-4 border-t border-border">
+              <Label className="text-body-sm font-medium text-foreground mb-4 block">
+                Attachments
+              </Label>
+              <div className="flex items-center space-x-6">
+                <div className="flex-1 p-4 border-2 border-dashed border-border rounded-lg bg-muted/50">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    {formData.cvUrl ? (
+                      <div className="flex items-center space-x-2 text-primary">
+                        <Plus className="w-5 h-5" />
+                        <span className="text-body-sm font-medium">CV already uploaded</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <Plus className="w-8 h-8 text-muted-foreground mb-2" />
+                        <p className="text-body-sm text-muted-foreground font-medium">No CV uploaded yet</p>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      ref={cvInputRef}
+                      className="hidden"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleCVUpload}
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => cvInputRef.current?.click()}
+                      disabled={uploading}
+                      className="bg-background text-foreground border-border hover:bg-muted font-normal mt-2"
+                    >
+                      {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" strokeWidth={1.5} />}
+                      {formData.cvUrl ? 'Update CV' : 'Upload CV'}
+                    </Button>
+                  </div>
+                </div>
+                <div className="w-1/3">
+                  <p className="text-caption text-muted-foreground">
+                    Upload your latest Curriculum Vitae (CV).
+                    Accepted formats: PDF, DOC, DOCX. Max size: 10MB.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </Card>
 
@@ -845,11 +1033,11 @@ const EditProfile: React.FC = () => {
                 <Label htmlFor="title" className="text-body-sm font-medium text-foreground mb-2 block">
                   Job Title <span className="text-error">*</span>
                 </Label>
-                <Input
+                <AutocompleteInput
+                  category="job_titles"
                   id="title"
-                  type="text"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(val) => setFormData({ ...formData, title: val })}
                   className="bg-background text-foreground border-border"
                 />
               </div>
@@ -876,14 +1064,16 @@ const EditProfile: React.FC = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Technology">Technology</SelectItem>
-                    <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="IT">IT</SelectItem>
                     <SelectItem value="Healthcare">Healthcare</SelectItem>
-                    <SelectItem value="Education">Education</SelectItem>
-                    <SelectItem value="Marketing">Marketing</SelectItem>
-                    <SelectItem value="Design">Design</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
                     <SelectItem value="Engineering">Engineering</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
                     <SelectItem value="Sales">Sales</SelectItem>
+                    <SelectItem value="Education">Education</SelectItem>
+                    <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                    <SelectItem value="Retail">Retail</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -916,12 +1106,17 @@ const EditProfile: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {/* Werte müssen exakt mit DB Constraints übereinstimmen */}
-                    <SelectItem value="employed_full_time">Employed (Full-time)</SelectItem>
-                    <SelectItem value="employed_part_time">Employed (Part-time)</SelectItem>
-                    <SelectItem value="unemployed">Unemployed</SelectItem>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="self_employed">Freelance / Self-Employed</SelectItem>
-                    <SelectItem value="retired">Retired</SelectItem>
+                    <SelectItem value="Unemployed">Unemployed</SelectItem>
+                    <SelectItem value="Employed">Employed</SelectItem>
+                    <SelectItem value="Trainee">Trainee</SelectItem>
+                    <SelectItem value="Apprentice">Apprentice</SelectItem>
+                    <SelectItem value="Pupil">Pupil</SelectItem>
+                    <SelectItem value="Student">Student</SelectItem>
+                    <SelectItem value="Civil Servant">Civil Servant</SelectItem>
+                    <SelectItem value="Freelancer">Freelancer</SelectItem>
+                    <SelectItem value="Entrepreneur">Entrepreneur</SelectItem>
+                    <SelectItem value="Retired">Retired</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -932,12 +1127,12 @@ const EditProfile: React.FC = () => {
                 Skills
               </Label>
               <div className="flex space-x-2 mb-4">
-                <Input
-                  type="text"
-                  placeholder="Add skill name..."
+                <AutocompleteInput
+                  category="skills"
                   value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
+                  onChange={setSkillInput}
+                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddSkill()}
+                  placeholder="Add skill name..."
                   className="flex-1 bg-background text-foreground border-border"
                 />
                 <Button
@@ -981,12 +1176,12 @@ const EditProfile: React.FC = () => {
                 Qualifications
               </Label>
               <div className="flex space-x-2 mb-3">
-                <Input
-                  type="text"
-                  placeholder="Add qualification..."
+                <AutocompleteInput
+                  category="qualifications"
                   value={qualificationInput}
-                  onChange={(e) => setQualificationInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddQualification()}
+                  onChange={setQualificationInput}
+                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddQualification()}
+                  placeholder="Add qualification..."
                   className="flex-1 bg-background text-foreground border-border"
                 />
                 <Button
@@ -1021,12 +1216,12 @@ const EditProfile: React.FC = () => {
                 Requirements
               </Label>
               <div className="flex space-x-2 mb-3">
-                <Input
-                  type="text"
-                  placeholder="Add requirement..."
+                <AutocompleteInput
+                  category="requirements"
                   value={requirementInput}
-                  onChange={(e) => setRequirementInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddRequirement()}
+                  onChange={setRequirementInput}
+                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddRequirement()}
+                  placeholder="Add requirement..."
                   className="flex-1 bg-background text-foreground border-border"
                 />
                 <Button
@@ -1061,12 +1256,12 @@ const EditProfile: React.FC = () => {
                 Languages
               </Label>
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
-                <Input
-                  type="text"
-                  placeholder="Add language..."
+                <AutocompleteInput
+                  category="languages"
                   value={languageInput}
-                  onChange={(e) => setLanguageInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddLanguage()}
+                  onChange={setLanguageInput}
+                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddLanguage()}
+                  placeholder="Add language..."
                   className="flex-1 bg-background text-foreground border-border"
                 />
                 <Select value={languageLevel} onValueChange={setLanguageLevel}>
@@ -1104,6 +1299,46 @@ const EditProfile: React.FC = () => {
                       aria-label={`Remove ${language.name}`}
                     >
                       <X className="w-4 h-4" strokeWidth={2} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                Additional Tags (e.g., "Handicap accessible", "Pets allowed")
+              </Label>
+              <div className="flex space-x-2 mb-3">
+                <AutocompleteInput
+                  category="tags"
+                  value={tagInput}
+                  onChange={setTagInput}
+                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddTag()}
+                  placeholder="Add a custom tag..."
+                  className="flex-1 bg-background text-foreground border-border"
+                />
+                <Button
+                  size="icon"
+                  onClick={handleAddTag}
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                >
+                  <Plus className="w-5 h-5" strokeWidth={2} />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {formData.tags.map((tag: string) => (
+                  <div
+                    key={tag}
+                    className="flex items-center space-x-1 px-3 py-1 bg-muted text-foreground border border-border rounded-full text-body-sm"
+                  >
+                    <span>{tag}</span>
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      className="hover:text-error"
+                      aria-label={`Remove ${tag}`}
+                    >
+                      <X className="w-3 h-3" strokeWidth={2} />
                     </button>
                   </div>
                 ))}
@@ -1180,7 +1415,7 @@ const EditProfile: React.FC = () => {
                 Preferred Job Types
               </Label>
               <div className="flex flex-wrap gap-3">
-                {['full-time', 'part-time', 'contract', 'freelance', 'remote'].map((type) => (
+                {['full-time', 'part-time', 'apprenticeship', 'internship', 'traineeship', 'freelance', 'contract'].map((type) => (
                   <button
                     key={type}
                     type="button"
@@ -1201,14 +1436,19 @@ const EditProfile: React.FC = () => {
                 <Label htmlFor="noticePeriod" className="text-body-sm font-medium text-foreground mb-2 block">
                   Notice Period
                 </Label>
-                <Input
-                  id="noticePeriod"
-                  type="text"
-                  placeholder="e.g., 3 months, Immediate"
-                  value={formData.noticePeriod}
-                  onChange={(e) => setFormData({ ...formData, noticePeriod: e.target.value })}
-                  className="bg-background text-foreground border-border"
-                />
+                <Select value={formData.noticePeriod} onValueChange={(value) => setFormData({ ...formData, noticePeriod: value })}>
+                  <SelectTrigger className="bg-background text-foreground border-border">
+                    <SelectValue placeholder="Select notice period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="immediate">Immediate</SelectItem>
+                    <SelectItem value="1-week">1 Week</SelectItem>
+                    <SelectItem value="2-weeks">2 Weeks</SelectItem>
+                    <SelectItem value="1-month">1 Month</SelectItem>
+                    <SelectItem value="2-months">2 Months</SelectItem>
+                    <SelectItem value="3-months">3 Months</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -1239,9 +1479,9 @@ const EditProfile: React.FC = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No Home Office</SelectItem>
+                    <SelectItem value="no">No Home Office</SelectItem>
                     <SelectItem value="hybrid">Hybrid</SelectItem>
-                    <SelectItem value="full">Full Remote</SelectItem>
+                    <SelectItem value="yes">Full Remote (Yes)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1252,7 +1492,7 @@ const EditProfile: React.FC = () => {
                 Preferred Contract Terms
               </Label>
               <div className="flex flex-wrap gap-3">
-                {['permanent', 'temporary', 'contract', 'freelance', 'internship'].map((term) => (
+                {['unlimited', 'temporary'].map((term) => (
                   <button
                     key={term}
                     type="button"
@@ -1523,7 +1763,7 @@ const EditProfile: React.FC = () => {
             <Button
               onClick={() => {
                 setEditingEducationId(null);
-                setNewEducation({ degree: '', institution: '', startDate: '', endDate: '', isCurrent: false });
+                setNewEducation({ degree: '', institution: '', startDate: '', endDate: '', isCurrent: false, description: '' });
                 setEducationModalOpen(true);
               }}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
@@ -1864,6 +2104,19 @@ const EditProfile: React.FC = () => {
                 I am currently studying here
               </Label>
             </div>
+
+            <div>
+              <Label htmlFor="eduDescription" className="text-body-sm font-medium text-foreground mb-2 block">
+                Description
+              </Label>
+              <textarea
+                id="eduDescription"
+                placeholder="Describe your studies, main subjects, or achievements..."
+                value={newEducation.description}
+                onChange={(e) => setNewEducation({ ...newEducation, description: e.target.value })}
+                className="w-full min-h-[120px] px-3 py-2 rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end space-x-4">
@@ -1872,7 +2125,7 @@ const EditProfile: React.FC = () => {
               onClick={() => {
                 setEducationModalOpen(false);
                 setEditingEducationId(null);
-                setNewEducation({ degree: '', institution: '', startDate: '', endDate: '', isCurrent: false });
+                setNewEducation({ degree: '', institution: '', startDate: '', endDate: '', isCurrent: false, description: '' });
               }}
               className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
             >

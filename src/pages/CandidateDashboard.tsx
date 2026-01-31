@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import DashboardStatsCard from '@/components/candidate/DashboardStatsCard';
 import ProfileViewsChart from '@/components/candidate/ProfileViewsChart';
 import ActivityFeed from '@/components/candidate/ActivityFeed';
-import { Briefcase, Eye, Star, CheckCircle, MapPin, DollarSign, Calendar, Building2, Loader2, Users } from 'lucide-react';
+import { Briefcase, Eye, Star, CheckCircle, MapPin, Calendar, Building2, Loader2, Users, Mail, Bell } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -39,12 +39,13 @@ const CandidateDashboard: React.FC = () => {
     shortlisted: 0,
     invitations: 0,
     savedJobs: 0,
+    dataRequests: 0,
   });
 
   const [applications, setApplications] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
   const [savedJobs, setSavedJobs] = useState<any[]>([]);
-  const [profile, setProfile] = useState<any>(null);
+  // const [profile, setProfile] = useState<any>(null);
   const [viewStats, setViewStats] = useState<any[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
 
@@ -56,7 +57,7 @@ const CandidateDashboard: React.FC = () => {
         setLoading(true);
 
         const candidateProfile = user.profile || await candidateService.getCandidateProfile(user.id);
-        setProfile(candidateProfile);
+        // setProfile(candidateProfile);
 
         const [appsData, invitationsData, savedJobsData, followersData, dataRequests, statsData, totalViewsCount] = await Promise.all([
           applicationsService.getApplicationsByCandidate(candidateProfile.id),
@@ -85,6 +86,7 @@ const CandidateDashboard: React.FC = () => {
           shortlisted: followersData?.length || 0,
           invitations: filteredInvitations.length,
           savedJobs: savedJobsData?.length || 0,
+          dataRequests: dataRequests?.length || 0,
         });
 
         // Compute activities
@@ -201,9 +203,18 @@ const CandidateDashboard: React.FC = () => {
   return (
     <AppLayout>
       <div className="space-y-8">
-        <div>
-          <h1 className="text-h1 font-heading text-foreground mb-2">Dashboard</h1>
-          <p className="text-body text-muted-foreground">Welcome back! Here's your activity overview.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-h1 font-heading text-foreground mb-2">Dashboard</h1>
+            <p className="text-body text-muted-foreground">Welcome back! Here's your activity overview.</p>
+          </div>
+          <Button
+            onClick={() => navigate('/candidate/settings#notifications')}
+            className="bg-primary text-primary-foreground hover:bg-primary-hover flex items-center gap-2"
+          >
+            <Bell className="w-4 h-4" />
+            Job Alarm
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -220,6 +231,13 @@ const CandidateDashboard: React.FC = () => {
             value={stats.invitations}
             color="success"
             onClick={() => handleOpenModal('invitations')}
+          />
+          <DashboardStatsCard
+            icon={Mail}
+            label="Data Requests"
+            value={stats.dataRequests}
+            color="info"
+            onClick={() => navigate('/candidate/messages')}
           />
           <DashboardStatsCard
             icon={Eye}

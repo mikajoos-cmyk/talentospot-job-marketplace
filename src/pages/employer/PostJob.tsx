@@ -10,11 +10,13 @@ import RichTextEditor from '../../components/ui/rich-text-editor';
 import { useToast } from '../../contexts/ToastContext';
 import { useUser } from '../../contexts/UserContext';
 import { jobsService } from '../../services/jobs.service';
+import { masterDataService } from '../../services/master-data.service';
 import { locationData } from '../../data/locationData';
 import { X, Plus, ArrowLeft, Loader2, Home } from 'lucide-react';
 import { Switch } from '../../components/ui/switch';
 import { Slider } from '../../components/ui/slider';
 import { getLanguageLevelOptions } from '../../utils/language-levels';
+import { AutocompleteInput } from '../../components/shared/AutocompleteInput';
 
 const PostJob: React.FC = () => {
   const navigate = useNavigate();
@@ -41,6 +43,7 @@ const PostJob: React.FC = () => {
     experienceYears: 0,
     drivingLicenses: [] as string[],
     contractTerms: [] as string[],
+    vacationDays: '',
   });
 
   const [languages, setLanguages] = useState<{ name: string; level: string }[]>([]);
@@ -50,6 +53,8 @@ const PostJob: React.FC = () => {
   const [qualificationInput, setQualificationInput] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState('');
+  const [benefits, setBenefits] = useState<string[]>([]);
+  const [benefitInput, setBenefitInput] = useState('');
 
   const continents = Object.keys(locationData);
   const countries = formData.location.continent ? Object.keys(locationData[formData.location.continent] || {}) : [];
@@ -90,6 +95,17 @@ const PostJob: React.FC = () => {
     setSkills(skills.filter(s => s !== skill));
   };
 
+  const handleAddBenefit = () => {
+    if (benefitInput.trim() && !benefits.includes(benefitInput.trim())) {
+      setBenefits([...benefits, benefitInput.trim()]);
+      setBenefitInput('');
+    }
+  };
+
+  const handleRemoveBenefit = (benefit: string) => {
+    setBenefits(benefits.filter(b => b !== benefit));
+  };
+
   const saveJob = async (status: 'draft' | 'active') => {
     if (!formData.title || !formData.description) {
       showToast({
@@ -111,8 +127,7 @@ const PostJob: React.FC = () => {
 
     setIsSaving(true);
     try {
-
-      await jobsService.createJob({
+      const jobData = {
         employer_id: user.id,
         title: formData.title,
         description: formData.description,
@@ -133,8 +148,22 @@ const PostJob: React.FC = () => {
         experience_years: formData.experienceYears,
         driving_licenses: formData.drivingLicenses,
         contract_terms: formData.contractTerms,
+        vacation_days: formData.vacationDays ? parseInt(formData.vacationDays) : undefined,
+        benefits: benefits,
         status: status,
-      });
+      };
+
+      console.log('Sending job data:', jobData);
+
+      // Sync benefits to master data for suggestions
+      // Don't block saving if this fails due to permissions
+      try {
+        await masterDataService.syncMasterData('tags', benefits);
+      } catch (err) {
+        console.warn('Failed to sync benefits to master data:', err);
+      }
+
+      await jobsService.createJob(jobData);
 
       showToast({
         title: status === 'active' ? 'Job Published' : 'Draft Saved',
@@ -185,12 +214,12 @@ const PostJob: React.FC = () => {
               <Label htmlFor="title" className="text-body-sm font-medium text-foreground mb-2 block">
                 Job Title <span className="text-error">*</span>
               </Label>
-              <Input
+              <AutocompleteInput
+                category="job_titles"
                 id="title"
-                type="text"
-                placeholder="e.g., Senior Frontend Developer"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(val) => setFormData({ ...formData, title: val })}
+                placeholder="e.g., Senior Frontend Developer"
                 className="bg-background text-foreground border-border"
               />
             </div>
@@ -425,6 +454,20 @@ const PostJob: React.FC = () => {
                   className="bg-background text-foreground border-border"
                 />
               </div>
+
+              <div>
+                <Label htmlFor="vacationDays" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Vacation Days (per year)
+                </Label>
+                <Input
+                  id="vacationDays"
+                  type="number"
+                  placeholder="e.g., 25"
+                  value={formData.vacationDays}
+                  onChange={(e) => setFormData({ ...formData, vacationDays: e.target.value })}
+                  className="bg-background text-foreground border-border"
+                />
+              </div>
             </div>
 
             <div>
@@ -432,12 +475,12 @@ const PostJob: React.FC = () => {
                 Required Languages
               </Label>
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
-                <Input
-                  type="text"
-                  placeholder="Add language..."
+                <AutocompleteInput
+                  category="languages"
                   value={languageInput}
-                  onChange={(e) => setLanguageInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddLanguage()}
+                  onChange={setLanguageInput}
+                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddLanguage()}
+                  placeholder="Add language..."
                   className="flex-1 bg-background text-foreground border-border"
                 />
                 <Select value={languageLevel} onValueChange={setLanguageLevel}>
@@ -482,12 +525,12 @@ const PostJob: React.FC = () => {
                 Required Qualifications
               </Label>
               <div className="flex space-x-2 mb-3">
-                <Input
-                  type="text"
-                  placeholder="Add qualification..."
+                <AutocompleteInput
+                  category="qualifications"
                   value={qualificationInput}
-                  onChange={(e) => setQualificationInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddQualification()}
+                  onChange={setQualificationInput}
+                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddQualification()}
+                  placeholder="Add qualification..."
                   className="flex-1 bg-background text-foreground border-border"
                 />
                 <Button
@@ -579,12 +622,12 @@ const PostJob: React.FC = () => {
                 Required Skills
               </Label>
               <div className="flex space-x-2 mb-3">
-                <Input
-                  type="text"
-                  placeholder="Add skill..."
+                <AutocompleteInput
+                  category="skills"
                   value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
+                  onChange={setSkillInput}
+                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddSkill()}
+                  placeholder="Add skill..."
                   className="flex-1 bg-background text-foreground border-border"
                 />
                 <Button
@@ -606,6 +649,51 @@ const PostJob: React.FC = () => {
                       onClick={() => handleRemoveSkill(skill)}
                       className="hover:text-primary-hover"
                       aria-label={`Remove ${skill}`}
+                    >
+                      <X className="w-4 h-4" strokeWidth={2} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+
+
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                Benefits / Additional Conditions (Tags)
+              </Label>
+              <p className="text-caption text-muted-foreground mb-2">
+                e.g., Gym membership, Free snacks, Pet friendly, Barrier-free
+              </p>
+              <div className="flex space-x-2 mb-3">
+                <AutocompleteInput
+                  category="tags"
+                  value={benefitInput}
+                  onChange={setBenefitInput}
+                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddBenefit()}
+                  placeholder="Add benefit..."
+                  className="flex-1 bg-background text-foreground border-border"
+                />
+                <Button
+                  size="icon"
+                  onClick={handleAddBenefit}
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                >
+                  <Plus className="w-5 h-5" strokeWidth={2} />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {benefits.map((benefit) => (
+                  <div
+                    key={benefit}
+                    className="flex items-center space-x-1 px-3 py-1 bg-secondary/10 text-secondary rounded-full text-body-sm"
+                  >
+                    <span>{benefit}</span>
+                    <button
+                      onClick={() => handleRemoveBenefit(benefit)}
+                      className="hover:text-secondary-hover"
+                      aria-label={`Remove ${benefit}`}
                     >
                       <X className="w-4 h-4" strokeWidth={2} />
                     </button>

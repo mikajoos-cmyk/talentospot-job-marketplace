@@ -47,7 +47,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, fullHeight = false, noP
       <div className={`${!isMobile && !isPublic ? (sidebarCollapsed ? 'md:ml-16' : 'md:ml-64') : ''} transition-all duration-normal ${fullHeight ? 'h-screen flex flex-col' : ''}`}>
         {isPublic ? <PublicHeader /> : <AppHeader />}
 
-        <main className={`${noPadding ? 'p-0' : 'p-6 md:p-8'} ${fullHeight ? 'flex-1 overflow-hidden' : 'pb-24 md:pb-8'} ${isPublic ? 'container mx-auto max-w-7xl pt-12' : ''}`}>
+        <main className={`${noPadding ? 'p-0' : 'p-6 md:p-8'} ${fullHeight ? 'flex-1 overflow-hidden' : 'pb-24 md:pb-8'} ${isPublic ? 'container mx-auto max-w-[1600px] pt-12' : ''}`}>
           {children}
         </main>
       </div>

@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import Footer from '@/components/layout/Footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import RichTextEditor from '@/components/ui/rich-text-editor';
-import { MapPin, DollarSign, Briefcase, Search, Bookmark, Building2, Loader2 } from 'lucide-react';
+import { Briefcase, Loader2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
 import { jobsService } from '@/services/jobs.service';
@@ -23,6 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import JobFilters, { JobFiltersState } from '@/components/candidate/JobFilters';
 import { calculateJobMatchScore } from '@/utils/match-utils';
+import JobListCard from '@/components/landing/JobListCard';
 
 const JobSearch: React.FC = () => {
   const navigate = useNavigate();
@@ -38,7 +38,43 @@ const JobSearch: React.FC = () => {
   const [appliedJobIds, setAppliedJobIds] = useState<string[]>([]);
   const [applying, setApplying] = useState(false);
 
+  const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState<JobFiltersState>(() => {
+    // 1. Check for URL parameters first
+    const urlTitle = searchParams.get('title');
+    const urlLocation = searchParams.get('location');
+    const urlSector = searchParams.get('sector');
+    const urlSalaryMin = searchParams.get('salaryMin');
+
+    const hasUrlParams = urlTitle || urlLocation || urlSector || urlSalaryMin;
+
+    if (hasUrlParams) {
+      return {
+        title: urlTitle || '',
+        sector: urlSector || '',
+        continent: '',
+        country: '',
+        city: urlLocation || '',
+        employmentTypes: [],
+        salaryRange: [urlSalaryMin ? parseInt(urlSalaryMin) : 0, 250000],
+        minEntryBonus: 0,
+        contractDuration: '',
+        skills: [],
+        qualifications: [],
+        languages: [],
+        careerLevel: '',
+        experienceYears: null,
+        drivingLicenses: [],
+        contractTerms: [],
+        homeOffice: false,
+        enableFlexibleMatch: false,
+        enablePartialMatch: false,
+        minMatchThreshold: 50,
+        benefits: [],
+      };
+    }
+
+    // 2. Fall back to session storage
     const savedFilters = sessionStorage.getItem('job_search_filters');
     if (savedFilters) {
       try {
@@ -47,8 +83,11 @@ const JobSearch: React.FC = () => {
         console.error('Error parsing saved filters:', e);
       }
     }
+
+    // 3. Default state
     return {
       title: '',
+      sector: '',
       continent: '',
       country: '',
       city: '',
@@ -67,6 +106,8 @@ const JobSearch: React.FC = () => {
       enableFlexibleMatch: false,
       enablePartialMatch: false,
       minMatchThreshold: 50,
+      minVacationDays: parseInt(searchParams.get('minVacationDays') || '0'),
+      benefits: [],
     };
   });
 
@@ -92,6 +133,7 @@ const JobSearch: React.FC = () => {
 
       if (!useClientSideFiltering) {
         if (currentFilters.title) searchParams.title = currentFilters.title;
+        if (currentFilters.sector && currentFilters.sector !== 'all') searchParams.sector = currentFilters.sector;
         if (currentFilters.continent && currentFilters.continent !== 'all') searchParams.continent = currentFilters.continent;
         if (currentFilters.country && currentFilters.country !== 'all') searchParams.country = currentFilters.country;
         if (currentFilters.city && currentFilters.city !== 'all') searchParams.city = currentFilters.city;
@@ -181,6 +223,7 @@ const JobSearch: React.FC = () => {
       // Map profile fields to filters
       const matchedFilters: JobFiltersState = {
         title: profile.title || '',
+        sector: '',
         continent: profile.preferredLocations?.[0]?.continent || '',
         country: profile.preferredLocations?.[0]?.country || '',
         city: profile.preferredLocations?.[0]?.city || '',
@@ -201,6 +244,8 @@ const JobSearch: React.FC = () => {
         enableFlexibleMatch: filters.enableFlexibleMatch,
         enablePartialMatch: filters.enablePartialMatch,
         minMatchThreshold: filters.minMatchThreshold,
+        benefits: profile.tags || [],
+        minVacationDays: 0,
       };
 
       setFilters(matchedFilters);
@@ -221,6 +266,7 @@ const JobSearch: React.FC = () => {
   const handleResetFilters = () => {
     setFilters({
       title: '',
+      sector: '',
       continent: '',
       country: '',
       city: '',
@@ -239,6 +285,8 @@ const JobSearch: React.FC = () => {
       enableFlexibleMatch: false,
       enablePartialMatch: false,
       minMatchThreshold: 50,
+      benefits: [],
+      minVacationDays: 0,
     });
     setSearchQuery('');
   };
@@ -399,7 +447,7 @@ const JobSearch: React.FC = () => {
 
           <div className="flex flex-col layout-md:flex-row gap-8">
             {(user.role === 'guest' || user.role === 'candidate') && (
-              <div className="w-full layout-md:w-96 flex-shrink-0">
+              <div className="w-full layout-md:w-96 shrink-0">
                 <JobFilters
                   filters={filters}
                   onFiltersChange={setFilters}
@@ -409,7 +457,7 @@ const JobSearch: React.FC = () => {
               </div>
             )}
 
-            <div className="flex-1 space-y-8">
+            <div className="flex-1 min-w-0 space-y-8">
 
 
               <div>
@@ -432,119 +480,18 @@ const JobSearch: React.FC = () => {
                         </p>
                       </Card>
                     ) : (
-                      <div className="grid grid-cols-1 layout-sm:grid-cols-2 3xl:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 gap-6">
                         {filteredJobs.map((job) => (
-                          <Card key={job.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 flex flex-col">
-                            <div className="space-y-4">
-                              <div className="flex items-start justify-between">
-                                <div
-                                  className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/companies/${job.employer_id}`);
-                                  }}
-                                >
-                                  {job.employer_profiles?.logo_url ? (
-                                    <img
-                                      src={job.employer_profiles.logo_url}
-                                      alt={job.employer_profiles.company_name}
-                                      className="w-full h-full rounded-lg object-cover"
-                                    />
-                                  ) : (
-                                    <Building2 className="w-6 h-6 text-muted-foreground" />
-                                  )}
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleSaveJob(job.id)}
-                                  className={`bg-transparent hover:bg-muted ${savedJobs.includes(job.id) ? 'text-accent' : 'text-muted-foreground'
-                                    } hover:text-foreground`}
-                                  aria-label={savedJobs.includes(job.id) ? 'Remove from saved' : 'Save job'}
-                                >
-                                  <Bookmark className="w-5 h-5" strokeWidth={1.5} fill={savedJobs.includes(job.id) ? 'currentColor' : 'none'} />
-                                </Button>
-                              </div>
-
-                              <div>
-                                <div className="flex items-center justify-between mb-1">
-                                  <h3 className="text-h4 font-heading text-foreground">{job.title}</h3>
-                                  {job.matchScore !== undefined && (
-                                    <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${job.matchScore >= 80 ? 'bg-success/20 text-success' :
-                                      job.matchScore >= 50 ? 'bg-warning/20 text-warning' :
-                                        'bg-muted text-muted-foreground'
-                                      }`}>
-                                      {job.matchScore}% Match
-                                    </div>
-                                  )}
-                                </div>
-                                <p
-                                  className="text-body-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/companies/${job.employer_id}`);
-                                  }}
-                                >
-                                  {job.employer_profiles?.company_name || 'Company'}
-                                </p>
-                              </div>
-
-                              <p className="text-body-sm text-foreground line-clamp-2">
-                                {job.description?.replace(/<[^>]*>/g, '').substring(0, 150) || 'No description available'}
-                              </p>
-
-                              <div className="space-y-2">
-                                <div className="flex items-center text-body-sm text-muted-foreground">
-                                  <MapPin className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                                  <span>{job.city || job.country || 'Remote'}</span>
-                                </div>
-                                {(job.salary_min || job.salary_max) && (
-                                  <div className="flex items-center text-body-sm text-muted-foreground">
-                                    <DollarSign className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                                    <span>
-                                      {job.salary_min && job.salary_max
-                                        ? `${job.salary_currency || 'EUR'} ${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}`
-                                        : job.salary_min
-                                          ? `${job.salary_currency || 'EUR'} ${job.salary_min.toLocaleString()}+`
-                                          : `${job.salary_currency || 'EUR'} ${job.salary_max.toLocaleString()}`}
-                                    </span>
-                                  </div>
-                                )}
-                                <div className="flex items-center text-body-sm text-muted-foreground">
-                                  <Briefcase className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                                  <span className="capitalize">{job.employment_type?.replace(/_/g, ' ') || 'Full Time'}</span>
-                                </div>
-                              </div>
-
-                              {job.entry_bonus && job.entry_bonus > 0 && (
-                                <div className="bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
-                                  <span className="text-body-sm font-medium text-warning">
-                                    Entry Bonus: {job.salary_currency || 'EUR'} {job.entry_bonus.toLocaleString()}
-                                  </span>
-                                </div>
-                              )}
-
-                              <div className="flex flex-wrap gap-2">
-                                <Button
-                                  onClick={() => navigate(`/jobs/${job.id}`)}
-                                  variant="outline"
-                                  className="flex-1 min-w-[120px] bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-                                >
-                                  View Details
-                                </Button>
-                                <Button
-                                  onClick={() => handleApply(job)}
-                                  className={`flex-1 min-w-[120px] font-normal ${appliedJobIds.includes(job.id)
-                                    ? 'bg-muted text-muted-foreground'
-                                    : 'bg-primary text-primary-foreground hover:bg-primary-hover'
-                                    }`}
-                                  disabled={appliedJobIds.includes(job.id)}
-                                >
-                                  {appliedJobIds.includes(job.id) ? 'Already Applied' : 'Apply Now'}
-                                </Button>
-                              </div>
-                            </div>
-                          </Card>
+                          <JobListCard
+                            key={job.id}
+                            job={job}
+                            onViewDetail={(id) => navigate(`/jobs/${id}`)}
+                            onApply={handleApply}
+                            onSave={handleSaveJob}
+                            isSaved={savedJobs.includes(job.id)}
+                            isApplied={appliedJobIds.includes(job.id)}
+                            showMatchScore={true}
+                          />
                         ))}
                       </div>
                     )}

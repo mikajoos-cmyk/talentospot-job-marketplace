@@ -10,7 +10,7 @@ import { candidateService } from '../services/candidate.service';
 import { Loader2 } from 'lucide-react';
 import {
   MapPin, Mail, Phone, Briefcase, GraduationCap, Award, Video,
-  Image as ImageIcon, DollarSign, Plane, Globe, Car, Star
+  Image as ImageIcon, DollarSign, Plane, Globe, Car, Star, FileText, Tag, Download
 } from 'lucide-react';
 import {
   Dialog,
@@ -37,22 +37,24 @@ const CandidateProfile: React.FC = () => {
     let score = 0;
 
     // Basisdaten (User Context + Profile)
-    if (userProfile.name) score += 10;
-    if (userProfile.email) score += 5;
+    if (userProfile?.name) score += 10;
+    if (userProfile?.email) score += 5;
     if (data.title) score += 10;
-    if (data.city || data.country) score += 5;
+    if (data.street || data.city || data.country) score += 5;
     if (data.phone) score += 5;
 
     // Konditionen
-    if (data.salary_expectation_min || data.salary_expectation_max) score += 10;
+    if (data.salary?.min || data.salary?.max) score += 10;
 
     // Qualifikationen & Skills
     if (data.skills && data.skills.length > 0) score += 15;
     if (data.languages && data.languages.length > 0) score += 10;
+    if (data.tags && data.tags.length > 0) score += 5;
 
     // Erfahrung & Bildung
     if (data.experience && data.experience.length > 0) score += 15;
     if (data.education && data.education.length > 0) score += 15;
+    if (data.cvUrl) score += 5;
 
     return Math.min(score, 100);
   };
@@ -97,8 +99,14 @@ const CandidateProfile: React.FC = () => {
   const hasExperience = candidateData.experience && candidateData.experience.length > 0;
   const hasEducation = candidateData.education && candidateData.education.length > 0;
 
-  // Formatierung der Location (filtert leere/null Werte heraus)
-  const locationString = [candidateData.city, candidateData.country].filter(Boolean).join(', ');
+  // Formatierung der Location
+  const addressParts = [
+    candidateData.street && `${candidateData.street}${candidateData.houseNumber ? ` ${candidateData.houseNumber}` : ''}`,
+    candidateData.postalCode && candidateData.city ? `${candidateData.postalCode} ${candidateData.city}` : (candidateData.postalCode || candidateData.city),
+    candidateData.state,
+    candidateData.country
+  ].filter(Boolean);
+  const locationString = addressParts.join(', ');
 
   // Placeholder für Reviews (da Tabelle noch leer/nicht implementiert)
   const candidateReviews: any[] = [];
@@ -173,6 +181,30 @@ const CandidateProfile: React.FC = () => {
                 </div>
               )}
 
+              <div className="flex flex-wrap gap-4 mb-6">
+                {candidateData.cvUrl && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-primary/5 text-primary border-primary/20 hover:bg-primary/10"
+                    onClick={() => window.open(candidateData.cvUrl, '_blank')}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download CV
+                  </Button>
+                )}
+                {candidateData.tags && candidateData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {candidateData.tags.map((tag: string) => (
+                      <span key={tag} className="flex items-center px-2 py-1 bg-muted text-foreground text-[11px] font-medium rounded-md border border-border capitalize">
+                        <Tag className="w-3 h-3 mr-1 text-muted-foreground" />
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-body-sm font-medium text-foreground">Profile Completion</span>
@@ -190,19 +222,19 @@ const CandidateProfile: React.FC = () => {
             <h3 className="text-h3 font-heading text-foreground">My Conditions</h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 bg-muted rounded-lg">
+          <div className="flex flex-wrap gap-4">
+            <div className="p-4 bg-muted rounded-lg flex-1 min-w-[200px]">
               <p className="text-caption text-muted-foreground mb-1">Salary Expectation</p>
               <p className="text-h4 font-heading text-foreground">
-                {(candidateData.conditions.salaryExpectation.min || candidateData.conditions.salaryExpectation.max)
-                  ? `€${candidateData.conditions.salaryExpectation.min?.toLocaleString() || '0'} - €${candidateData.conditions.salaryExpectation.max?.toLocaleString() || '0'}`
+                {(candidateData.salary?.min || candidateData.salary?.max)
+                  ? `€${candidateData.salary.min?.toLocaleString() || '0'} - €${candidateData.salary.max?.toLocaleString() || '0'}`
                   : 'Not specified'}
               </p>
             </div>
 
             {/* Nur anzeigen, wenn Bonus > 0 */}
-            {candidateData.conditions.entryBonus > 0 && (
-              <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
+            {candidateData.conditions?.entryBonus > 0 && (
+              <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg flex-1 min-w-[200px]">
                 <p className="text-caption text-warning mb-1">Entry Bonus</p>
                 <p className="text-h4 font-heading text-warning">
                   €{candidateData.conditions.entryBonus.toLocaleString()}
@@ -210,44 +242,44 @@ const CandidateProfile: React.FC = () => {
               </div>
             )}
 
-            <div className="p-4 bg-muted rounded-lg">
+            <div className="p-4 bg-muted rounded-lg flex-1 min-w-[200px]">
               <p className="text-caption text-muted-foreground mb-1">Work Radius</p>
               <p className="text-h4 font-heading text-foreground">
-                {candidateData.conditions.workRadius ? `${candidateData.conditions.workRadius} km` : 'Not specified'}
+                {candidateData.conditions?.workRadius ? `${candidateData.conditions.workRadius} km` : 'Not specified'}
               </p>
             </div>
 
-            <div className="p-4 bg-muted rounded-lg">
+            <div className="p-4 bg-muted rounded-lg flex-1 min-w-[200px]">
               <p className="text-caption text-muted-foreground mb-1">Home Office</p>
               <p className="text-h4 font-heading text-foreground capitalize">
-                {candidateData.conditions.homeOfficePreference || 'Not specified'}
+                {candidateData.conditions?.homeOfficePreference || 'Not specified'}
               </p>
             </div>
 
-            <div className="p-4 bg-muted rounded-lg">
+            <div className="p-4 bg-muted rounded-lg flex-1 min-w-[200px]">
               <p className="text-caption text-muted-foreground mb-1">Vacation Days</p>
               <p className="text-h4 font-heading text-foreground">
-                {candidateData.conditions.vacationDays ? `${candidateData.conditions.vacationDays} days` : 'Not specified'}
+                {candidateData.conditions?.vacationDays ? `${candidateData.conditions.vacationDays} days` : 'Not specified'}
               </p>
             </div>
 
-            {candidateData.conditions.startDate && (
-              <div className="p-4 bg-muted rounded-lg">
+            {candidateData.availableFrom && (
+              <div className="p-4 bg-muted rounded-lg flex-1 min-w-[200px]">
                 <p className="text-caption text-muted-foreground mb-1">Available From</p>
                 <p className="text-h4 font-heading text-foreground">
-                  {new Date(candidateData.conditions.startDate).toLocaleDateString()}
+                  {new Date(candidateData.availableFrom).toLocaleDateString()}
                 </p>
               </div>
             )}
 
-            <div className="p-4 bg-muted rounded-lg">
+            <div className="p-4 bg-muted rounded-lg flex-1 min-w-[200px]">
               <p className="text-caption text-muted-foreground mb-1">Notice Period</p>
               <p className="text-h4 font-heading text-foreground">
-                {candidateData.conditions.noticePeriod || 'Not specified'}
+                {candidateData.noticePeriod || 'Not specified'}
               </p>
             </div>
 
-            <div className="p-4 bg-muted rounded-lg">
+            <div className="p-4 bg-muted rounded-lg flex-1 min-w-[200px]">
               <p className="text-caption text-muted-foreground mb-1">Travel Willingness</p>
               <div className="flex items-center">
                 <Plane className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
@@ -259,7 +291,7 @@ const CandidateProfile: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-muted rounded-lg md:col-span-2">
+            <div className="p-4 bg-muted rounded-lg md:flex-grow min-w-[200px]">
               <p className="text-caption text-muted-foreground mb-1">Preferred Contract Terms</p>
               <div className="flex flex-wrap gap-2 mt-1">
                 {candidateData.contractTermPreference && candidateData.contractTermPreference.length > 0 ? (
@@ -276,98 +308,47 @@ const CandidateProfile: React.FC = () => {
           </div>
         </Card>
 
-        {/* Video Introduction - Nur anzeigen wenn vorhanden */}
-        {candidateData.videoUrl && (
-          <Card className="p-6 md:p-8 border border-border bg-card">
-            <div className="flex items-center space-x-3 mb-6">
-              <Video className="w-6 h-6 text-primary" strokeWidth={1.5} />
-              <h3 className="text-h3 font-heading text-foreground">Video Introduction</h3>
-            </div>
-            <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-              <iframe
-                width="100%"
-                height="100%"
-                src={getYouTubeEmbedUrl(candidateData.videoUrl)}
-                title="Video Introduction"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full"
-              ></iframe>
-            </div>
-          </Card>
-        )}
 
-        {/* Portfolio - Nur anzeigen wenn vorhanden */}
-        {candidateData.portfolioImages && candidateData.portfolioImages.length > 0 && (
-          <Card className="p-6 md:p-8 border border-border bg-card">
-            <div className="flex items-center space-x-3 mb-6">
-              <ImageIcon className="w-6 h-6 text-primary" strokeWidth={1.5} />
-              <h3 className="text-h3 font-heading text-foreground">Portfolio</h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {candidateData.portfolioImages.map((project: any, index: number) => (
-                <div
-                  key={index}
-                  onClick={() => {
-                    setSelectedProject(project);
-                    setIsModalOpen(true);
-                  }}
-                  className="group relative aspect-square rounded-lg overflow-hidden bg-muted hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                >
-                  <ProjectImageCarousel
-                    images={project.images || (project.image ? [project.image] : [])}
-                    title={project.title || `Portfolio ${index + 1}`}
-                  />
-                  {(project.title || project.description) && (
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 pointer-events-none">
-                      <p className="text-white font-medium truncate">{project.title}</p>
-                      <p className="text-white/70 text-caption truncate">{project.description}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-              <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden bg-card border-border">
-                {selectedProject && (
-                  <div className="flex flex-col">
-                    <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                      <ProjectImageCarousel
-                        images={selectedProject.images || (selectedProject.image ? [selectedProject.image] : [])}
-                        title={selectedProject.title}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setIsModalOpen(false)}
-                        className="absolute top-2 right-2 rounded-full bg-black/20 hover:bg-black/40 text-white border-none"
-                      >
-                        <X className="w-5 h-5" />
-                      </Button>
-                    </div>
-                    <div className="p-6">
-                      <DialogHeader className="mb-4">
-                        <DialogTitle className="text-h3 font-heading text-foreground">
-                          {selectedProject.title || 'Untitled Project'}
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="prose prose-sm max-w-none text-muted-foreground">
-                          {selectedProject.description || 'No description provided for this project.'}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </DialogContent>
-            </Dialog>
-          </Card>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
+            <Card className="p-6 border border-border bg-card">
+              <div className="flex items-center space-x-3 mb-6">
+                <GraduationCap className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                <h3 className="text-h3 font-heading text-foreground">Education</h3>
+              </div>
+
+              {!hasEducation ? (
+                <div className="text-center py-8">
+                  <GraduationCap className="w-12 h-12 mx-auto mb-3 text-muted-foreground" strokeWidth={1.5} />
+                  <p className="text-body text-muted-foreground mb-4">No education added yet</p>
+                  <Button
+                    onClick={() => navigate('/candidate/profile/edit')}
+                    variant="outline"
+                    size="sm"
+                    className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                  >
+                    Add Education
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {candidateData.education.map((edu: any) => (
+                    <div key={edu.id} className="relative pl-6 border-l-2 border-border">
+                      <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-accent"></div>
+                      <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
+                      <p className="text-body-sm text-muted-foreground mb-2">
+                        {edu.institution} • {edu.period}
+                      </p>
+                      {edu.description && (
+                        <p className="text-body-sm text-foreground whitespace-pre-wrap">{edu.description}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
             <Card className="p-6 border border-border bg-card">
               <div className="flex items-center space-x-3 mb-6">
                 <Briefcase className="w-6 h-6 text-primary" strokeWidth={1.5} />
@@ -394,74 +375,113 @@ const CandidateProfile: React.FC = () => {
                       <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary"></div>
                       <h4 className="text-h4 font-heading text-foreground mb-1">{exp.job_title || exp.title}</h4>
                       <p className="text-body-sm text-muted-foreground mb-2">
-                        {exp.company} • {new Date(exp.startDate).toLocaleDateString()}
-                        {exp.endDate ? ` - ${new Date(exp.endDate).toLocaleDateString()}` : ' - Present'}
+                        {exp.company} • {exp.period}
                       </p>
-                      <p className="text-body-sm text-foreground">{exp.description}</p>
+                      <p className="text-body-sm text-foreground whitespace-pre-wrap">{exp.description}</p>
                     </div>
                   ))}
                 </div>
               )}
             </Card>
 
-            <Card className="p-6 border border-border bg-card">
-              <div className="flex items-center space-x-3 mb-6">
-                <GraduationCap className="w-6 h-6 text-primary" strokeWidth={1.5} />
-                <h3 className="text-h3 font-heading text-foreground">Education</h3>
-              </div>
-
-              {!hasEducation ? (
-                <div className="text-center py-8">
-                  <GraduationCap className="w-12 h-12 mx-auto mb-3 text-muted-foreground" strokeWidth={1.5} />
-                  <p className="text-body text-muted-foreground mb-4">No education added yet</p>
-                  <Button
-                    onClick={() => navigate('/candidate/profile/edit')}
-                    variant="outline"
-                    size="sm"
-                    className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-                  >
-                    Add Education
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {candidateData.education.map((edu: any) => (
-                    <div key={edu.id} className="relative pl-6 border-l-2 border-border">
-                      <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-accent"></div>
-                      <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
-                      <p className="text-body-sm text-muted-foreground">
-                        {edu.institution} • {new Date(edu.startDate).toLocaleDateString()}
-                        {edu.endDate ? ` - ${new Date(edu.endDate).toLocaleDateString()}` : ' - Present'}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-
-            {/* Optional: Preferred Locations anzeigen wenn nicht leer */}
-            {(candidateData.city || candidateData.country) && (
-              <Card className="p-6 border border-border bg-card">
+            {/* Portfolio - Reordered into the main column if requested */}
+            {candidateData.portfolioImages && candidateData.portfolioImages.length > 0 && (
+              <Card className="p-6 md:p-8 border border-border bg-card">
                 <div className="flex items-center space-x-3 mb-6">
-                  <MapPin className="w-6 h-6 text-primary" strokeWidth={1.5} />
-                  <h3 className="text-h3 font-heading text-foreground">Primary Location</h3>
+                  <ImageIcon className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                  <h3 className="text-h3 font-heading text-foreground">Portfolio</h3>
                 </div>
-                <div className="flex items-center p-3 bg-muted rounded-lg">
-                  <MapPin className="w-4 h-4 mr-2 text-primary" strokeWidth={1.5} />
-                  <span className="text-body-sm text-foreground">
-                    {locationString}
-                  </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {candidateData.portfolioImages.map((project: any, index: number) => (
+                    <div
+                      key={index}
+                      onClick={() => {
+                        setSelectedProject(project);
+                        setIsModalOpen(true);
+                      }}
+                      className="group relative aspect-video rounded-lg overflow-hidden bg-muted hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                    >
+                      <ProjectImageCarousel
+                        images={project.images || (project.image ? [project.image] : [])}
+                        title={project.title || `Portfolio ${index + 1}`}
+                      />
+                      {(project.title || project.description) && (
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 pointer-events-none">
+                          <p className="text-white font-medium truncate">{project.title}</p>
+                          <p className="text-white/70 text-caption truncate">{project.description}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                  <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden bg-card border-border">
+                    {selectedProject && (
+                      <div className="flex flex-col">
+                        <div className="relative aspect-video w-full overflow-hidden bg-muted">
+                          <ProjectImageCarousel
+                            images={selectedProject.images || (selectedProject.image ? [selectedProject.image] : [])}
+                            title={selectedProject.title}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setIsModalOpen(false)}
+                            className="absolute top-2 right-2 rounded-full bg-black/20 hover:bg-black/40 text-white border-none"
+                          >
+                            <X className="w-5 h-5" />
+                          </Button>
+                        </div>
+                        <div className="p-6">
+                          <DialogHeader className="mb-4">
+                            <DialogTitle className="text-h3 font-heading text-foreground">
+                              {selectedProject.title || 'Untitled Project'}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="prose prose-sm max-w-none text-muted-foreground">
+                              {selectedProject.description || 'No description provided for this project.'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
+              </Card>
+            )}
+
+            {/* Video Introduction - Reordered into the main column if requested */}
+            {candidateData.videoUrl && (
+              <Card className="p-6 md:p-8 border border-border bg-card">
+                <div className="flex items-center space-x-3 mb-6">
+                  <Video className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                  <h3 className="text-h3 font-heading text-foreground">Video Introduction</h3>
+                </div>
+                <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={getYouTubeEmbedUrl(candidateData.videoUrl)}
+                    title="Video Introduction"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full"
+                  ></iframe>
                 </div>
               </Card>
             )}
 
+            {/* Preferred Locations anzeigen wenn nicht leer */}
             {candidateData.preferredLocations && candidateData.preferredLocations.length > 0 && (
               <Card className="p-6 border border-border bg-card">
                 <div className="flex items-center space-x-3 mb-6">
                   <MapPin className="w-6 h-6 text-accent" strokeWidth={1.5} />
                   <h3 className="text-h3 font-heading text-foreground">Preferred Work Locations</h3>
                 </div>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {candidateData.preferredLocations.map((loc: any, idx: number) => (
                     <div key={idx} className="flex items-center p-3 bg-muted rounded-lg">
                       <MapPin className="w-4 h-4 mr-2 text-accent" strokeWidth={1.5} />

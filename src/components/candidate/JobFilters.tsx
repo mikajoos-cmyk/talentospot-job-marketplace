@@ -3,15 +3,17 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Filter, Sparkles, RotateCcw, X, Plus } from 'lucide-react';
+import { ChevronDown, Sparkles, RotateCcw, X, Plus, Users, Briefcase } from 'lucide-react';
 import { locationData } from '@/data/locationData';
 import { getLanguageLevelOptions } from '@/utils/language-levels';
+import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
+import { Switch } from '@/components/ui/switch';
 
 export interface JobFiltersState {
     title: string;
+    sector: string;
     continent: string;
     country: string;
     city: string;
@@ -21,15 +23,17 @@ export interface JobFiltersState {
     contractDuration: string;
     skills: string[];
     qualifications: string[];
-    languages: { name: string; level: string }[] | string[]; // Support both formats for backward compatibility
+    languages: { name: string; level: string }[] | string[];
     careerLevel: string;
     experienceYears: number | null;
     drivingLicenses: string[];
     contractTerms: string[];
     homeOffice: boolean;
-    enableFlexibleMatch: boolean; // Show jobs even if overqualified
-    enablePartialMatch: boolean; // Show jobs with partial match (with score)
+    enableFlexibleMatch: boolean;
+    enablePartialMatch: boolean;
     minMatchThreshold: number;
+    benefits: string[];
+    minVacationDays: number;
 }
 
 interface JobFiltersProps {
@@ -40,11 +44,13 @@ interface JobFiltersProps {
 }
 
 const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMatchProfile, onReset }) => {
-    const [advancedOpen, setAdvancedOpen] = useState(false);
+    const [requirementsOpen, setRequirementsOpen] = useState(false);
+    const [conditionsOpen, setConditionsOpen] = useState(false);
     const [skillInput, setSkillInput] = useState('');
     const [qualificationInput, setQualificationInput] = useState('');
     const [languageInput, setLanguageInput] = useState('');
     const [languageLevel, setLanguageLevel] = useState('B2');
+    const [benefitInput, setBenefitInput] = useState('');
 
     const employmentTypes = [
         { id: 'full-time', label: 'Full Time' },
@@ -63,12 +69,22 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
         { id: 'lead', label: 'Lead / Manager' },
     ];
 
+    const sectors = ['IT', 'Healthcare', 'Finance', 'Engineering', 'Marketing', 'Sales', 'Education', 'Manufacturing', 'Retail', 'Other'];
+
     const handleEmploymentTypeToggle = (typeId: string) => {
         const current = filters.employmentTypes;
         const updated = current.includes(typeId)
             ? current.filter(t => t !== typeId)
             : [...current, typeId];
         onFiltersChange({ ...filters, employmentTypes: updated });
+    };
+
+    const handleContractTermToggle = (term: string) => {
+        const current = filters.contractTerms;
+        const updated = current.includes(term)
+            ? current.filter(t => t !== term)
+            : [...current, term];
+        onFiltersChange({ ...filters, contractTerms: updated });
     };
 
     const handleAddSkill = () => {
@@ -85,6 +101,23 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
         onFiltersChange({
             ...filters,
             skills: filters.skills.filter(s => s !== skill),
+        });
+    };
+
+    const handleAddBenefit = () => {
+        if (benefitInput.trim() && !(filters.benefits || []).includes(benefitInput.trim())) {
+            onFiltersChange({
+                ...filters,
+                benefits: [...(filters.benefits || []), benefitInput.trim()],
+            });
+            setBenefitInput('');
+        }
+    };
+
+    const handleRemoveBenefit = (benefit: string) => {
+        onFiltersChange({
+            ...filters,
+            benefits: (filters.benefits || []).filter(b => b !== benefit),
         });
     };
 
@@ -129,12 +162,15 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
     };
 
     const continents = Object.keys(locationData);
-    const countries = filters.continent ? Object.keys(locationData[filters.continent] || {}) : [];
-    const cities = filters.continent && filters.country ? locationData[filters.continent][filters.country] || [] : [];
+    const countries = filters.continent && filters.continent !== 'all' ? Object.keys(locationData[filters.continent] || {}) : [];
+    const cities = filters.continent && filters.country && filters.continent !== 'all' && filters.country !== 'all'
+        ? locationData[filters.continent][filters.country] || []
+        : [];
 
     const handleReset = () => {
         onFiltersChange({
             title: '',
+            sector: '',
             continent: '',
             country: '',
             city: '',
@@ -153,6 +189,8 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
             enableFlexibleMatch: false,
             enablePartialMatch: false,
             minMatchThreshold: 50,
+            benefits: [],
+            minVacationDays: 0,
         });
         onReset();
     };
@@ -181,186 +219,108 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                     <span className="font-medium">Match My Profile</span>
                 </Button>
 
-                {/* Matching Options Section */}
-                <div className="space-y-4 pt-4 border-t border-border">
-                    {/* Flexible Matching Toggle */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                            <Label htmlFor="enableFlexibleMatch" className="text-body-sm font-medium text-foreground cursor-pointer">
-                                Flexible Matching
-                            </Label>
-                            <p className="text-[10px] text-muted-foreground">Show jobs even if you're overqualified</p>
-                        </div>
-                        <button
-                            type="button"
-                            role="switch"
-                            id="enableFlexibleMatch"
-                            aria-checked={filters.enableFlexibleMatch}
-                            onClick={() => onFiltersChange({ ...filters, enableFlexibleMatch: !filters.enableFlexibleMatch })}
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 ${filters.enableFlexibleMatch ? 'bg-primary' : 'bg-muted'
-                                }`}
-                        >
-                            <span
-                                className={`pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform ${filters.enableFlexibleMatch ? 'translate-x-4' : 'translate-x-0.5'
-                                    }`}
-                            />
-                        </button>
+                {/* Always Visible Section */}
+                <div className="space-y-4 pb-4 border-b border-border">
+                    <h4 className="text-sm font-bold text-foreground uppercase tracking-wide">Always Visible</h4>
+
+                    {/* Job Title */}
+                    <div>
+                        <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                            Job Title
+                        </Label>
+                        <AutocompleteInput
+                            category="job_titles"
+                            placeholder="Search title..."
+                            value={filters.title}
+                            onChange={(val) => onFiltersChange({ ...filters, title: val })}
+                            className="bg-background text-foreground border-border"
+                        />
                     </div>
 
-                    {/* Partial Matching Toggle */}
-                    <div className="flex items-center justify-between pt-2">
-                        <div className="flex-1">
-                            <Label htmlFor="enablePartialMatch" className="text-body-sm font-medium text-foreground cursor-pointer">
-                                Partial Matching
-                            </Label>
-                            <p className="text-[10px] text-muted-foreground">Show jobs with incomplete match</p>
-                        </div>
-                        <button
-                            type="button"
-                            role="switch"
-                            id="enablePartialMatch"
-                            aria-checked={filters.enablePartialMatch}
-                            onClick={() => onFiltersChange({ ...filters, enablePartialMatch: !filters.enablePartialMatch })}
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 ${filters.enablePartialMatch ? 'bg-accent' : 'bg-muted'
-                                }`}
-                        >
-                            <span
-                                className={`pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform ${filters.enablePartialMatch ? 'translate-x-4' : 'translate-x-0.5'
-                                    }`}
-                            />
-                        </button>
+                    {/* Sector */}
+                    <div>
+                        <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                            Sector
+                        </Label>
+                        <Select value={filters.sector || ''} onValueChange={(value) => onFiltersChange({ ...filters, sector: value })}>
+                            <SelectTrigger className="bg-background text-foreground border-border">
+                                <SelectValue placeholder="Select sector" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Sectors</SelectItem>
+                                {sectors.map(sector => (
+                                    <SelectItem key={sector} value={sector}>{sector}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    {filters.enablePartialMatch && (
-                        <div className="space-y-2 pt-2">
-                            <Label className="text-body-sm font-medium text-foreground block">
-                                Min Match Score: {filters.minMatchThreshold}%
-                            </Label>
-                            <Slider
-                                value={[filters.minMatchThreshold]}
-                                onValueChange={(val) => onFiltersChange({ ...filters, minMatchThreshold: val[0] })}
-                                min={10}
-                                max={90}
-                                step={5}
-                                className="mt-2"
-                            />
-                            <p className="text-[10px] text-muted-foreground">
-                                Lower threshold shows more jobs with partial requirements
-                            </p>
-                        </div>
-                    )}
+                    {/* Location */}
+                    <div className="space-y-3">
+                        <Label className="text-body-sm font-medium text-foreground block">
+                            Location
+                        </Label>
+                        <Select
+                            value={filters.continent}
+                            onValueChange={(val) => onFiltersChange({ ...filters, continent: val, country: '', city: '' })}
+                        >
+                            <SelectTrigger className="bg-background text-foreground border-border">
+                                <SelectValue placeholder="Continent" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Continents</SelectItem>
+                                {continents.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+
+                        {filters.continent && filters.continent !== 'all' && (
+                            <Select
+                                value={filters.country}
+                                onValueChange={(val) => onFiltersChange({ ...filters, country: val, city: '' })}
+                            >
+                                <SelectTrigger className="bg-background text-foreground border-border">
+                                    <SelectValue placeholder="Country" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Countries</SelectItem>
+                                    {countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        )}
+
+                        {filters.country && filters.country !== 'all' && cities.length > 0 && (
+                            <Select
+                                value={filters.city}
+                                onValueChange={(val) => onFiltersChange({ ...filters, city: val })}
+                            >
+                                <SelectTrigger className="bg-background text-foreground border-border">
+                                    <SelectValue placeholder="City" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Cities</SelectItem>
+                                    {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    </div>
                 </div>
 
-                {/* Job Title - Second position */}
-                <div className="pt-4 border-t border-border">
-                    <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                        Job Title
-                    </Label>
-                    <Input
-                        placeholder="Search title..."
-                        value={filters.title}
-                        onChange={(e) => onFiltersChange({ ...filters, title: e.target.value })}
-                        className="bg-background text-foreground border-border"
-                    />
-                </div>
-
-                {/* Advanced Filters - Everything else */}
-                <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                {/* Candidate Requirements (Collapsible) */}
+                <Collapsible open={requirementsOpen} onOpenChange={setRequirementsOpen}>
                     <CollapsibleTrigger asChild>
                         <Button
                             variant="ghost"
-                            className="w-full justify-between p-0 h-auto font-medium text-primary hover:bg-transparent hover:text-primary-hover"
+                            className="w-full justify-between bg-transparent text-primary hover:bg-primary/10 hover:text-primary font-medium"
                         >
-                            <span className="flex items-center gap-2">
-                                <Filter className="w-4 h-4" />
-                                Advanced Filters
-                            </span>
-                            <ChevronDown className={`w-4 h-4 transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
+                            <div className="flex items-center">
+                                <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                                Candidate Requirements
+                            </div>
+                            <ChevronDown className={`w-4 h-4 transition-transform ${requirementsOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
                         </Button>
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-6 pt-6">
-                        {/* Employment Type */}
-                        <div>
-                            <Label className="text-body-sm font-medium text-foreground mb-3 block">
-                                Employment Type
-                            </Label>
-                            <div className="flex flex-wrap gap-2">
-                                {employmentTypes.map((type) => (
-                                    <button
-                                        key={type.id}
-                                        onClick={() => handleEmploymentTypeToggle(type.id)}
-                                        className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${filters.employmentTypes.includes(type.id)
-                                            ? 'bg-primary text-primary-foreground'
-                                            : 'bg-muted text-foreground hover:bg-muted/80'
-                                            }`}
-                                    >
-                                        {type.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
 
-                        {/* Location */}
-                        <div className="grid grid-cols-1 gap-4">
-                            <div>
-                                <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                                    Continent
-                                </Label>
-                                <Select
-                                    value={filters.continent}
-                                    onValueChange={(val) => onFiltersChange({ ...filters, continent: val, country: '', city: '' })}
-                                >
-                                    <SelectTrigger className="bg-background text-foreground border-border">
-                                        <SelectValue placeholder="All" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Continents</SelectItem>
-                                        {continents.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            {filters.continent && filters.continent !== 'all' && (
-                                <div>
-                                    <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                                        Country
-                                    </Label>
-                                    <Select
-                                        value={filters.country}
-                                        onValueChange={(val) => onFiltersChange({ ...filters, country: val, city: '' })}
-                                    >
-                                        <SelectTrigger className="bg-background text-foreground border-border">
-                                            <SelectValue placeholder="All" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Countries</SelectItem>
-                                            {countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-
-                            {filters.country && filters.country !== 'all' && cities.length > 0 && (
-                                <div>
-                                    <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                                        City
-                                    </Label>
-                                    <Select
-                                        value={filters.city}
-                                        onValueChange={(val) => onFiltersChange({ ...filters, city: val })}
-                                    >
-                                        <SelectTrigger className="bg-background text-foreground border-border">
-                                            <SelectValue placeholder="All" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Cities</SelectItem>
-                                            {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-                        </div>
-
+                    <CollapsibleContent className="space-y-6 mt-6">
                         {/* Career Level */}
                         <div>
                             <Label className="text-body-sm font-medium text-foreground mb-3 block">
@@ -399,74 +359,18 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                             <p className="text-[10px] text-muted-foreground mt-1 text-right">Slide to 30 for "Any"</p>
                         </div>
 
-                        {/* Salary Range */}
-                        <div>
-                            <Label className="text-body-sm font-medium text-foreground mb-4 block">
-                                Salary Range (EUR): €{filters.salaryRange[0].toLocaleString()} - €{filters.salaryRange[1].toLocaleString()}+
-                            </Label>
-                            <Slider
-                                value={filters.salaryRange}
-                                onValueChange={(val) => onFiltersChange({ ...filters, salaryRange: val as [number, number] })}
-                                min={0}
-                                max={250000}
-                                step={5000}
-                                className="mt-2"
-                            />
-                        </div>
-
-                        {/* Entry Bonus */}
-                        <div>
-                            <Label className="text-body-sm font-medium text-foreground mb-4 block">
-                                Min Entry Bonus (EUR): €{filters.minEntryBonus.toLocaleString()}+
-                            </Label>
-                            <Slider
-                                value={[filters.minEntryBonus]}
-                                onValueChange={(val) => onFiltersChange({ ...filters, minEntryBonus: val[0] })}
-                                min={0}
-                                max={50000}
-                                step={1000}
-                                className="mt-2"
-                            />
-                        </div>
-
-                        {/* Skills */}
-                        <div>
-                            <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                                Skills
-                            </Label>
-                            <div className="flex space-x-2 mb-3">
-                                <Input
-                                    placeholder="Add skill..."
-                                    value={skillInput}
-                                    onChange={(e) => setSkillInput(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
-                                    className="bg-background text-foreground border-border"
-                                />
-                                <Button size="icon" onClick={handleAddSkill} className="bg-primary text-primary-foreground shrink-0">
-                                    <Plus className="w-5 h-5" />
-                                </Button>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {filters.skills.map(skill => (
-                                    <div key={skill} className="flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-body-sm">
-                                        <span>{skill}</span>
-                                        <button onClick={() => handleRemoveSkill(skill)}><X className="w-4 h-4" /></button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
                         {/* Qualifications */}
                         <div>
                             <Label className="text-body-sm font-medium text-foreground mb-2 block">
                                 Qualifications
                             </Label>
                             <div className="flex space-x-2 mb-3">
-                                <Input
+                                <AutocompleteInput
+                                    category="qualifications"
                                     placeholder="Add qualification..."
                                     value={qualificationInput}
-                                    onChange={(e) => setQualificationInput(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleAddQualification()}
+                                    onChange={setQualificationInput}
+                                    onKeyPress={(e: any) => e.key === 'Enter' && handleAddQualification()}
                                     className="bg-background text-foreground border-border"
                                 />
                                 <Button size="icon" onClick={handleAddQualification} className="bg-accent text-accent-foreground shrink-0">
@@ -489,11 +393,12 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                                 Languages
                             </Label>
                             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
-                                <Input
+                                <AutocompleteInput
+                                    category="languages"
                                     placeholder="Add language..."
                                     value={languageInput}
-                                    onChange={(e) => setLanguageInput(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleAddLanguage()}
+                                    onChange={setLanguageInput}
+                                    onKeyPress={(e: any) => e.key === 'Enter' && handleAddLanguage()}
                                     className="flex-1 bg-background text-foreground border-border"
                                 />
                                 <Select value={languageLevel} onValueChange={setLanguageLevel}>
@@ -521,6 +426,34 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                                         </div>
                                     );
                                 })}
+                            </div>
+                        </div>
+
+                        {/* Skills */}
+                        <div>
+                            <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                                Skills
+                            </Label>
+                            <div className="flex space-x-2 mb-3">
+                                <AutocompleteInput
+                                    category="skills"
+                                    placeholder="Add skill..."
+                                    value={skillInput}
+                                    onChange={setSkillInput}
+                                    onKeyPress={(e: any) => e.key === 'Enter' && handleAddSkill()}
+                                    className="bg-background text-foreground border-border"
+                                />
+                                <Button size="icon" onClick={handleAddSkill} className="bg-primary text-primary-foreground shrink-0">
+                                    <Plus className="w-5 h-5" />
+                                </Button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {filters.skills.map(skill => (
+                                    <div key={skill} className="flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-body-sm">
+                                        <span>{skill}</span>
+                                        <button onClick={() => handleRemoveSkill(skill)}><X className="w-4 h-4" /></button>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
@@ -554,7 +487,6 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                                         ))}
                                     </div>
                                 </div>
-
                                 <div>
                                     <Label className="text-caption text-muted-foreground mb-2 block">Truck Licenses</Label>
                                     <div className="flex flex-wrap gap-2">
@@ -581,6 +513,90 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                                 </div>
                             </div>
                         </div>
+                    </CollapsibleContent>
+                </Collapsible>
+
+                {/* Job Conditions (Collapsible) */}
+                <Collapsible open={conditionsOpen} onOpenChange={setConditionsOpen}>
+                    <CollapsibleTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-between bg-transparent text-primary hover:bg-primary/10 hover:text-primary font-medium"
+                        >
+                            <div className="flex items-center">
+                                <Briefcase className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                                Job Conditions
+                            </div>
+                            <ChevronDown className={`w-4 h-4 transition-transform ${conditionsOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
+                        </Button>
+                    </CollapsibleTrigger>
+
+                    <CollapsibleContent className="space-y-6 mt-6">
+                        {/* Salary Range */}
+                        <div>
+                            <Label className="text-body-sm font-medium text-foreground mb-4 block">
+                                Salary Range (EUR): €{filters.salaryRange[0].toLocaleString()} - €{filters.salaryRange[1].toLocaleString()}+
+                            </Label>
+                            <Slider
+                                value={filters.salaryRange}
+                                onValueChange={(val) => onFiltersChange({ ...filters, salaryRange: val as [number, number] })}
+                                min={0}
+                                max={250000}
+                                step={5000}
+                                className="mt-2"
+                            />
+                        </div>
+
+                        {/* Entry Bonus */}
+                        <div>
+                            <Label className="text-body-sm font-medium text-foreground mb-4 block">
+                                Min Entry Bonus (EUR): €{filters.minEntryBonus.toLocaleString()}+
+                            </Label>
+                            <Slider
+                                value={[filters.minEntryBonus]}
+                                onValueChange={(val) => onFiltersChange({ ...filters, minEntryBonus: val[0] })}
+                                min={0}
+                                max={50000}
+                                step={1000}
+                                className="mt-2"
+                            />
+                        </div>
+
+                        {/* Vacation Days */}
+                        <div>
+                            <Label className="text-body-sm font-medium text-foreground mb-4 block">
+                                Min Vacation Days: {filters.minVacationDays > 0 ? filters.minVacationDays : 'Any'}
+                            </Label>
+                            <Slider
+                                value={[filters.minVacationDays]}
+                                onValueChange={(val) => onFiltersChange({ ...filters, minVacationDays: val[0] })}
+                                min={0}
+                                max={40}
+                                step={1}
+                                className="mt-2"
+                            />
+                        </div>
+
+                        {/* Employment Type */}
+                        <div>
+                            <Label className="text-body-sm font-medium text-foreground mb-3 block">
+                                Employment Type
+                            </Label>
+                            <div className="flex flex-wrap gap-2">
+                                {employmentTypes.map((type) => (
+                                    <button
+                                        key={type.id}
+                                        onClick={() => handleEmploymentTypeToggle(type.id)}
+                                        className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${filters.employmentTypes.includes(type.id)
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'bg-muted text-foreground hover:bg-muted/80'
+                                            }`}
+                                    >
+                                        {type.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
                         {/* Contract Terms */}
                         <div>
@@ -592,13 +608,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                                     <button
                                         key={term}
                                         type="button"
-                                        onClick={() => {
-                                            const current = filters.contractTerms || [];
-                                            const updated = current.includes(term)
-                                                ? current.filter(t => t !== term)
-                                                : [...current, term];
-                                            onFiltersChange({ ...filters, contractTerms: updated });
-                                        }}
+                                        onClick={() => handleContractTermToggle(term)}
                                         className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${(filters.contractTerms || []).includes(term)
                                             ? 'bg-info text-info-foreground shadow-sm shadow-info/20'
                                             : 'bg-muted text-foreground hover:bg-muted/80'
@@ -615,23 +625,61 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                             <Label htmlFor="homeOffice" className="text-body-sm font-medium text-foreground cursor-pointer">
                                 Home Office Available
                             </Label>
-                            <button
-                                type="button"
-                                role="switch"
+                            <Switch
                                 id="homeOffice"
-                                aria-checked={filters.homeOffice}
-                                onClick={() => onFiltersChange({ ...filters, homeOffice: !filters.homeOffice })}
-                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 ${filters.homeOffice ? 'bg-primary' : 'bg-muted'
-                                    }`}
-                            >
-                                <span
-                                    className={`pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform ${filters.homeOffice ? 'translate-x-4' : 'translate-x-0.5'
-                                        }`}
+                                checked={filters.homeOffice}
+                                onCheckedChange={(checked) => onFiltersChange({ ...filters, homeOffice: checked })}
+                            />
+                        </div>
+
+                        {/* Benefits / Custom Tags */}
+                        <div>
+                            <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                                Benefits (Tags)
+                            </Label>
+                            <p className="text-[10px] text-muted-foreground mb-2">
+                                e.g. Gym, Free snacks, etc.
+                            </p>
+                            <div className="flex space-x-2 mb-3">
+                                <AutocompleteInput
+                                    category="tags"
+                                    value={benefitInput}
+                                    onChange={setBenefitInput}
+                                    onKeyPress={(e: any) => e.key === 'Enter' && handleAddBenefit()}
+                                    placeholder="Add benefit..."
+                                    className="flex-1 bg-background text-foreground border-border"
                                 />
-                            </button>
+                                <Button
+                                    size="icon"
+                                    onClick={handleAddBenefit}
+                                    className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                                >
+                                    <Plus className="w-5 h-5" strokeWidth={2} />
+                                </Button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {(filters.benefits || []).map((benefit) => (
+                                    <div
+                                        key={benefit}
+                                        className="flex items-center space-x-1 px-3 py-1 bg-secondary/10 text-secondary rounded-full text-body-sm"
+                                    >
+                                        <span>{benefit}</span>
+                                        <button
+                                            onClick={() => handleRemoveBenefit(benefit)}
+                                            className="hover:text-secondary-hover"
+                                            aria-label={`Remove ${benefit}`}
+                                        >
+                                            <X className="w-4 h-4" strokeWidth={2} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </CollapsibleContent>
                 </Collapsible>
+
+
+
             </div>
         </Card>
     );

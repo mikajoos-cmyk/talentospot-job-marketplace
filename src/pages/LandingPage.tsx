@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import { MapPin, DollarSign, ArrowRight, Users, Briefcase, TrendingUp, Calendar, Loader2 } from 'lucide-react';
+import { ArrowRight, Users, Briefcase, TrendingUp, Loader2, Star } from 'lucide-react';
 import { jobsService } from '../services/jobs.service';
 import { employerService } from '../services/employer.service';
 import { candidateService } from '../services/candidate.service';
 import PublicHeader from '../components/layout/PublicHeader';
-import logoImg from '../assets/logo.png';
+import MainHeroFilter from '../components/landing/MainHeroFilter';
+import QuickAccessStatus from '../components/landing/QuickAccessStatus';
+import CandidateListCard from '../components/landing/CandidateListCard';
+import JobListCard from '../components/landing/JobListCard';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -65,13 +67,7 @@ const LandingPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleViewProfile = () => {
-    navigate('/login');
-  };
 
-  const handleViewJob = () => {
-    navigate('/login');
-  };
 
   if (isLoading) {
     return (
@@ -85,342 +81,220 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-background">
       <PublicHeader />
 
-      <section className="py-20 md:py-32 bg-gradient-to-br from-primary/5 via-background to-accent/5">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-h1 md:text-[48px] font-heading text-foreground mb-6 leading-tight">
-            Discover Top Talent
-          </h2>
-          <p className="text-body-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Connect with skilled professionals and find the perfect match for your team.
-            Join thousands of companies building their dream teams.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button
-              size="lg"
-              onClick={() => navigate('/candidates')}
-              className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal h-12 px-8"
-            >
-              Start Hiring <ArrowRight className="ml-2 w-5 h-5" strokeWidth={2} />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate('/jobs')}
-              className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal h-12 px-8"
-            >
-              Find Jobs
-            </Button>
-          </div>
+      {/* Modern Hero Section */}
+      <section className="relative pt-24 pb-40 md:pt-32 md:pb-52 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/5 -z-10"></div>
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-primary/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 -z-10"></div>
+        <div className="absolute bottom-0 left-0 w-1/4 h-1/2 bg-accent/5 blur-3xl rounded-full translate-y-1/2 -translate-x-1/2 -z-10"></div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                <Users className="w-8 h-8 text-primary" strokeWidth={1.5} />
-              </div>
-              <h3 className="text-h4 font-heading text-foreground mb-2">10,000+ Talents</h3>
-              <p className="text-body-sm text-muted-foreground">Verified professionals ready to join your team</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/10 flex items-center justify-center">
-                <Briefcase className="w-8 h-8 text-accent" strokeWidth={1.5} />
-              </div>
-              <h3 className="text-h4 font-heading text-foreground mb-2">5,000+ Companies</h3>
-              <p className="text-body-sm text-muted-foreground">Leading employers trust our platform</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-info/10 flex items-center justify-center">
-                <TrendingUp className="w-8 h-8 text-info" strokeWidth={1.5} />
-              </div>
-              <h3 className="text-h4 font-heading text-foreground mb-2">95% Success Rate</h3>
-              <p className="text-body-sm text-muted-foreground">Successful placements and satisfied clients</p>
-            </div>
+        <div className="container mx-auto px-6 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-6 border border-primary/20 animate-fade-in">
+            <Star className="w-3 h-3 fill-primary" />
+            The Future of Recruitment
           </div>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading text-foreground mb-6 leading-[1.1] tracking-tight">
+            Connecting <span className="text-primary italic">Ambition</span> <br className="hidden md:block" /> with Opportunity.
+          </h1>
+          <p className="text-body-lg text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
+            Discover a world of talented professionals and leading employers.
+            Automated matching, verified profiles, and seamless communication.
+          </p>
+
+          <MainHeroFilter />
+          <QuickAccessStatus />
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-background">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-12">
-            <h3 className="text-h2 font-heading text-foreground mb-4">Latest Jobs</h3>
-            <p className="text-body text-muted-foreground">
-              Explore exciting job openings from top companies
-            </p>
+      {/* Redesigned Sections: List Layouts */}
+      <section className="py-24 bg-background border-t border-border/40">
+        <div className="container mx-auto px-6 max-w-6xl">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+            <div className="max-w-xl">
+              <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Featured Talents</h2>
+              <p className="text-muted-foreground">Premium professionals currently looking for their next challenge. Quick matching guaranteed.</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/candidates')}
+              className="group border-primary/20 text-primary hover:bg-primary/5 font-bold"
+            >
+              Explore All Talents
+              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {featuredJobs.map((job) => (
-              <Card
-                key={job.id}
-                className="p-5 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1"
-              >
-                <div className="flex flex-col space-y-3">
-                  <div className="flex items-start justify-between">
-                    <img
-                      src={job.employer_profiles?.logo_url || "https://via.placeholder.com/48"}
-                      alt={job.employer_profiles?.company_name}
-                      className="w-12 h-12 rounded-lg object-cover"
-                      loading="lazy"
-                    />
-                    <span className="px-2 py-1 bg-primary/10 text-primary text-caption rounded-md">
-                      Featured
-                    </span>
-                  </div>
-
-                  <div>
-                    <h4 className="text-h4 font-heading text-foreground mb-1">{job.title}</h4>
-                    <p className="text-body-sm text-muted-foreground">{job.employer_profiles?.company_name}</p>
-                  </div>
-
-                  <p className="text-body-sm text-foreground line-clamp-2">{job.description}</p>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center text-body-sm text-muted-foreground">
-                      <MapPin className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
-                      <span>{job.city}, {job.country}</span>
-                    </div>
-                    <div className="flex items-center text-body-sm text-muted-foreground">
-                      <DollarSign className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
-                      <span>{job.salary_min && job.salary_max ? `${job.salary_min} - ${job.salary_max} ${job.salary_currency || 'EUR'}` : 'Competitive'}</span>
-                    </div>
-                    <div className="flex items-center text-body-sm text-muted-foreground">
-                      <Calendar className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
-                      <span>{new Date(job.posted_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-
-                  {job.entry_bonus && (
-                    <div className="bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
-                      <span className="text-body-sm font-medium text-warning">
-                        Entry Bonus: €{job.entry_bonus.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-
-                  <Button
-                    onClick={handleViewJob}
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-medium text-body-sm h-9"
-                  >
-                    View Job
-                  </Button>
-                </div>
-              </Card>
+          <div className="flex flex-col gap-6">
+            {previewCandidates.map((candidate) => (
+              <CandidateListCard
+                key={candidate.id}
+                candidate={candidate}
+                onViewProfile={() => navigate('/login')}
+              />
             ))}
           </div>
+        </div>
+      </section>
 
-          <div className="text-center mt-12">
+      <section className="py-24 bg-muted/20 border-y border-border/40">
+        <div className="container mx-auto px-6 max-w-6xl">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+            <div className="max-w-xl">
+              <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Latest Jobs</h2>
+              <p className="text-muted-foreground">High-impact roles at innovative companies. Updated daily with fresh opportunities.</p>
+            </div>
             <Button
-              size="lg"
+              variant="outline"
               onClick={() => navigate('/jobs')}
-              className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+              className="group border-primary/20 text-primary hover:bg-primary/5 font-bold"
             >
-              View All Jobs <ArrowRight className="ml-2 w-5 h-5" strokeWidth={2} />
+              Browse All Jobs
+              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Button>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            {featuredJobs.map((job) => (
+              <JobListCard
+                key={job.id}
+                job={job}
+                onViewDetail={() => navigate('/login')}
+              />
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-muted/30">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-12">
-            <h3 className="text-h2 font-heading text-foreground mb-4">Top Employers</h3>
-            <p className="text-body text-muted-foreground">
-              Join leading companies hiring on TalentoSpot
-            </p>
+      <section className="py-24 bg-background">
+        <div className="container mx-auto px-6 max-w-6xl">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+            <div className="max-w-xl">
+              <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Top Employers</h2>
+              <p className="text-muted-foreground">Shape your career at these market leaders. Vetted for culture and excellence.</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/register')}
+              className="group border-primary/20 text-primary hover:bg-primary/5 font-bold"
+            >
+              All Companies
+              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {topCompanies.map((company) => (
               <Card
                 key={company.id}
-                className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 text-center"
+                className="group p-6 border border-border/60 hover:border-primary/40 hover:shadow-xl transition-all duration-300 relative overflow-hidden"
               >
-                <img
-                  src={company.logo_url || "https://via.placeholder.com/64"}
-                  alt={company.company_name}
-                  className="w-16 h-16 mx-auto mb-3 rounded-lg object-cover"
-                  loading="lazy"
-                />
-                <h4 className="text-body font-medium text-foreground mb-1 truncate">{company.company_name}</h4>
-                <p className="text-caption text-muted-foreground mb-2">{company.industry}</p>
-                {company.open_for_refugees && (
-                  <span className="inline-block px-2 py-1 bg-accent/10 text-accent text-caption rounded-md">
-                    Open for Refugees
-                  </span>
-                )}
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Button
-              size="lg"
-              onClick={() => navigate('/register')}
-              className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-            >
-              View All Companies <ArrowRight className="ml-2 w-5 h-5" strokeWidth={2} />
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 md:py-24 bg-background">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-12">
-            <h3 className="text-h2 font-heading text-foreground mb-4">Featured Talent</h3>
-            <p className="text-body text-muted-foreground">
-              Preview our talented professionals. Sign up to view full profiles.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {previewCandidates.map((candidate) => (
-              <Card
-                key={candidate.id}
-                className="p-5 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1"
-              >
-                <div className="flex flex-col space-y-3">
-                  <div className="flex items-start space-x-3">
-                    <div className="relative">
-                      <Avatar className="w-14 h-14 blur-md">
-                        <AvatarImage src={candidate.profiles?.avatar_url || ""} alt={candidate.profiles?.full_name} />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {candidate.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute inset-0 bg-white/30 backdrop-blur-sm rounded-full"></div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      {candidate.is_refugee && (
-                        <span className="inline-block px-2 py-0.5 bg-accent/10 text-accent text-caption rounded-md mb-1">
-                          Refugee/Immigrant
-                        </span>
-                      )}
-                      <h4 className="text-h4 font-heading text-foreground truncate">
-                        Candidate #{candidate.id.substring(0, 4)}
-                      </h4>
-                      <p className="text-body-sm text-muted-foreground">{candidate.job_title}</p>
-                    </div>
+                <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover:bg-primary transition-colors"></div>
+                <div className="flex items-start gap-5">
+                  <div className="w-16 h-16 shrink-0 rounded-xl bg-white shadow-sm border border-border/40 p-1 blur-md select-none">
+                    <img
+                      src={company.logo_url || "https://via.placeholder.com/64"}
+                      alt={company.company_name}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center text-body-sm text-muted-foreground">
-                      <MapPin className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
-                      <span>{candidate.city}, {candidate.country}</span>
-                    </div>
-                    <div className="flex items-center text-body-sm text-muted-foreground">
-                      <DollarSign className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
-                      <span>
-                        {candidate.salary_expectation_min?.toLocaleString()} - {candidate.salary_expectation_max?.toLocaleString()} {candidate.currency || 'EUR'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {candidate.candidate_skills?.slice(0, 3).map((cs: any) => (
-                      <span
-                        key={cs.skills?.name}
-                        className="px-2 py-0.5 bg-muted text-foreground text-caption rounded-md"
-                      >
-                        {cs.skills?.name}
-                      </span>
-                    ))}
-                    {candidate.candidate_skills?.length > 3 && (
-                      <span className="px-2 py-0.5 bg-muted text-foreground text-caption rounded-md">
-                        +{candidate.candidate_skills.length - 3}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors truncate blur-md select-none">{company.company_name}</h4>
+                    <p className="text-sm text-muted-foreground mb-3 flex items-center gap-1.5">
+                      <Briefcase className="w-3.5 h-3.5" />
+                      {company.industry}
+                    </p>
+                    {company.open_for_refugees && (
+                      <span className="inline-flex items-center px-2 py-0.5 bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider rounded border border-accent/20">
+                        Open for Refugees
                       </span>
                     )}
                   </div>
-
-                  <Button
-                    onClick={handleViewProfile}
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-medium text-body-sm h-9"
-                  >
-                    View Profile
-                  </Button>
                 </div>
               </Card>
             ))}
           </div>
+        </div>
+      </section>
 
-          <div className="text-center mt-12">
-            <Button
-              size="lg"
-              onClick={() => navigate('/candidates')}
-              className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-            >
-              View All Candidates <ArrowRight className="ml-2 w-5 h-5" strokeWidth={2} />
-            </Button>
+      {/* Stats Section */}
+      <section className="py-20 bg-secondary/10 border-y border-secondary/20 relative overflow-hidden">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
+            <div className="text-center group">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-primary shadow-lg shadow-primary/30 flex items-center justify-center group-hover:-translate-y-2 transition-transform duration-300">
+                <Users className="w-8 h-8 text-white" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-3xl font-heading text-foreground mb-2">10,000+</h3>
+              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Professionals</p>
+            </div>
+            <div className="text-center group">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-accent shadow-lg shadow-accent/30 flex items-center justify-center group-hover:-translate-y-2 transition-transform duration-300">
+                <Briefcase className="w-8 h-8 text-white" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-3xl font-heading text-foreground mb-2">5,000+</h3>
+              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Companies</p>
+            </div>
+            <div className="text-center group">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-info shadow-lg shadow-info/30 flex items-center justify-center group-hover:-translate-y-2 transition-transform duration-300">
+                <TrendingUp className="w-8 h-8 text-white" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-3xl font-heading text-foreground mb-2">95%</h3>
+              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Success Rate</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <footer className="bg-secondary text-secondary-foreground py-12 border-t border-secondary-hover">
+      <footer className="bg-foreground text-background py-20">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <img
-                src={logoImg}
-                alt="TalentoSpot"
-                className="h-8 w-auto mb-4 brightness-0 invert"
-              />
-              <p className="text-body-sm text-muted-foreground">
-                Connecting talented professionals with leading companies worldwide.
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 border-b border-background/10 pb-16">
+            <div className="col-span-1 md:col-span-1">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="w-8 h-8 bg-primary rounded-lg"></div>
+                <span className="text-2xl font-heading font-black tracking-tighter">TalentoSpot</span>
+              </div>
+              <p className="text-sm text-background/60 leading-relaxed">
+                Empowering the next generation of global talent through smart technology and human-centric design.
               </p>
             </div>
+
             <div>
-              <h5 className="text-body font-medium text-secondary-foreground mb-4">Explore</h5>
-              <ul className="space-y-2">
-                <li>
-                  <button
-                    onClick={() => navigate('/candidates')}
-                    className="text-body-sm text-muted-foreground hover:text-secondary-foreground transition-colors"
-                  >
-                    Find Talent
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => navigate('/jobs')}
-                    className="text-body-sm text-muted-foreground hover:text-secondary-foreground transition-colors"
-                  >
-                    Find Jobs
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => navigate('/login')}
-                    className="text-body-sm text-muted-foreground hover:text-secondary-foreground transition-colors"
-                  >
-                    Sign In
-                  </button>
-                </li>
+              <h5 className="text-sm font-bold uppercase tracking-widest mb-6 text-primary">Explore</h5>
+              <ul className="space-y-4">
+                <li><button onClick={() => navigate('/candidates')} className="text-sm text-background/80 hover:text-white transition-colors">Find Talent</button></li>
+                <li><button onClick={() => navigate('/jobs')} className="text-sm text-background/80 hover:text-white transition-colors">Find Jobs</button></li>
+                <li><button onClick={() => navigate('/login')} className="text-sm text-background/80 hover:text-white transition-colors">Candidate Sign In</button></li>
+                <li><button onClick={() => navigate('/login')} className="text-sm text-background/80 hover:text-white transition-colors">Employer Portal</button></li>
               </ul>
             </div>
+
             <div>
-              <h5 className="text-body font-medium text-secondary-foreground mb-4">Company</h5>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="text-body-sm text-muted-foreground hover:text-secondary-foreground transition-colors">
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-body-sm text-muted-foreground hover:text-secondary-foreground transition-colors">
-                    Contact
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-body-sm text-muted-foreground hover:text-secondary-foreground transition-colors">
-                    Privacy Policy
-                  </a>
-                </li>
+              <h5 className="text-sm font-bold uppercase tracking-widest mb-6 text-primary">Platforms</h5>
+              <ul className="space-y-4">
+                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">How it Works</a></li>
+                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">Pricing Plans</a></li>
+                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">Success Stories</a></li>
+                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">FAQ</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h5 className="text-sm font-bold uppercase tracking-widest mb-6 text-primary">Connect</h5>
+              <ul className="space-y-4">
+                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">LinkedIn</a></li>
+                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">Instagram</a></li>
+                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">Twitter (X)</a></li>
+                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">Contact Support</a></li>
               </ul>
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t border-secondary-hover text-center">
-            <p className="text-caption text-muted-foreground">
-              © 2026 TalentoSpot. All rights reserved.
-            </p>
+
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <p className="text-xs text-background/40">© 2026 TalentoSpot. Engineering Excellence in Recruitment.</p>
+            <div className="flex gap-8">
+              <a href="#" className="text-xs text-background/40 hover:text-white transition-colors font-medium underline-offset-4 hover:underline">Imprint</a>
+              <a href="#" className="text-xs text-background/40 hover:text-white transition-colors font-medium underline-offset-4 hover:underline">Privacy Policy</a>
+              <a href="#" className="text-xs text-background/40 hover:text-white transition-colors font-medium underline-offset-4 hover:underline">Terms of Service</a>
+            </div>
           </div>
         </div>
       </footer>

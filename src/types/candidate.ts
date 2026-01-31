@@ -28,6 +28,13 @@ export interface CandidateProfile {
   dateOfBirth?: string;
   nationality?: string;
   gender?: string;
+  street?: string;
+  houseNumber?: string;
+  postalCode?: string;
+  state?: string;
+  tags?: string[];
+  cvUrl?: string;
+  nationalityCode?: string;
   salary: { min: number; max: number };
   currency: string;
   skills: Array<{ name: string; percentage: number }>;
@@ -72,6 +79,7 @@ export interface CandidateProfile {
     startDate?: string;
     endDate?: string;
     period: string;
+    description?: string;
   }>;
 }
 
@@ -98,4 +106,12 @@ export interface CandidateFilters {
   drivingLicenses?: string[];
   enablePartialMatch?: boolean;
   minMatchThreshold?: number;
+  // New fields
+  sector?: string;
+  candidateStatus?: string[];
+  homeOfficePreference?: ('yes' | 'no' | 'hybrid')[];
+  vacationDays?: number[];
+  noticePeriod?: string[];
+  preferredWorkLocations?: Array<{ continent: string; country: string; city: string; radius: number }>;
+  customTags?: string[];
 }

@@ -1,9 +1,9 @@
 import React from 'react';
-import { StarIcon } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 interface DashboardStatsCardProps {
-  icon: StarIcon;
+  icon: LucideIcon;
   label: string;
   value: number;
   color: 'primary' | 'accent' | 'info' | 'success';
@@ -19,10 +19,9 @@ const DashboardStatsCard: React.FC<DashboardStatsCardProps> = ({ icon: Icon, lab
   };
 
   return (
-    <Card 
-      className={`p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 ${
-        onClick ? 'cursor-pointer' : ''
-      }`}
+    <Card
+      className={`p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1 ${onClick ? 'cursor-pointer' : ''
+        }`}
       onClick={onClick}
     >
       <div className="flex items-start justify-between">
