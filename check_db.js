@@ -1,23 +1,31 @@
-const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient('https://ftsufrzwilxlinwjmxqh.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0c3Vmcnp3aWx4bGlud2pteHFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0MTY0NjIsImV4cCI6MjA4NDk5MjQ2Mn0.rq48hBxlqVNdNuohAc6SMBc7suJOEpyjgsovHVc_eSw');
+const { createClient } = require('@supabase/supabase-client');
+require('dotenv').config({ path: '.env.local' });
 
-async function check() {
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase environment variables');
+    process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function checkTable() {
+    console.log('Checking job_alerts table...');
     const { data, error } = await supabase
-        .from('candidate_profiles')
-        .select(`
-      id,
-      job_title,
-      candidate_skills(skills(name)),
-      candidate_languages(languages(name)),
-      candidate_qualifications(qualifications(name))
-    `)
-        .limit(5);
+        .from('job_alerts')
+        .select('*')
+        .limit(1);
 
     if (error) {
-        console.error('Error:', error);
+        console.error('Error accessing job_alerts:', error.message, error.code);
+        if (error.code === '42P01') {
+            console.log('Table job_alerts DOES NOT exist.');
+        }
     } else {
-        console.log(JSON.stringify(data, null, 2));
+        console.log('Successfully accessed job_alerts table.');
     }
 }
 
-check();
+checkTable();

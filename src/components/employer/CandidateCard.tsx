@@ -155,9 +155,9 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   return (
     <>
       <Card className="group p-0 overflow-hidden border border-border bg-card hover:shadow-xl transition-all duration-300">
-        <div className="flex flex-col md:flex-row">
+        <div className="flex flex-col layout-md:flex-row">
           {/* Left Section: Profile Info */}
-          <div className="p-6 md:w-72 flex flex-col items-center text-center border-b md:border-b-0 md:border-r border-border bg-muted/5 shrink-0">
+          <div className="p-6 layout-md:w-72 flex flex-col items-center text-center border-b layout-md:border-b-0 layout-md:border-r border-border bg-muted/5 shrink-0">
             <div className="relative mb-4">
               <div className="relative">
                 <Avatar className={`w-24 h-24 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-500 ${shouldBlurIdentity ? 'blur-md' : ''}`}>
@@ -208,7 +208,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
           </div>
 
           {/* Middle Section: Details */}
-          <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-8 min-w-0">
+          <div className="flex-1 p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-8 min-w-0">
             {/* Column 1: Core Details */}
             <div className="space-y-4">
               <div className="flex items-start gap-3">
@@ -309,7 +309,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
           </div>
 
           {/* Right Section: Action */}
-          <div className="p-6 md:w-48 flex flex-col justify-center items-center gap-3 bg-muted/5 border-t md:border-t-0 md:border-l border-border">
+          <div className="p-6 layout-md:w-48 flex flex-col justify-center items-center gap-3 bg-muted/5 border-t layout-md:border-t-0 layout-md:border-l border-border">
             <Button
               onClick={handleAction}
               disabled={requestPending && !canContact}

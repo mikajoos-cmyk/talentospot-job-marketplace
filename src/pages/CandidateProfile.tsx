@@ -10,7 +10,8 @@ import { candidateService } from '../services/candidate.service';
 import { Loader2 } from 'lucide-react';
 import {
   MapPin, Mail, Phone, Briefcase, GraduationCap, Award, Video,
-  Image as ImageIcon, DollarSign, Plane, Globe, Car, Star, FileText, Tag, Download
+  Image as ImageIcon, DollarSign, Plane, Globe, Car, Star, Tag, Download,
+  User, Calendar, Layers, Activity, UserCircle, CheckCircle2, Home, Clock
 } from 'lucide-react';
 import {
   Dialog,
@@ -98,15 +99,14 @@ const CandidateProfile: React.FC = () => {
   const hasQualifications = candidateData.qualifications && candidateData.qualifications.length > 0;
   const hasExperience = candidateData.experience && candidateData.experience.length > 0;
   const hasEducation = candidateData.education && candidateData.education.length > 0;
+  const hasRequirements = candidateData.requirements && candidateData.requirements.length > 0;
+  const hasJobTypes = candidateData.jobTypes && candidateData.jobTypes.length > 0;
 
-  // Formatierung der Location
-  const addressParts = [
-    candidateData.street && `${candidateData.street}${candidateData.houseNumber ? ` ${candidateData.houseNumber}` : ''}`,
-    candidateData.postalCode && candidateData.city ? `${candidateData.postalCode} ${candidateData.city}` : (candidateData.postalCode || candidateData.city),
-    candidateData.state,
-    candidateData.country
-  ].filter(Boolean);
-  const locationString = addressParts.join(', ');
+  // Formatierung der Location-Teile
+  const streetDisplay = candidateData.street ? `${candidateData.street}${candidateData.houseNumber ? ` ${candidateData.houseNumber}` : ''}` : null;
+  const cityDisplay = candidateData.postalCode && candidateData.city ? `${candidateData.postalCode} ${candidateData.city}` : (candidateData.postalCode || candidateData.city || null);
+  const regionDisplay = [candidateData.state, candidateData.country].filter(Boolean).join(', ') || null;
+  const hasLocation = streetDisplay || cityDisplay || regionDisplay;
 
   // Placeholder für Reviews (da Tabelle noch leer/nicht implementiert)
   const candidateReviews: any[] = [];
@@ -152,26 +152,98 @@ const CandidateProfile: React.FC = () => {
                 {candidateData.title || 'No job title specified'}
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                <div className="flex items-center text-body-sm text-foreground">
-                  <Mail className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4 mb-6">
+                <div className="flex items-center text-body-sm text-foreground self-start h-full">
+                  <div className="flex items-center">
+                    <Mail className="w-4 h-4 mr-2 text-primary/70" strokeWidth={2} />
+                    <span className="font-medium mr-1">Email:</span>
+                  </div>
                   <span>{user.email}</span>
                 </div>
-                <div className="flex items-center text-body-sm text-foreground">
-                  <Phone className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
+                <div className="flex items-center text-body-sm text-foreground self-start h-full">
+                  <div className="flex items-center">
+                    <Phone className="w-4 h-4 mr-2 text-primary/70" strokeWidth={2} />
+                    <span className="font-medium mr-1">Phone:</span>
+                  </div>
                   <span>{candidateData.phone || 'Not specified'}</span>
                 </div>
-                <div className="flex items-center text-body-sm text-foreground">
-                  <MapPin className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{locationString || 'Location not specified'}</span>
+                <div className="flex items-center text-body-sm text-foreground self-start h-full">
+                  <div className="flex items-center">
+                    <User className="w-4 h-4 mr-2 text-primary/70" strokeWidth={2} />
+                    <span className="font-medium mr-1">Gender:</span>
+                  </div>
+                  <span className="capitalize">{candidateData.gender || 'Not specified'}</span>
                 </div>
-                <div className="flex items-center text-body-sm text-foreground">
-                  <Globe className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
+
+                {hasLocation ? (
+                  <div className="flex items-start text-body-sm text-foreground">
+                    <MapPin className="w-4 h-4 mr-2 text-primary/70 shrink-0 mt-0.5" strokeWidth={2} />
+                    <div className="flex flex-col">
+                      <span className="font-medium mb-1">Current Address:</span>
+                      <div className="flex flex-col space-y-0.5 text-muted-foreground">
+                        {streetDisplay && <span>{streetDisplay}</span>}
+                        {cityDisplay && <span>{cityDisplay}</span>}
+                        {regionDisplay && <span>{regionDisplay}</span>}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center text-body-sm text-foreground self-start h-full">
+                    <div className="flex items-center">
+                      <MapPin className="w-4 h-4 mr-2 text-primary/70" strokeWidth={2} />
+                      <span className="font-medium mr-1">Location:</span>
+                    </div>
+                    <span>Not specified</span>
+                  </div>
+                )}
+
+                <div className="flex items-center text-body-sm text-foreground self-start h-full">
+                  <div className="flex items-center">
+                    <Globe className="w-4 h-4 mr-2 text-primary/70" strokeWidth={2} />
+                    <span className="font-medium mr-1">Nationality:</span>
+                  </div>
                   <span>{candidateData.nationality || 'Not specified'}</span>
                 </div>
-                <div className="flex items-center text-body-sm text-foreground">
-                  <Briefcase className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{candidateData.yearsOfExperience || 0} years of professional experience</span>
+
+                <div className="flex items-center text-body-sm text-foreground self-start h-full">
+                  <div className="flex items-center">
+                    <Calendar className="w-4 h-4 mr-2 text-primary/70" strokeWidth={2} />
+                    <span className="font-medium mr-1">Birthday:</span>
+                  </div>
+                  <span>{candidateData.dateOfBirth ? new Date(candidateData.dateOfBirth).toLocaleDateString() : 'Not specified'}</span>
+                </div>
+              </div>
+
+              <div className="bg-muted/30 rounded-xl p-4 border border-border/50 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="flex flex-col">
+                    <div className="flex items-center text-caption text-muted-foreground mb-1">
+                      <Layers className="w-3.5 h-3.5 mr-1.5" />
+                      Sector
+                    </div>
+                    <span className="text-body-sm font-semibold">{candidateData.sector || 'Not specified'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center text-caption text-muted-foreground mb-1">
+                      <Activity className="w-3.5 h-3.5 mr-1.5" />
+                      Career Level
+                    </div>
+                    <span className="text-body-sm font-semibold capitalize">{candidateData.careerLevel || 'Not specified'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center text-caption text-muted-foreground mb-1">
+                      <UserCircle className="w-3.5 h-3.5 mr-1.5" />
+                      Status
+                    </div>
+                    <span className="text-body-sm font-semibold capitalize">{candidateData.employmentStatus || 'Not specified'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center text-caption text-muted-foreground mb-1">
+                      <Briefcase className="w-3.5 h-3.5 mr-1.5" />
+                      Experience
+                    </div>
+                    <span className="text-body-sm font-semibold">{candidateData.yearsOfExperience || 0} years</span>
+                  </div>
                 </div>
               </div>
 
@@ -227,7 +299,7 @@ const CandidateProfile: React.FC = () => {
               <p className="text-caption text-muted-foreground mb-1">Salary Expectation</p>
               <p className="text-h4 font-heading text-foreground">
                 {(candidateData.salary?.min || candidateData.salary?.max)
-                  ? `€${candidateData.salary.min?.toLocaleString() || '0'} - €${candidateData.salary.max?.toLocaleString() || '0'}`
+                  ? `${candidateData.currency || '€'}${candidateData.salary.min?.toLocaleString() || '0'} - ${candidateData.currency || '€'}${candidateData.salary.max?.toLocaleString() || '0'}`
                   : 'Not specified'}
               </p>
             </div>
@@ -237,7 +309,7 @@ const CandidateProfile: React.FC = () => {
               <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg flex-1 min-w-[200px]">
                 <p className="text-caption text-warning mb-1">Entry Bonus</p>
                 <p className="text-h4 font-heading text-warning">
-                  €{candidateData.conditions.entryBonus.toLocaleString()}
+                  {candidateData.currency || '€'}{candidateData.conditions.entryBonus.toLocaleString()}
                 </p>
               </div>
             )}
@@ -292,12 +364,33 @@ const CandidateProfile: React.FC = () => {
             </div>
 
             <div className="p-4 bg-muted rounded-lg md:flex-grow min-w-[200px]">
-              <p className="text-caption text-muted-foreground mb-1">Preferred Contract Terms</p>
-              <div className="flex flex-wrap gap-2 mt-1">
+              <p className="text-caption text-muted-foreground mb-1">
+                <Clock className="w-3.5 h-3.5 inline mr-1" />
+                Preferred Contract Terms
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2">
                 {candidateData.contractTermPreference && candidateData.contractTermPreference.length > 0 ? (
                   candidateData.contractTermPreference.map((term: string) => (
-                    <span key={term} className="px-2 py-1 bg-info/10 text-info text-caption rounded-md border border-info/20 capitalize">
-                      {term}
+                    <span key={term} className="px-2 py-1 bg-info/10 text-info text-caption rounded-md border border-info/20 capitalize font-medium">
+                      {term === 'unlimited' ? 'Permanent' : term}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-body-sm text-foreground">Not specified</span>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 bg-muted rounded-lg md:flex-grow min-w-[200px]">
+              <p className="text-caption text-muted-foreground mb-1">
+                <Home className="w-3.5 h-3.5 inline mr-1" />
+                Job Types
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {hasJobTypes ? (
+                  candidateData.jobTypes.map((type: string) => (
+                    <span key={type} className="px-2 py-1 bg-accent/10 text-accent text-caption rounded-md border border-accent/20 capitalize font-medium">
+                      {type}
                     </span>
                   ))
                 ) : (
@@ -307,6 +400,23 @@ const CandidateProfile: React.FC = () => {
             </div>
           </div>
         </Card>
+
+        {hasRequirements && (
+          <Card className="p-6 md:p-8 border border-border bg-card">
+            <div className="flex items-center space-x-3 mb-6">
+              <CheckCircle2 className="w-6 h-6 text-primary" strokeWidth={1.5} />
+              <h3 className="text-h3 font-heading text-foreground">My Expectations from Employers</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {candidateData.requirements.map((req: string, idx: number) => (
+                <div key={idx} className="flex items-start p-3 bg-muted/30 rounded-lg border border-border/50">
+                  <div className="mt-1 mr-3 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                  <span className="text-body-sm text-foreground">{req}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
 
 
 

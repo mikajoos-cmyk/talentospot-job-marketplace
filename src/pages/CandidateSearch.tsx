@@ -29,52 +29,62 @@ const CandidateSearch: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState<CandidateFiltersType>(() => {
     // 1. First, check if there are URL parameters (these should override everything)
-    const urlTitle = searchParams.get('title');
-    const urlLocation = searchParams.get('location');
-    const urlRadius = searchParams.get('radius');
-    const urlStatus = searchParams.get('status');
-    const urlSector = searchParams.get('sector');
-    const urlSalaryMin = searchParams.get('salaryMin');
-    const urlBonusMin = searchParams.get('bonusMin');
-    const urlPkwClasses = searchParams.get('pkwClasses');
-    const urlLkwClasses = searchParams.get('lkwClasses');
+    // 1. First, check if there are URL parameters (these should override everything)
 
-    const hasUrlParams = urlTitle || urlLocation || urlRadius || urlStatus || urlSector || urlSalaryMin || urlBonusMin;
+    const hasUrlParams = Array.from(searchParams.keys()).length > 0;
 
     if (hasUrlParams) {
+      const getArray = (key: string) => {
+        const val = searchParams.get(key);
+        return val ? val.split(',').filter(Boolean) : [];
+      };
+
+      const getInt = (key: string, defaultValue: number) => {
+        const val = searchParams.get(key);
+        return val ? parseInt(val) : defaultValue;
+      };
+
       return {
-        salary: [urlSalaryMin ? parseInt(urlSalaryMin) : 20000, 200000],
-        bonus: [urlBonusMin ? parseInt(urlBonusMin) : 0, 100000],
-        workRadius: urlRadius ? parseInt(urlRadius) : 200,
-        isRefugee: false,
-        originCountry: '',
-        skills: [],
-        qualifications: [],
+        salary: [getInt('salaryMin', 20000), getInt('salaryMax', 200000)],
+        bonus: [getInt('bonusMin', 0), getInt('bonusMax', 100000)],
+        workRadius: getInt('radius', 200),
+        isRefugee: searchParams.get('isRefugee') === 'true',
+        originCountry: searchParams.get('originCountry') || '',
+        skills: getArray('skills'),
+        qualifications: getArray('qualifications'),
         location: {
-          continent: '',
-          country: '',
-          cities: urlLocation ? [urlLocation] : [],
+          continent: searchParams.get('continent') || '',
+          country: searchParams.get('country') || '',
+          cities: searchParams.get('city') ? [searchParams.get('city')!] : (searchParams.get('location') ? [searchParams.get('location')!] : []),
         },
-        jobTitle: urlTitle || '',
-        jobTypes: [],
-        careerLevel: [],
-        yearsOfExperience: [0, 30],
-        languages: [],
-        contractTerm: [],
-        travelWillingness: [0, 100],
+        jobTitle: searchParams.get('title') || '',
+        jobTypes: getArray('jobTypes'),
+        careerLevel: getArray('careerLevel'),
+        yearsOfExperience: [getInt('expMin', 0), getInt('expMax', 30)],
+        languages: (() => {
+          const langs = searchParams.get('languages');
+          if (!langs) return [];
+          try {
+            return JSON.parse(langs);
+          } catch (e) {
+            return [];
+          }
+        })(),
+        contractTerm: getArray('contractTerms'),
+        travelWillingness: [getInt('travelMin', 0), getInt('travelMax', 100)],
         drivingLicenses: [
-          ...(urlPkwClasses ? urlPkwClasses.split(',') : []),
-          ...(urlLkwClasses ? urlLkwClasses.split(',') : [])
+          ...getArray('pkwClasses'),
+          ...getArray('lkwClasses')
         ],
-        candidateStatus: urlStatus !== 'any' ? [urlStatus as any] : [],
-        sector: urlSector !== 'any' ? urlSector || '' : '',
-        enablePartialMatch: false,
-        minMatchThreshold: 50,
-        homeOfficePreference: [],
-        vacationDays: [0, 50],
-        noticePeriod: [],
+        candidateStatus: getArray('status') as any,
+        sector: searchParams.get('sector') !== 'any' ? searchParams.get('sector') || '' : '',
+        enablePartialMatch: searchParams.get('partialMatch') === 'true',
+        minMatchThreshold: getInt('threshold', 50),
+        homeOfficePreference: getArray('homeOffice') as any,
+        vacationDays: [getInt('vacationMin', 0), getInt('vacationMax', 50)],
+        noticePeriod: getArray('noticePeriod'),
         preferredWorkLocations: [],
-        customTags: [],
+        customTags: getArray('tags'),
       };
     }
 
@@ -376,8 +386,8 @@ const CandidateSearch: React.FC = () => {
             </div>
           )}
 
-          <div className="flex flex-col layout-md:flex-row gap-8">
-            <div className="w-full layout-md:w-96 shrink-0">
+          <div className="flex flex-col layout-sm:flex-row gap-8">
+            <div className="w-full layout-sm:w-96 shrink-0">
               <CandidateFilters filters={filters} onFiltersChange={setFilters} />
             </div>
 

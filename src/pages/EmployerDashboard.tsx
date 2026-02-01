@@ -25,7 +25,7 @@ const EmployerDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState<'candidates' | 'jobs' | 'applications' | null>(null);
+  const [modalType, setModalType] = useState<'candidates' | 'jobs' | 'applications' | 'views' | 'followers' | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [stats, setStats] = useState({
@@ -33,11 +33,12 @@ const EmployerDashboard: React.FC = () => {
     activeJobs: 0,
     profileViews: 0,
     totalApplications: 0,
-    followers: 0,
+    followersCount: 0,
   });
 
   const [jobs, setJobs] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
+  const [followers, setFollowers] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [viewStats, setViewStats] = useState<any[]>([]);
 
@@ -51,10 +52,10 @@ const EmployerDashboard: React.FC = () => {
         const employerProfile = user.profile || await employerService.getEmployerProfile(user.id);
         setProfile(employerProfile);
 
-        const [jobsData, applicationsData, followersCount, statsData, totalViewsCount] = await Promise.all([
+        const [jobsData, applicationsData, followersData, statsData, totalViewsCount] = await Promise.all([
           jobsService.getJobsByEmployer(employerProfile.id),
           applicationsService.getApplicationsByEmployer(employerProfile.id),
-          followsService.getFollowersCount(employerProfile.id),
+          followsService.getFollowerCandidates(employerProfile.id),
           analyticsService.getViewStats(user.id),
           analyticsService.getTotalViews(user.id)
         ]);
@@ -63,6 +64,7 @@ const EmployerDashboard: React.FC = () => {
 
         setJobs(jobsData || []);
         setApplications(applicationsData || []);
+        setFollowers(followersData || []);
 
         const activeJobsCount = jobsData?.filter((j: any) => j.status === 'active').length || 0;
 
@@ -71,7 +73,7 @@ const EmployerDashboard: React.FC = () => {
           activeJobs: activeJobsCount,
           profileViews: totalViewsCount || 0,
           totalApplications: applicationsData?.length || 0,
-          followers: followersCount || 0,
+          followersCount: followersData?.length || 0,
         });
       } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -83,7 +85,7 @@ const EmployerDashboard: React.FC = () => {
     loadDashboardData();
   }, [user.id, user.role, user.profile]);
 
-  const handleOpenModal = (type: 'candidates' | 'jobs' | 'applications') => {
+  const handleOpenModal = (type: 'candidates' | 'jobs' | 'applications' | 'views' | 'followers') => {
     setModalType(type);
     setModalOpen(true);
   };
@@ -93,6 +95,8 @@ const EmployerDashboard: React.FC = () => {
       case 'candidates': return 'All Candidates';
       case 'jobs': return 'Active Jobs';
       case 'applications': return 'All Applications';
+      case 'views': return 'Profile Views';
+      case 'followers': return 'Followers';
       default: return '';
     }
   };
@@ -136,7 +140,7 @@ const EmployerDashboard: React.FC = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
           <DashboardStatsCard
             icon={Users}
             label="Total Applications"
@@ -156,21 +160,21 @@ const EmployerDashboard: React.FC = () => {
             label="Profile Views"
             value={stats.profileViews}
             color="info"
-            onClick={() => navigate('/employer/profile')}
+            onClick={() => handleOpenModal('views')}
           />
           <DashboardStatsCard
             icon={Users}
             label="Candidates"
             value={stats.totalCandidates}
             color="success"
-            onClick={() => navigate('/candidates')}
+            onClick={() => handleOpenModal('candidates')}
           />
           <DashboardStatsCard
             icon={Users}
             label="Followers"
-            value={stats.followers}
+            value={stats.followersCount}
             color="primary"
-            onClick={() => navigate('/employer/network')}
+            onClick={() => handleOpenModal('followers')}
           />
         </div>
 
@@ -281,12 +285,40 @@ const EmployerDashboard: React.FC = () => {
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="bg-card border-border max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-h3 font-heading text-foreground">{getModalTitle()}</DialogTitle>
-            <DialogDescription className="text-body text-muted-foreground">
-              {modalType === 'candidates' && 'Browse all candidates through the search page'}
-              {modalType === 'jobs' && 'All your active job postings'}
-              {modalType === 'applications' && 'All applications received for your job postings'}
-            </DialogDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-h3 font-heading text-foreground">{getModalTitle()}</DialogTitle>
+                <DialogDescription className="text-body text-muted-foreground">
+                  {modalType === 'candidates' && 'Browse all candidates through the search page'}
+                  {modalType === 'jobs' && 'All your active job postings'}
+                  {modalType === 'applications' && 'All applications received for your job postings'}
+                  {modalType === 'views' && 'Your profile visibility over the last 14 days'}
+                  {modalType === 'followers' && 'Candidates following your company'}
+                </DialogDescription>
+              </div>
+              <div className="flex gap-2">
+                {modalType === 'candidates' && (
+                  <Button onClick={() => { setModalOpen(false); navigate('/candidates'); }} size="sm" variant="outline">
+                    Go to Search
+                  </Button>
+                )}
+                {modalType === 'jobs' && (
+                  <Button onClick={() => { setModalOpen(false); navigate('/employer/jobs'); }} size="sm" variant="outline">
+                    All Jobs
+                  </Button>
+                )}
+                {modalType === 'views' && (
+                  <Button onClick={() => { setModalOpen(false); navigate('/employer/profile'); }} size="sm" variant="outline">
+                    View Profile
+                  </Button>
+                )}
+                {modalType === 'followers' && (
+                  <Button onClick={() => { setModalOpen(false); navigate('/employer/network'); }} size="sm" variant="outline">
+                    View Network
+                  </Button>
+                )}
+              </div>
+            </div>
           </DialogHeader>
 
           <div className="py-4">

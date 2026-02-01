@@ -271,6 +271,16 @@ export const calculateJobMatchScore = (job: any, filters: any, flexibleMode: boo
         }
     }
 
+    // Contract Duration
+    if (filters.contractDuration && filters.contractDuration !== '') {
+        total += 1;
+        if (job.contract_duration === filters.contractDuration) {
+            matched += 1;
+        } else if (!job.contract_duration) {
+            matched += 0.5;
+        }
+    }
+
     // Home Office
     if (filters.homeOffice === true) {
         total += 1;

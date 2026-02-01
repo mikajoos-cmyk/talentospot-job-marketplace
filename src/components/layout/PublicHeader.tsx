@@ -18,7 +18,7 @@ const PublicHeader: React.FC = () => {
                         className="h-10 w-auto cursor-pointer"
                         onClick={() => navigate('/')}
                     />
-                    <nav className="hidden md:flex items-center space-x-4">
+                    <nav className="flex items-center space-x-1 sm:space-x-4">
                         <Button
                             variant="ghost"
                             onClick={() => navigate('/candidates')}

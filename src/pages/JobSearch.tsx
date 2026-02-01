@@ -41,36 +41,55 @@ const JobSearch: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState<JobFiltersState>(() => {
     // 1. Check for URL parameters first
-    const urlTitle = searchParams.get('title');
-    const urlLocation = searchParams.get('location');
-    const urlSector = searchParams.get('sector');
-    const urlSalaryMin = searchParams.get('salaryMin');
+    // 1. Check for URL parameters first
 
-    const hasUrlParams = urlTitle || urlLocation || urlSector || urlSalaryMin;
+    const hasUrlParams = Array.from(searchParams.keys()).length > 0;
 
     if (hasUrlParams) {
+      const getArray = (key: string) => {
+        const val = searchParams.get(key);
+        return val ? val.split(',').filter(Boolean) : [];
+      };
+
+      const getInt = (key: string, defaultValue: number) => {
+        const val = searchParams.get(key);
+        return val ? parseInt(val) : defaultValue;
+      };
+
       return {
-        title: urlTitle || '',
-        sector: urlSector || '',
-        continent: '',
-        country: '',
-        city: urlLocation || '',
-        employmentTypes: [],
-        salaryRange: [urlSalaryMin ? parseInt(urlSalaryMin) : 0, 250000],
-        minEntryBonus: 0,
-        contractDuration: '',
-        skills: [],
-        qualifications: [],
-        languages: [],
-        careerLevel: '',
-        experienceYears: null,
-        drivingLicenses: [],
-        contractTerms: [],
-        homeOffice: false,
-        enableFlexibleMatch: false,
-        enablePartialMatch: false,
-        minMatchThreshold: 50,
-        benefits: [],
+        title: searchParams.get('title') || '',
+        sector: searchParams.get('sector') || '',
+        continent: searchParams.get('continent') || '',
+        country: searchParams.get('country') || '',
+        city: searchParams.get('city') || searchParams.get('location') || '',
+        employmentTypes: getArray('jobTypes'),
+        salaryRange: [getInt('salaryMin', 0), getInt('salaryMax', 250000)],
+        minEntryBonus: getInt('bonusMin', 0),
+        contractDuration: searchParams.get('contractDuration') || '',
+        skills: getArray('skills'),
+        qualifications: getArray('qualifications'),
+        languages: (() => {
+          const langs = searchParams.get('languages');
+          if (!langs) return [];
+          try {
+            return JSON.parse(langs);
+          } catch (e) {
+            return [];
+          }
+        })(),
+        careerLevel: searchParams.get('careerLevel') || '',
+        experienceYears: searchParams.get('expMin') ? parseInt(searchParams.get('expMin')!) : null,
+        drivingLicenses: [
+          ...getArray('pkwClasses'),
+          ...getArray('lkwClasses')
+        ],
+        contractTerms: getArray('contractTerms'),
+        homeOffice: getArray('homeOffice').length > 0,
+        enableFlexibleMatch: searchParams.get('flexibleMatch') === 'true',
+        enablePartialMatch: searchParams.get('partialMatch') === 'true',
+        minMatchThreshold: getInt('threshold', 50),
+        benefits: getArray('benefits'),
+        minVacationDays: getInt('vacationMin', 0),
       };
     }
 
@@ -445,9 +464,9 @@ const JobSearch: React.FC = () => {
             </div>
           )}
 
-          <div className="flex flex-col layout-md:flex-row gap-8">
+          <div className="flex flex-col layout-sm:flex-row gap-8">
             {(user.role === 'guest' || user.role === 'candidate') && (
-              <div className="w-full layout-md:w-96 shrink-0">
+              <div className="w-full layout-sm:w-96 shrink-0">
                 <JobFilters
                   filters={filters}
                   onFiltersChange={setFilters}

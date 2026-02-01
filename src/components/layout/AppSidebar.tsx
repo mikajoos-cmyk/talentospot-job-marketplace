@@ -19,7 +19,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/candidate/dashboard' },
     { icon: User, label: 'My Profile', path: '/candidate/profile' },
     { icon: Briefcase, label: 'Find Jobs', path: '/candidate/jobs' },
-    { icon: Bell, label: 'Job Alerts', path: '/candidate/settings#notifications' },
+    { icon: Bell, label: 'Job Alerts', path: '/candidate/alerts' },
     { icon: Bookmark, label: 'Saved Jobs', path: '/candidate/saved' },
     { icon: Mail, label: 'Invitations', path: '/candidate/invitations' },
     { icon: MessageSquare, label: 'Messages', path: '/candidate/messages' },

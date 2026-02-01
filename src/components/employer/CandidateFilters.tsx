@@ -4,7 +4,6 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { X, Plus, Map, ChevronDown, User, Briefcase } from 'lucide-react';
@@ -12,6 +11,7 @@ import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
 import { locationData, refugeeOriginCountries } from '@/data/locationData';
 import { getLanguageLevelOptions } from '@/utils/language-levels';
 import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
+import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
 
 interface CandidateFiltersProps {
   filters: CandidateFiltersType;
@@ -23,7 +23,6 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
   const [qualificationInput, setQualificationInput] = useState('');
   const [languageInput, setLanguageInput] = useState('');
   const [languageLevel, setLanguageLevel] = useState('B2');
-  const [licenseInput, setLicenseInput] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [showMap, setShowMap] = useState(false);
   const [personalInfoOpen, setPersonalInfoOpen] = useState(false);
@@ -86,22 +85,6 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
     });
   };
 
-  const handleAddLicense = () => {
-    if (licenseInput.trim() && !(filters.drivingLicenses || []).includes(licenseInput.trim().toUpperCase())) {
-      onFiltersChange({
-        ...filters,
-        drivingLicenses: [...(filters.drivingLicenses || []), licenseInput.trim().toUpperCase()],
-      });
-      setLicenseInput('');
-    }
-  };
-
-  const handleRemoveLicense = (license: string) => {
-    onFiltersChange({
-      ...filters,
-      drivingLicenses: (filters.drivingLicenses || []).filter(l => l !== license),
-    });
-  };
 
   const handleAddTag = () => {
     if (tagInput.trim() && !(filters.customTags || []).includes(tagInput.trim())) {
@@ -828,88 +811,13 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
 
             {/* Driving Licenses */}
             <div>
-              <Label className="text-body-sm font-medium text-foreground mb-2 block">
+              <Label className="text-body-sm font-medium text-foreground mb-3 block">
                 Driving Licenses
               </Label>
-              <div className="flex space-x-2 mb-3">
-                <Input
-                  type="text"
-                  placeholder="Add license (e.g., B, C, CE)..."
-                  value={licenseInput}
-                  onChange={(e) => setLicenseInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddLicense()}
-                  className="flex-1 bg-background text-foreground border-border"
-                />
-                <Button
-                  size="icon"
-                  onClick={handleAddLicense}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                >
-                  <Plus className="w-5 h-5" strokeWidth={2} />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {['B', 'A', 'BE', 'AM'].map((lic) => (
-                  <button
-                    key={lic}
-                    onClick={() => {
-                      const current = filters.drivingLicenses || [];
-                      const updated = current.includes(lic)
-                        ? current.filter(l => l !== lic)
-                        : [...current, lic];
-                      onFiltersChange({ ...filters, drivingLicenses: updated });
-                    }}
-                    className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${(filters.drivingLicenses || []).includes(lic)
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-foreground hover:bg-muted/80'
-                      }`}
-                  >
-                    {lic}
-                  </button>
-                ))}
-              </div>
-
-              <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                Truck Licenses
-              </Label>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {['C', 'CE', 'C1', 'C1E'].map((lic) => (
-                  <button
-                    key={lic}
-                    onClick={() => {
-                      const current = filters.drivingLicenses || [];
-                      const updated = current.includes(lic)
-                        ? current.filter(l => l !== lic)
-                        : [...current, lic];
-                      onFiltersChange({ ...filters, drivingLicenses: updated });
-                    }}
-                    className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${(filters.drivingLicenses || []).includes(lic)
-                      ? 'bg-warning/20 text-warning-foreground border border-warning/30'
-                      : 'bg-muted text-foreground hover:bg-muted/80'
-                      }`}
-                  >
-                    {lic}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {(filters.drivingLicenses || []).filter(l => !['B', 'A', 'BE', 'AM', 'C', 'CE', 'C1', 'C1E'].includes(l)).map((license) => (
-                  <div
-                    key={license}
-                    className="flex items-center space-x-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-body-sm font-medium"
-                  >
-                    <span>Class {license}</span>
-                    <button
-                      onClick={() => handleRemoveLicense(license)}
-                      className="hover:text-primary-hover"
-                      aria-label={`Remove ${license}`}
-                    >
-                      <X className="w-4 h-4" strokeWidth={2} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <DrivingLicenseSelector
+                value={filters.drivingLicenses || []}
+                onChange={(val) => onFiltersChange({ ...filters, drivingLicenses: val })}
+              />
             </div>
 
             {/* Custom Tags */}
@@ -921,12 +829,12 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
                 e.g., Barrier-free, Fitness studio, Pets allowed, etc.
               </p>
               <div className="flex space-x-2 mb-3">
-                <Input
-                  type="text"
+                <AutocompleteInput
+                  category="tags"
                   placeholder="Add custom tag..."
                   value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                  onChange={setTagInput}
+                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddTag()}
                   className="flex-1 bg-background text-foreground border-border"
                 />
                 <Button

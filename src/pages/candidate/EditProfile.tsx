@@ -17,6 +17,7 @@ import { Switch } from '../../components/ui/switch';
 import { refugeeOriginCountries } from '../../data/locationData';
 import { locationData } from '../../data/locationData';
 import { AutocompleteInput } from '../../components/shared/AutocompleteInput';
+import DrivingLicenseSelector from '../../components/shared/DrivingLicenseSelector';
 import {
   Dialog,
   DialogContent,
@@ -68,8 +69,13 @@ const EditProfile: React.FC = () => {
       try {
         const profile = await candidateService.getCandidateProfile(user.id);
         if (profile) {
+          const nameParts = (user.name || '').trim().split(/\s+/);
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts.slice(1).join(' ') || '';
+
           setFormData({
-            name: user.name,
+            firstName,
+            lastName,
             email: user.email,
             phone: profile.phone || '',
             dateOfBirth: profile.dateOfBirth || '',
@@ -570,7 +576,7 @@ const EditProfile: React.FC = () => {
 
       const updates = {
         // --- Basisdaten ---
-        name: formData.name,
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email,
         phone: formData.phone,
         avatar: formData.avatar,
@@ -717,15 +723,30 @@ const EditProfile: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="name" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Full Name <span className="text-error">*</span>
+                <Label htmlFor="firstName" className="text-body-sm font-medium text-foreground mb-2 block">
+                  First Name <span className="text-error">*</span>
                 </Label>
                 <Input
-                  id="name"
+                  id="firstName"
                   type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   className="bg-background text-foreground border-border"
+                  placeholder="e.g., John"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="lastName" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Last Name <span className="text-error">*</span>
+                </Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  className="bg-background text-foreground border-border"
+                  placeholder="e.g., Doe"
                 />
               </div>
 
@@ -1350,57 +1371,10 @@ const EditProfile: React.FC = () => {
                 <Car className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
                 Driving Licenses
               </Label>
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-caption text-muted-foreground mb-2 block">General Licenses</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {['B', 'A', 'BE', 'AM'].map((lic) => (
-                      <button
-                        key={lic}
-                        type="button"
-                        onClick={() => {
-                          const current = drivingLicenses;
-                          const updated = current.includes(lic)
-                            ? current.filter((l: string) => l !== lic)
-                            : [...current, lic];
-                          setDrivingLicenses(updated);
-                        }}
-                        className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${drivingLicenses.includes(lic)
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-foreground hover:bg-muted/80'
-                          }`}
-                      >
-                        {lic}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-caption text-muted-foreground mb-2 block">Truck Licenses</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {['C', 'CE', 'C1', 'C1E'].map((lic) => (
-                      <button
-                        key={lic}
-                        type="button"
-                        onClick={() => {
-                          const current = drivingLicenses;
-                          const updated = current.includes(lic)
-                            ? current.filter((l: string) => l !== lic)
-                            : [...current, lic];
-                          setDrivingLicenses(updated);
-                        }}
-                        className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${drivingLicenses.includes(lic)
-                          ? 'bg-warning text-warning-foreground border border-warning/30'
-                          : 'bg-muted text-foreground hover:bg-muted/80'
-                          }`}
-                      >
-                        {lic}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <DrivingLicenseSelector
+                value={drivingLicenses}
+                onChange={setDrivingLicenses}
+              />
             </div>
           </div>
         </Card>

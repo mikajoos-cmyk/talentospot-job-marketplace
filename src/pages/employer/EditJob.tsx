@@ -17,6 +17,7 @@ import { Switch } from '../../components/ui/switch';
 import { Slider } from '../../components/ui/slider';
 import { getLanguageLevelOptions } from '../../utils/language-levels';
 import { AutocompleteInput } from '../../components/shared/AutocompleteInput';
+import DrivingLicenseSelector from '../../components/shared/DrivingLicenseSelector';
 
 const EditJob: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -588,57 +589,10 @@ const EditJob: React.FC = () => {
               <Label className="text-body-sm font-medium text-foreground mb-4 block">
                 Required Driving Licenses
               </Label>
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-caption text-muted-foreground mb-2 block">General Licenses</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {['B', 'A', 'BE', 'AM'].map((lic) => (
-                      <button
-                        key={lic}
-                        type="button"
-                        onClick={() => {
-                          const current = formData.drivingLicenses;
-                          const updated = current.includes(lic)
-                            ? current.filter((l: string) => l !== lic)
-                            : [...current, lic];
-                          setFormData({ ...formData, drivingLicenses: updated });
-                        }}
-                        className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${formData.drivingLicenses.includes(lic)
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-foreground hover:bg-muted/80'
-                          }`}
-                      >
-                        {lic}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-caption text-muted-foreground mb-2 block">Truck Licenses</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {['C', 'CE', 'C1', 'C1E'].map((lic) => (
-                      <button
-                        key={lic}
-                        type="button"
-                        onClick={() => {
-                          const current = formData.drivingLicenses;
-                          const updated = current.includes(lic)
-                            ? current.filter((l: string) => l !== lic)
-                            : [...current, lic];
-                          setFormData({ ...formData, drivingLicenses: updated });
-                        }}
-                        className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${formData.drivingLicenses.includes(lic)
-                          ? 'bg-warning text-warning-foreground border border-warning/30'
-                          : 'bg-muted text-foreground hover:bg-muted/80'
-                          }`}
-                      >
-                        {lic}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <DrivingLicenseSelector
+                value={formData.drivingLicenses}
+                onChange={(val) => setFormData({ ...formData, drivingLicenses: val })}
+              />
             </div>
 
             <div>

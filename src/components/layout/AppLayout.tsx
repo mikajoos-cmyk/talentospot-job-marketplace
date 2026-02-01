@@ -53,7 +53,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, fullHeight = false, noP
       </div>
 
 
-      {isMobile && <MobileNav />}
+      {isMobile && !isPublic && <MobileNav />}
       <ScrollToTop />
     </div>
   );

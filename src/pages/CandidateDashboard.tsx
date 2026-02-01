@@ -29,7 +29,7 @@ const CandidateDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState<'applied' | 'reviews' | 'views' | 'shortlisted' | 'invitations' | 'saved' | null>(null);
+  const [modalType, setModalType] = useState<'applied' | 'reviews' | 'views' | 'shortlisted' | 'invitations' | 'saved' | 'requests' | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [stats, setStats] = useState({
@@ -45,7 +45,8 @@ const CandidateDashboard: React.FC = () => {
   const [applications, setApplications] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
   const [savedJobs, setSavedJobs] = useState<any[]>([]);
-  // const [profile, setProfile] = useState<any>(null);
+  const [shortlistedBy, setShortlistedBy] = useState<any[]>([]);
+  const [dataRequests, setDataRequests] = useState<any[]>([]);
   const [viewStats, setViewStats] = useState<any[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
 
@@ -57,9 +58,8 @@ const CandidateDashboard: React.FC = () => {
         setLoading(true);
 
         const candidateProfile = user.profile || await candidateService.getCandidateProfile(user.id);
-        // setProfile(candidateProfile);
 
-        const [appsData, invitationsData, savedJobsData, followersData, dataRequests, statsData, totalViewsCount] = await Promise.all([
+        const [appsData, invitationsData, savedJobsData, followersData, requestsData, statsData, totalViewsCount] = await Promise.all([
           applicationsService.getApplicationsByCandidate(candidateProfile.id),
           invitationsService.getInvitationsByCandidate(candidateProfile.id),
           savedJobsService.getSavedJobs(candidateProfile.id),
@@ -78,6 +78,8 @@ const CandidateDashboard: React.FC = () => {
 
         setInvitations(filteredInvitations);
         setSavedJobs(savedJobsData || []);
+        setShortlistedBy(followersData || []);
+        setDataRequests(requestsData || []);
 
         setStats({
           appliedJobs: appsData?.length || 0,
@@ -86,7 +88,7 @@ const CandidateDashboard: React.FC = () => {
           shortlisted: followersData?.length || 0,
           invitations: filteredInvitations.length,
           savedJobs: savedJobsData?.length || 0,
-          dataRequests: dataRequests?.length || 0,
+          dataRequests: requestsData?.length || 0,
         });
 
         // Compute activities
@@ -112,7 +114,7 @@ const CandidateDashboard: React.FC = () => {
             company: folder.employer_profiles?.company_name || 'Unknown Company',
             time: folder.created_at,
           })),
-          ...(dataRequests || []).map((req: any) => ({
+          ...(requestsData || []).map((req: any) => ({
             id: `data-${req.id}`,
             type: 'data_access' as const,
             title: 'Personal Data',
@@ -138,7 +140,7 @@ const CandidateDashboard: React.FC = () => {
   }, [user.id, user.role, user.profile]);
 
 
-  const handleOpenModal = (type: 'applied' | 'reviews' | 'views' | 'shortlisted' | 'invitations' | 'saved') => {
+  const handleOpenModal = (type: 'applied' | 'reviews' | 'views' | 'shortlisted' | 'invitations' | 'saved' | 'requests') => {
     setModalType(type);
     setModalOpen(true);
   };
@@ -151,6 +153,7 @@ const CandidateDashboard: React.FC = () => {
       case 'shortlisted': return 'Shortlisted';
       case 'invitations': return 'Job Invitations';
       case 'saved': return 'Saved Jobs';
+      case 'requests': return 'Data Requests';
       default: return '';
     }
   };
@@ -209,7 +212,7 @@ const CandidateDashboard: React.FC = () => {
             <p className="text-body text-muted-foreground">Welcome back! Here's your activity overview.</p>
           </div>
           <Button
-            onClick={() => navigate('/candidate/settings#notifications')}
+            onClick={() => navigate('/candidate/alerts')}
             className="bg-primary text-primary-foreground hover:bg-primary-hover flex items-center gap-2"
           >
             <Bell className="w-4 h-4" />
@@ -237,21 +240,21 @@ const CandidateDashboard: React.FC = () => {
             label="Data Requests"
             value={stats.dataRequests}
             color="info"
-            onClick={() => navigate('/candidate/messages')}
+            onClick={() => handleOpenModal('requests')}
           />
           <DashboardStatsCard
             icon={Eye}
             label="Profile Views"
             value={stats.profileViews}
             color="info"
-            onClick={() => navigate('/candidate/profile')}
+            onClick={() => handleOpenModal('views')}
           />
           <DashboardStatsCard
             icon={Users}
             label="Shortlisted"
             value={stats.shortlisted}
             color="accent"
-            onClick={() => navigate('/candidate/network')}
+            onClick={() => handleOpenModal('shortlisted')}
           />
           <DashboardStatsCard
             icon={Star}
@@ -310,12 +313,36 @@ const CandidateDashboard: React.FC = () => {
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="bg-card border-border max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-h3 font-heading text-foreground">{getModalTitle()}</DialogTitle>
-            <DialogDescription className="text-body text-muted-foreground">
-              {modalType === 'applied' && 'All jobs you have applied to'}
-              {modalType === 'invitations' && 'Job invitations from employers'}
-              {modalType === 'saved' && 'Jobs you have saved for later'}
-            </DialogDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-h3 font-heading text-foreground">{getModalTitle()}</DialogTitle>
+                <DialogDescription className="text-body text-muted-foreground">
+                  {modalType === 'applied' && 'All jobs you have applied to'}
+                  {modalType === 'invitations' && 'Job invitations from employers'}
+                  {modalType === 'saved' && 'Jobs you have saved for later'}
+                  {modalType === 'views' && 'Your profile visibility over the last 14 days'}
+                  {modalType === 'shortlisted' && 'Companies that have shortlisted you'}
+                  {modalType === 'requests' && 'Employer requests for your personal data'}
+                </DialogDescription>
+              </div>
+              <div className="flex gap-2">
+                {modalType === 'views' && (
+                  <Button onClick={() => { setModalOpen(false); navigate('/candidate/profile'); }} size="sm" variant="outline">
+                    View Profile
+                  </Button>
+                )}
+                {modalType === 'shortlisted' && (
+                  <Button onClick={() => { setModalOpen(false); navigate('/candidate/network'); }} size="sm" variant="outline">
+                    View Network
+                  </Button>
+                )}
+                {modalType === 'requests' && (
+                  <Button onClick={() => { setModalOpen(false); navigate('/candidate/messages'); }} size="sm" variant="outline">
+                    View Messages
+                  </Button>
+                )}
+              </div>
+            </div>
           </DialogHeader>
 
           <div className="py-4">
@@ -486,6 +513,103 @@ const CandidateDashboard: React.FC = () => {
                         >
                           View Job
                         </Button>
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </div>
+            )}
+
+            {modalType === 'views' && (
+              <div className="space-y-6">
+                <ProfileViewsChart data={viewStats} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Card className="p-4 bg-background border-border">
+                    <p className="text-caption text-muted-foreground mb-1">Total Views</p>
+                    <p className="text-h3 font-heading text-foreground">{stats.profileViews}</p>
+                  </Card>
+                </div>
+              </div>
+            )}
+
+            {modalType === 'shortlisted' && (
+              <div className="space-y-4">
+                {shortlistedBy.length === 0 ? (
+                  <p className="text-body-sm text-muted-foreground text-center py-8">
+                    No companies have shortlisted you yet
+                  </p>
+                ) : (
+                  shortlistedBy.map((item) => (
+                    <Card
+                      key={item.id}
+                      className="p-4 border border-border bg-background hover:shadow-md transition-all duration-normal cursor-pointer"
+                      onClick={() => {
+                        setModalOpen(false);
+                        navigate(`/employer-profile/${item.employer_id}`);
+                      }}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <Avatar className="w-12 h-12 rounded-lg">
+                          <AvatarImage src={item.employer_profiles?.logo_url || ''} className="object-cover" />
+                          <AvatarFallback className="rounded-lg">
+                            <Building2 className="w-6 h-6 text-muted-foreground" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <h4 className="text-body font-heading text-foreground">
+                            {item.employer_profiles?.company_name || 'Employer'}
+                          </h4>
+                          <p className="text-caption text-muted-foreground">
+                            Shortlisted {formatDate(item.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </div>
+            )}
+
+            {modalType === 'requests' && (
+              <div className="space-y-4">
+                {dataRequests.length === 0 ? (
+                  <p className="text-body-sm text-muted-foreground text-center py-8">
+                    No data requests yet
+                  </p>
+                ) : (
+                  dataRequests.map((req) => (
+                    <Card
+                      key={req.id}
+                      className="p-4 border border-border bg-background hover:shadow-md transition-all duration-normal cursor-pointer"
+                      onClick={() => {
+                        setModalOpen(false);
+                        navigate('/candidate/messages');
+                      }}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <Avatar className="w-12 h-12 rounded-lg">
+                          <AvatarImage src={req.employer_profiles?.logo_url || ''} className="object-cover" />
+                          <AvatarFallback className="rounded-lg">
+                            <Building2 className="w-6 h-6 text-muted-foreground" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <h4 className="text-body font-heading text-foreground">
+                            {req.employer_profiles?.company_name || 'Employer'}
+                          </h4>
+                          <p className="text-body-sm text-muted-foreground">
+                            {req.status === 'pending' ? 'Requested' : req.status.charAt(0).toUpperCase() + req.status.slice(1)} access to your profile
+                          </p>
+                          <p className="text-caption text-muted-foreground">
+                            {formatDate(req.requested_at)}
+                          </p>
+                        </div>
+                        <span className={`px-2 py-1 text-caption rounded-md border ${req.status === 'granted' ? 'bg-success/10 text-success border-success/30' :
+                          req.status === 'denied' ? 'bg-destructive/10 text-destructive border-destructive/30' :
+                            'bg-warning/10 text-warning border-warning/30'
+                          }`}>
+                          {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
+                        </span>
                       </div>
                     </Card>
                   ))

@@ -22,6 +22,7 @@ import MyApplications from './pages/candidate/MyApplications';
 import MyInvitations from './pages/candidate/MyInvitations';
 import Network from './pages/shared/Network';
 import EditProfile from './pages/candidate/EditProfile';
+import JobAlerts from './pages/candidate/JobAlerts';
 import Packages from './pages/shared/Packages';
 import Messages from './pages/shared/Messages';
 import JobDetailView from './pages/shared/JobDetailView';
@@ -69,6 +70,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="candidate">
                     <JobSearch />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/candidate/alerts"
+                element={
+                  <ProtectedRoute requiredRole="candidate">
+                    <JobAlerts />
                   </ProtectedRoute>
                 }
               />

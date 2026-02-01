@@ -9,6 +9,7 @@ import { ChevronDown, Sparkles, RotateCcw, X, Plus, Users, Briefcase } from 'luc
 import { locationData } from '@/data/locationData';
 import { getLanguageLevelOptions } from '@/utils/language-levels';
 import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
+import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
 import { Switch } from '@/components/ui/switch';
 
 export interface JobFiltersState {
@@ -218,6 +219,76 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                     <Sparkles className="w-5 h-5" />
                     <span className="font-medium">Match My Profile</span>
                 </Button>
+
+                {/* Matching Preferences (Collapsible) */}
+                <Collapsible defaultOpen>
+                    <CollapsibleTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-between bg-transparent text-primary hover:bg-primary/10 hover:text-primary font-medium border border-primary/20"
+                        >
+                            <div className="flex items-center">
+                                <Sparkles className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                                Matching Preferences
+                            </div>
+                            <ChevronDown className="w-4 h-4" strokeWidth={1.5} />
+                        </Button>
+                    </CollapsibleTrigger>
+
+                    <CollapsibleContent className="space-y-6 mt-6 p-4 bg-primary/5 rounded-lg border border-primary/10">
+                        {/* Flexible Match (Allow Overqualification) */}
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <Label htmlFor="flexibleMatch" className="text-body-sm font-medium text-foreground cursor-pointer">
+                                    Allow Overqualification
+                                </Label>
+                                <p className="text-[10px] text-muted-foreground">
+                                    Show jobs where you exceed requirements
+                                </p>
+                            </div>
+                            <Switch
+                                id="flexibleMatch"
+                                checked={filters.enableFlexibleMatch}
+                                onCheckedChange={(checked) => onFiltersChange({ ...filters, enableFlexibleMatch: checked })}
+                            />
+                        </div>
+
+                        {/* Partial Match */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <Label htmlFor="partialMatch" className="text-body-sm font-medium text-foreground cursor-pointer">
+                                        Enable Partial Matching
+                                    </Label>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Show jobs that don't match all criteria
+                                    </p>
+                                </div>
+                                <Switch
+                                    id="partialMatch"
+                                    checked={filters.enablePartialMatch}
+                                    onCheckedChange={(checked) => onFiltersChange({ ...filters, enablePartialMatch: checked })}
+                                />
+                            </div>
+
+                            {filters.enablePartialMatch && (
+                                <div className="pt-2 pl-2 border-l-2 border-primary/30 ml-1">
+                                    <Label className="text-body-sm font-medium text-foreground mb-4 block">
+                                        Minimum Match Percentage: {filters.minMatchThreshold}%
+                                    </Label>
+                                    <Slider
+                                        value={[filters.minMatchThreshold]}
+                                        onValueChange={(val) => onFiltersChange({ ...filters, minMatchThreshold: val[0] })}
+                                        min={0}
+                                        max={100}
+                                        step={5}
+                                        className="mt-2"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </CollapsibleContent>
+                </Collapsible>
 
                 {/* Always Visible Section */}
                 <div className="space-y-4 pb-4 border-b border-border">
@@ -462,56 +533,10 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                             <Label className="text-body-sm font-medium text-foreground mb-3 block">
                                 Required Driving Licenses
                             </Label>
-                            <div className="space-y-4">
-                                <div>
-                                    <Label className="text-caption text-muted-foreground mb-2 block">General Licenses</Label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {['B', 'A', 'BE', 'AM'].map((lic) => (
-                                            <button
-                                                key={lic}
-                                                type="button"
-                                                onClick={() => {
-                                                    const current = filters.drivingLicenses || [];
-                                                    const updated = current.includes(lic)
-                                                        ? current.filter(l => l !== lic)
-                                                        : [...current, lic];
-                                                    onFiltersChange({ ...filters, drivingLicenses: updated });
-                                                }}
-                                                className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${(filters.drivingLicenses || []).includes(lic)
-                                                    ? 'bg-primary text-primary-foreground'
-                                                    : 'bg-muted text-foreground hover:bg-muted/80'
-                                                    }`}
-                                            >
-                                                {lic}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div>
-                                    <Label className="text-caption text-muted-foreground mb-2 block">Truck Licenses</Label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {['C', 'CE', 'C1', 'C1E'].map((lic) => (
-                                            <button
-                                                key={lic}
-                                                type="button"
-                                                onClick={() => {
-                                                    const current = filters.drivingLicenses || [];
-                                                    const updated = current.includes(lic)
-                                                        ? current.filter(l => l !== lic)
-                                                        : [...current, lic];
-                                                    onFiltersChange({ ...filters, drivingLicenses: updated });
-                                                }}
-                                                className={`px-3 py-1 rounded-full text-body-sm font-medium transition-all ${(filters.drivingLicenses || []).includes(lic)
-                                                    ? 'bg-warning text-warning-foreground border border-warning/30'
-                                                    : 'bg-muted text-foreground hover:bg-muted/80'
-                                                    }`}
-                                            >
-                                                {lic}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
+                            <DrivingLicenseSelector
+                                value={filters.drivingLicenses || []}
+                                onChange={(val) => onFiltersChange({ ...filters, drivingLicenses: val })}
+                            />
                         </div>
                     </CollapsibleContent>
                 </Collapsible>
@@ -677,9 +702,6 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                         </div>
                     </CollapsibleContent>
                 </Collapsible>
-
-
-
             </div>
         </Card>
     );
