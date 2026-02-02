@@ -632,6 +632,21 @@ export const candidateService = {
   async searchCandidates(filters: any = {}) {
     console.log('Searching candidates with filters:', filters);
 
+    // 1. IDs für Preferred Locations sammeln (falls Stadt gefiltert wird)
+    let preferredLocationCandidateIds: string[] = [];
+
+    if (filters.city) {
+      // Suche in den verknüpften Tabellen nach der Stadt
+      const { data: prefData } = await supabase
+        .from('candidate_preferred_locations')
+        .select('candidate_id, cities!inner(name)')
+        .ilike('cities.name', `%${filters.city.trim()}%`);
+
+      if (prefData) {
+        preferredLocationCandidateIds = prefData.map((d: any) => d.candidate_id);
+      }
+    }
+
     // Build the dynamic select string based on active many-to-many filters
     const selectString = `
       id,
@@ -650,7 +665,7 @@ export const candidateService = {
       sector,
       career_level,
       employment_status,
-      profiles!inner(full_name, avatar_url, email),
+      profiles!inner(full_name, avatar_url, email, is_visible),
       candidate_preferred_locations(
         id,
         cities(name),
@@ -675,7 +690,8 @@ export const candidateService = {
 
     let query = supabase
       .from('candidate_profiles')
-      .select(selectString);
+      .select(selectString)
+      .eq('profiles.is_visible', true);
 
     if (filters.job_title) {
       query = query.ilike('job_title', `%${filters.job_title.trim()}%`);
@@ -686,7 +702,16 @@ export const candidateService = {
     }
 
     if (filters.city) {
-      query = query.eq('city', filters.city);
+      if (preferredLocationCandidateIds.length > 0) {
+        // Logik: (Wohnort matcht Stadt) ODER (ID ist in Wunschort-Liste)
+        const idsString = `(${preferredLocationCandidateIds.join(',')})`;
+        // Wir nutzen Query-Builder OR Syntax für Supabase
+        // city.ilike.%Term%,id.in.(ids)
+        query = query.or(`city.ilike.%${filters.city.trim()}%,id.in.${idsString}`);
+      } else {
+        // Keine Wunschorte gefunden -> Nur nach Wohnort filtern
+        query = query.ilike('city', `%${filters.city.trim()}%`);
+      }
     }
 
     if (filters.country) {
@@ -837,7 +862,7 @@ export const candidateService = {
       .from('candidate_profiles')
       .select(`
         *,
-        profiles(full_name, avatar_url),
+        profiles!inner(full_name, avatar_url, is_visible),
         candidate_skills(
           skills(name)
         ),
@@ -849,6 +874,7 @@ export const candidateService = {
           qualifications(name)
         )
       `)
+      .eq('profiles.is_visible', true)
       .order('created_at', { ascending: false })
       .limit(limit);
 

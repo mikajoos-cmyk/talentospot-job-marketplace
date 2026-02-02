@@ -283,6 +283,10 @@ const CandidateSearch: React.FC = () => {
           if (filters.location.country) {
             searchFilters.country = filters.location.country;
           }
+
+          if (filters.location.cities && filters.location.cities.length > 0) {
+            searchFilters.city = filters.location.cities[0];
+          }
         }
 
         const data = await candidateService.searchCandidates(searchFilters);

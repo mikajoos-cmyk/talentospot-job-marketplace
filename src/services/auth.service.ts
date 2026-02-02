@@ -93,4 +93,29 @@ export const authService = {
       callback(event, session);
     });
   },
+
+  async reauthenticate(password: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !user.email) throw new Error('No user found');
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: password
+    });
+
+    if (error) throw error;
+  },
+
+  async updatePassword(password: string) {
+    const { error } = await supabase.auth.updateUser({
+      password: password
+    });
+
+    if (error) throw error;
+  },
+
+  async deleteAccount() {
+    const { error } = await supabase.rpc('delete_user');
+    if (error) throw error;
+  },
 };

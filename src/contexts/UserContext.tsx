@@ -16,6 +16,8 @@ interface User {
   companyName?: string;
   subscription?: any;
   profile?: any;
+  isVisible?: boolean;
+  showActivityStatus?: boolean;
 }
 
 interface UserContextType {
@@ -101,6 +103,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         companyName: extendedProfile?.company_name,
         profile: extendedProfile,
         packageTier: subscription?.packages?.name?.toLowerCase() as any || 'free',
+        isVisible: profile.is_visible ?? true,
+        showActivityStatus: profile.show_activity_status ?? true,
       };
 
       setUser(updatedUser);

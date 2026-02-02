@@ -357,7 +357,7 @@ const MainHeroFilter = () => {
 
                     {/* Location (Simplified for main bar) */}
                     <div className={`${searchMode === 'candidates' ? 'md:col-span-3' : 'md:col-span-4'} space-y-1.5 p-2`}>
-                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider ml-1">Location</Label>
+                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider ml-1">Location / Work Preference</Label>
                         <div className="relative">
                             <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                             <Input
