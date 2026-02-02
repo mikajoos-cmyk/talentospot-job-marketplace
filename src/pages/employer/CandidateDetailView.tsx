@@ -8,7 +8,8 @@ import { Progress } from '../../components/ui/progress';
 import {
   MapPin, Mail, Phone, Briefcase, GraduationCap, Award, Video,
   Image as ImageIcon, DollarSign, Plane, ArrowLeft,
-  MessageSquare, UserPlus, Globe, Car, Star, Heart, X
+  MessageSquare, UserPlus, Globe, Car, Star, Heart, X,
+  Tag, Download, User, Calendar, Layers, Activity, UserCircle
 } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -43,6 +44,8 @@ const CandidateDetailView: React.FC = () => {
   const [isShortlisted, setIsShortlisted] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [selectedAward, setSelectedAward] = useState<any>(null);
+  const [isAwardModalOpen, setIsAwardModalOpen] = useState(false);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -226,28 +229,113 @@ const CandidateDetailView: React.FC = () => {
               <h2 className="text-h2 font-heading text-foreground mb-2">
                 {displayName}
               </h2>
-              <p className="text-body text-muted-foreground mb-4">{candidate.title}</p>
+              <p className="text-body text-muted-foreground mb-4">
+                {candidate.title || 'No job title specified'}
+              </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                <div className="flex items-center text-body-sm text-foreground">
-                  <Mail className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
+              {/* Basic Info Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4 mb-6">
+                <div className="flex items-center text-body-sm text-foreground self-start h-full">
+                  <div className="flex items-center">
+                    <Mail className="w-4 h-4 mr-2 text-primary/70" strokeWidth={2} />
+                    <span className="font-medium mr-1">Email:</span>
+                  </div>
                   <span>{isBlurred ? '••••••@••••.com' : (candidate.email || 'N/A')}</span>
                 </div>
-                <div className="flex items-center text-body-sm text-foreground">
-                  <Phone className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
+                <div className="flex items-center text-body-sm text-foreground self-start h-full">
+                  <div className="flex items-center">
+                    <Phone className="w-4 h-4 mr-2 text-primary/70" strokeWidth={2} />
+                    <span className="font-medium mr-1">Phone:</span>
+                  </div>
                   <span>{isBlurred ? '+•• ••• •••••••' : (candidate.phone || 'N/A')}</span>
                 </div>
-                <div className="flex items-center text-body-sm text-foreground">
-                  <MapPin className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{locationString || 'Location not specified'}</span>
+                <div className="flex items-center text-body-sm text-foreground self-start h-full">
+                  <div className="flex items-center">
+                    <User className="w-4 h-4 mr-2 text-primary/70" strokeWidth={2} />
+                    <span className="font-medium mr-1">Gender:</span>
+                  </div>
+                  <span className="capitalize">{candidate.gender || 'Not specified'}</span>
                 </div>
-                <div className="flex items-center text-body-sm text-foreground">
-                  <Globe className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
+
+                {/* Address Section */}
+                {!isBlurred ? (
+                  <div className="flex items-start text-body-sm text-foreground">
+                    <MapPin className="w-4 h-4 mr-2 text-primary/70 shrink-0 mt-0.5" strokeWidth={2} />
+                    <div className="flex flex-col">
+                      <span className="font-medium mb-1">Current Address:</span>
+                      <div className="flex flex-col space-y-0.5 text-muted-foreground">
+                        {candidate.street && <span>{candidate.street} {candidate.houseNumber}</span>}
+                        {(candidate.postalCode || candidate.city) && (
+                          <span>{[candidate.postalCode, candidate.city].filter(Boolean).join(' ')}</span>
+                        )}
+                        {[candidate.state, candidate.country].filter(Boolean).join(', ') && (
+                          <span>{[candidate.state, candidate.country].filter(Boolean).join(', ')}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center text-body-sm text-foreground self-start h-full">
+                    <div className="flex items-center">
+                      <MapPin className="w-4 h-4 mr-2 text-primary/70" strokeWidth={2} />
+                      <span className="font-medium mr-1">Location:</span>
+                    </div>
+                    <span>{locationString || 'Location hidden'}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center text-body-sm text-foreground self-start h-full">
+                  <div className="flex items-center">
+                    <Globe className="w-4 h-4 mr-2 text-primary/70" strokeWidth={2} />
+                    <span className="font-medium mr-1">Nationality:</span>
+                  </div>
                   <span>{candidate.nationality || 'Not specified'}</span>
                 </div>
-                <div className="flex items-center text-body-sm text-foreground">
-                  <Briefcase className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{candidate.yearsOfExperience || 0} years experience</span>
+
+                <div className="flex items-center text-body-sm text-foreground self-start h-full">
+                  <div className="flex items-center">
+                    <Calendar className="w-4 h-4 mr-2 text-primary/70" strokeWidth={2} />
+                    <span className="font-medium mr-1">Birthday:</span>
+                  </div>
+                  <span>
+                    {isBlurred
+                      ? '••.••.••••'
+                      : (candidate.dateOfBirth ? new Date(candidate.dateOfBirth).toLocaleDateString() : 'Not specified')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Stats Card */}
+              <div className="bg-muted/30 rounded-xl p-4 border border-border/50 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="flex flex-col">
+                    <div className="flex items-center text-caption text-muted-foreground mb-1">
+                      <Layers className="w-3.5 h-3.5 mr-1.5" />
+                      Sector
+                    </div>
+                    <span className="text-body-sm font-semibold">{candidate.sector || 'Not specified'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center text-caption text-muted-foreground mb-1">
+                      <Activity className="w-3.5 h-3.5 mr-1.5" />
+                      Career Level
+                    </div>
+                    <span className="text-body-sm font-semibold capitalize">{candidate.careerLevel || 'Not specified'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center text-caption text-muted-foreground mb-1">
+                      <UserCircle className="w-3.5 h-3.5 mr-1.5" />
+                      Status
+                    </div>
+                    <span className="text-body-sm font-semibold capitalize">{candidate.employmentStatus || 'Not specified'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center text-caption text-muted-foreground mb-1">
+                      <Briefcase className="w-3.5 h-3.5 mr-1.5" />
+                      Experience
+                    </div>
+                    <span className="text-body-sm font-semibold">{candidate.yearsOfExperience || 0} years</span>
+                  </div>
                 </div>
               </div>
 
@@ -257,6 +345,31 @@ const CandidateDetailView: React.FC = () => {
                 </div>
               )}
 
+              <div className="flex flex-wrap gap-4 mb-6">
+                {candidate.cvUrl && !isBlurred && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-primary/5 text-primary border-primary/20 hover:bg-primary/10"
+                    onClick={() => window.open(candidate.cvUrl, '_blank')}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download CV
+                  </Button>
+                )}
+                {candidate.tags && candidate.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {candidate.tags.map((tag: string) => (
+                      <span key={tag} className="flex items-center px-2 py-1 bg-muted text-foreground text-[11px] font-medium rounded-md border border-border capitalize">
+                        <Tag className="w-3 h-3 mr-1 text-muted-foreground" />
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
               <div className="flex flex-wrap gap-3">
                 <Button
                   onClick={handleShortlist}
@@ -380,86 +493,10 @@ const CandidateDetailView: React.FC = () => {
           </div>
         </Card>
 
-        {candidate.videoUrl && !isBlurred && (
-          <Card className="p-6 md:p-8 border border-border bg-card">
-            <div className="flex items-center space-x-3 mb-6">
-              <Video className="w-6 h-6 text-primary" strokeWidth={1.5} />
-              <h3 className="text-h3 font-heading text-foreground">Video Introduction</h3>
-            </div>
-            <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-              <iframe
-                width="100%"
-                height="100%"
-                src={getYouTubeEmbedUrl(candidate.videoUrl)}
-                title="Video Introduction"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full"
-              ></iframe>
-            </div>
-          </Card>
-        )}
-
-        {candidate.portfolioImages && candidate.portfolioImages.length > 0 && !isBlurred && (
-          <Card className="p-6 md:p-8 border border-border bg-card">
-            <div className="flex items-center space-x-3 mb-6">
-              <ImageIcon className="w-6 h-6 text-primary" strokeWidth={1.5} />
-              <h3 className="text-h3 font-heading text-foreground">Portfolio</h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {candidate.portfolioImages.map((item: any, index: number) => (
-                <div
-                  key={index}
-                  className="group relative aspect-square rounded-lg overflow-hidden bg-muted hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                  onClick={() => {
-                    setSelectedProject(item);
-                    setIsProjectModalOpen(true);
-                  }}
-                >
-                  <ProjectImageCarousel
-                    images={item.images || (item.image ? [item.image] : [])}
-                    title={item.title || `Portfolio ${index + 1}`}
-                  />
-                  {(item.title || item.description) && (
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 text-left pointer-events-none">
-                      <p className="text-white font-medium truncate">{item.title}</p>
-                      <p className="text-white/70 text-caption truncate">{item.description}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <Card className="p-6 border border-border bg-card">
-              <div className="flex items-center space-x-3 mb-6">
-                <Briefcase className="w-6 h-6 text-primary" strokeWidth={1.5} />
-                <h3 className="text-h3 font-heading text-foreground">Work Experience</h3>
-              </div>
 
-              {!candidate.experience || candidate.experience.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-body text-muted-foreground">No work experience added</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {candidate.experience.map((exp: any, index: number) => (
-                    <div key={exp.id || index} className="relative pl-6 border-l-2 border-border">                      <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary"></div>
-                      <h4 className="text-h4 font-heading text-foreground mb-1">{exp.title}</h4>
-                      <p className="text-body-sm text-muted-foreground mb-2">
-                        {exp.company} • {exp.period || `${new Date(exp.startDate).toLocaleDateString()} - ${exp.endDate ? new Date(exp.endDate).toLocaleDateString() : 'Present'}`}
-                      </p>
-                      <p className="text-body-sm text-foreground">{exp.description}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-
+            {/* Education - First */}
             <Card className="p-6 border border-border bg-card">
               <div className="flex items-center space-x-3 mb-6">
                 <GraduationCap className="w-6 h-6 text-primary" strokeWidth={1.5} />
@@ -473,7 +510,8 @@ const CandidateDetailView: React.FC = () => {
               ) : (
                 <div className="space-y-4">
                   {candidate.education.map((edu: any, index: number) => (
-                    <div key={edu.id || index} className="relative pl-6 border-l-2 border-border">                      <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-accent"></div>
+                    <div key={edu.id || index} className="relative pl-6 border-l-2 border-border">
+                      <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-accent"></div>
                       <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
                       <p className="text-body-sm text-muted-foreground">
                         {edu.institution} • {edu.period || `${new Date(edu.startDate).toLocaleDateString()} - ${edu.endDate ? new Date(edu.endDate).toLocaleDateString() : 'Present'}`}
@@ -484,49 +522,218 @@ const CandidateDetailView: React.FC = () => {
               )}
             </Card>
 
-            {/* Primary Location section */}
-            {(candidate.city || candidate.country) && (
-              <Card className="p-6 border border-border bg-card">
-                <div className="flex items-center space-x-3 mb-6">
-                  <MapPin className="w-6 h-6 text-primary" strokeWidth={1.5} />
-                  <h3 className="text-h3 font-heading text-foreground">Primary Location</h3>
+            {/* Work Experience - Second */}
+            <Card className="p-6 border border-border bg-card">
+              <div className="flex items-center space-x-3 mb-6">
+                <Briefcase className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                <h3 className="text-h3 font-heading text-foreground">Work Experience</h3>
+              </div>
+
+              {!candidate.experience || candidate.experience.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-body text-muted-foreground">No work experience added</p>
                 </div>
-                <div className="flex items-center p-3 bg-muted rounded-lg">
-                  <MapPin className="w-4 h-4 mr-2 text-primary" strokeWidth={1.5} />
-                  <span className="text-body-sm text-foreground">
-                    {locationString}
-                  </span>
+              ) : (
+                <div className="space-y-6">
+                  {candidate.experience.map((exp: any, index: number) => (
+                    <div key={exp.id || index} className="relative pl-6 border-l-2 border-border">
+                      <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary"></div>
+                      <h4 className="text-h4 font-heading text-foreground mb-1">{exp.title}</h4>
+                      <p className="text-body-sm text-muted-foreground mb-2">
+                        {exp.company} • {exp.period || `${new Date(exp.startDate).toLocaleDateString()} - ${exp.endDate ? new Date(exp.endDate).toLocaleDateString() : 'Present'}`}
+                      </p>
+                      <p className="text-body-sm text-foreground">{exp.description}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            {/* Awards & Achievements - Third */}
+            {candidate.awards && candidate.awards.length > 0 && (
+              <Card className="p-6 md:p-8 border border-border bg-card">
+                <div className="flex items-center space-x-3 mb-6">
+                  <Award className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                  <h3 className="text-h3 font-heading text-foreground">Awards & Achievements</h3>
+                </div>
+                <div className="space-y-4">
+                  {candidate.awards.map((award: any, index: number) => (
+                    <div
+                      key={award.id || index}
+                      className="flex gap-4 p-4 border border-border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer group"
+                      onClick={() => {
+                        setSelectedAward(award);
+                        setIsAwardModalOpen(true);
+                      }}
+                    >
+                      {award.certificateImage && (
+                        <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-white">
+                          <img src={award.certificateImage} alt={award.title} className="w-full h-full object-contain p-1" />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <h4 className="text-h4 font-heading text-foreground mb-1 group-hover:text-primary transition-colors">{award.title}</h4>
+                        <p className="text-body-sm text-muted-foreground mb-2">{award.year}</p>
+                        {award.description && (
+                          <p className="text-body-sm text-foreground line-clamp-2">{award.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </Card>
             )}
 
-            <Card className="p-6 border border-border bg-card">
-              <div className="flex items-center space-x-3 mb-6">
-                <MapPin className="w-6 h-6 text-accent" strokeWidth={1.5} />
-                <h3 className="text-h3 font-heading text-foreground">Preferred Work Locations</h3>
-              </div>
-
-              <div className="space-y-2">
-                {candidate.preferredLocations && candidate.preferredLocations.length > 0 ? (
-                  candidate.preferredLocations.map((loc: any, index: number) => (
-                    <div key={index} className="flex items-center p-3 bg-muted rounded-lg">
-                      <MapPin className="w-4 h-4 mr-2 text-accent" strokeWidth={1.5} />
-                      <span className="text-body-sm text-foreground">
-                        {[loc.city, loc.country].filter(Boolean).join(', ')}
-                        {loc.continent && <span className="text-muted-foreground ml-1">({loc.continent})</span>}
-                      </span>
+            <Dialog open={isAwardModalOpen} onOpenChange={setIsAwardModalOpen}>
+              <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-card border-border">
+                {selectedAward && (
+                  <div className="flex flex-col">
+                    {selectedAward.certificateImage && (
+                      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted flex items-center justify-center bg-white">
+                        <img
+                          src={selectedAward.certificateImage}
+                          alt={selectedAward.title}
+                          className="w-full h-full object-contain p-4"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setIsAwardModalOpen(false)}
+                          className="absolute top-2 right-2 rounded-full bg-black/20 hover:bg-black/40 text-muted-foreground border-none hover:text-white"
+                        >
+                          <X className="w-5 h-5" />
+                        </Button>
+                      </div>
+                    )}
+                    <div className="p-6 relative">
+                      {!selectedAward.certificateImage && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setIsAwardModalOpen(false)}
+                          className="absolute top-2 right-2 rounded-full hover:bg-muted text-muted-foreground"
+                        >
+                          <X className="w-5 h-5" />
+                        </Button>
+                      )}
+                      <DialogHeader className="mb-2">
+                        <DialogTitle className="text-h2 font-heading text-foreground">
+                          {selectedAward.title}
+                        </DialogTitle>
+                        <p className="text-body text-primary font-medium">{selectedAward.year}</p>
+                      </DialogHeader>
+                      <div className="space-y-4 mt-4">
+                        <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
+                          {selectedAward.description || 'No description provided.'}
+                        </div>
+                      </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="flex items-center p-3 bg-muted rounded-lg">
-                    <MapPin className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                    <span className="text-body-sm text-muted-foreground">
-                      No preferred locations specified
-                    </span>
                   </div>
                 )}
-              </div>
-            </Card>
+              </DialogContent>
+            </Dialog>
+
+            {/* Portfolio - Fourth */}
+            {candidate.portfolioImages && candidate.portfolioImages.length > 0 && !isBlurred && (
+              <Card className="p-6 md:p-8 border border-border bg-card">
+                <div className="flex items-center space-x-3 mb-6">
+                  <ImageIcon className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                  <h3 className="text-h3 font-heading text-foreground">Portfolio</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {candidate.portfolioImages.map((item: any, index: number) => (
+                    <div
+                      key={index}
+                      className="group relative aspect-video rounded-lg overflow-hidden bg-muted hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                      onClick={() => {
+                        setSelectedProject(item);
+                        setIsProjectModalOpen(true);
+                      }}
+                    >
+                      <ProjectImageCarousel
+                        images={item.images || (item.image ? [item.image] : [])}
+                        title={item.title || `Portfolio ${index + 1}`}
+                      />
+                      {(item.title || item.description) && (
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 text-left pointer-events-none">
+                          <p className="text-white font-medium truncate">{item.title}</p>
+                          <p className="text-white/70 text-caption truncate">{item.description}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Video Introduction - Fifth */}
+            {candidate.videoUrl && !isBlurred && (
+              <Card className="p-6 md:p-8 border border-border bg-card">
+                <div className="flex items-center space-x-3 mb-6">
+                  <Video className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                  <h3 className="text-h3 font-heading text-foreground">Video Introduction</h3>
+                </div>
+                <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={getYouTubeEmbedUrl(candidate.videoUrl)}
+                    title="Video Introduction"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full"
+                  ></iframe>
+                </div>
+              </Card>
+            )}
+
+            {/* Locations (Bottom of Main Col) */}
+            <div className="space-y-6">
+              {/* Primary Location section */}
+              {(candidate.city || candidate.country) && (
+                <Card className="p-6 border border-border bg-card">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <MapPin className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                    <h3 className="text-h3 font-heading text-foreground">Primary Location</h3>
+                  </div>
+                  <div className="flex items-center p-3 bg-muted rounded-lg">
+                    <MapPin className="w-4 h-4 mr-2 text-primary" strokeWidth={1.5} />
+                    <span className="text-body-sm text-foreground">
+                      {locationString}
+                    </span>
+                  </div>
+                </Card>
+              )}
+
+              <Card className="p-6 border border-border bg-card">
+                <div className="flex items-center space-x-3 mb-6">
+                  <MapPin className="w-6 h-6 text-accent" strokeWidth={1.5} />
+                  <h3 className="text-h3 font-heading text-foreground">Preferred Work Locations</h3>
+                </div>
+
+                <div className="space-y-2">
+                  {candidate.preferredLocations && candidate.preferredLocations.length > 0 ? (
+                    candidate.preferredLocations.map((loc: any, index: number) => (
+                      <div key={index} className="flex items-center p-3 bg-muted rounded-lg">
+                        <MapPin className="w-4 h-4 mr-2 text-accent" strokeWidth={1.5} />
+                        <span className="text-body-sm text-foreground">
+                          {[loc.city, loc.country].filter(Boolean).join(', ')}
+                          {loc.continent && <span className="text-muted-foreground ml-1">({loc.continent})</span>}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex items-center p-3 bg-muted rounded-lg">
+                      <MapPin className="w-4 h-4 mr-2 text-muted-foreground" strokeWidth={1.5} />
+                      <span className="text-body-sm text-muted-foreground">
+                        No preferred locations specified
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
           </div>
 
           <div className="space-y-6">

@@ -32,6 +32,8 @@ const CandidateProfile: React.FC = () => {
   const [profileCompletion, setProfileCompletion] = useState(0);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAward, setSelectedAward] = useState<any>(null);
+  const [isAwardModalOpen, setIsAwardModalOpen] = useState(false);
 
   // Funktion zur dynamischen Berechnung des Fortschritts
   const calculateCompletion = (data: any, userProfile: any) => {
@@ -505,17 +507,24 @@ const CandidateProfile: React.FC = () => {
                 </div>
                 <div className="space-y-4">
                   {candidateData.awards.map((award: any, index: number) => (
-                    <div key={award.id || index} className="flex gap-4 p-4 border border-border rounded-lg bg-muted/30">
+                    <div
+                      key={award.id || index}
+                      className="flex gap-4 p-4 border border-border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer group"
+                      onClick={() => {
+                        setSelectedAward(award);
+                        setIsAwardModalOpen(true);
+                      }}
+                    >
                       {award.certificateImage && (
-                        <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0">
-                          <img src={award.certificateImage} alt={award.title} className="w-full h-full object-cover" />
+                        <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-white">
+                          <img src={award.certificateImage} alt={award.title} className="w-full h-full object-contain p-1" />
                         </div>
                       )}
                       <div className="flex-1">
-                        <h4 className="text-h4 font-heading text-foreground mb-1">{award.title}</h4>
+                        <h4 className="text-h4 font-heading text-foreground mb-1 group-hover:text-primary transition-colors">{award.title}</h4>
                         <p className="text-body-sm text-muted-foreground mb-2">{award.year}</p>
                         {award.description && (
-                          <p className="text-body-sm text-foreground">{award.description}</p>
+                          <p className="text-body-sm text-foreground line-clamp-2">{award.description}</p>
                         )}
                       </div>
                     </div>
@@ -591,6 +600,56 @@ const CandidateProfile: React.FC = () => {
                 </Dialog>
               </Card>
             )}
+
+            {/* Award Detail Dialog */}
+            <Dialog open={isAwardModalOpen} onOpenChange={setIsAwardModalOpen}>
+              <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-card border-border">
+                {selectedAward && (
+                  <div className="flex flex-col">
+                    {selectedAward.certificateImage && (
+                      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted flex items-center justify-center bg-white">
+                        <img
+                          src={selectedAward.certificateImage}
+                          alt={selectedAward.title}
+                          className="w-full h-full object-contain p-4"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setIsAwardModalOpen(false)}
+                          className="absolute top-2 right-2 rounded-full bg-black/20 hover:bg-black/40 text-muted-foreground border-none hover:text-white"
+                        >
+                          <X className="w-5 h-5" />
+                        </Button>
+                      </div>
+                    )}
+                    <div className="p-6 relative">
+                      {!selectedAward.certificateImage && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setIsAwardModalOpen(false)}
+                          className="absolute top-2 right-2 rounded-full hover:bg-muted text-muted-foreground"
+                        >
+                          <X className="w-5 h-5" />
+                        </Button>
+                      )}
+                      <DialogHeader className="mb-2">
+                        <DialogTitle className="text-h2 font-heading text-foreground">
+                          {selectedAward.title}
+                        </DialogTitle>
+                        <p className="text-body text-primary font-medium">{selectedAward.year}</p>
+                      </DialogHeader>
+                      <div className="space-y-4 mt-4">
+                        <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
+                          {selectedAward.description || 'No description provided.'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
 
             {/* Video Introduction - Reordered into the main column if requested */}
             {candidateData.videoUrl && (

@@ -193,7 +193,13 @@ export const candidateService = {
         period: `${edu.start_date} - ${edu.end_date || 'Present'}`,
         description: edu.description || ''
       })) || [],
-      awards: data.awards || []
+      awards: data.candidate_awards?.map((award: any) => ({
+        id: award.id,
+        title: award.title,
+        year: award.year,
+        description: award.description,
+        certificateImage: award.certificate_image
+      })) || []
     };
   },
 
@@ -207,6 +213,7 @@ export const candidateService = {
         candidate_languages(proficiency_level, languages(id, name)),
         candidate_experience(*),
         candidate_education(*),
+        candidate_awards(*),
         candidate_qualifications(qualifications(id, name)),
         candidate_requirements(requirements(id, name)),
         candidate_preferred_locations(
@@ -306,8 +313,7 @@ export const candidateService = {
       driving_licenses: updates.drivingLicenses ?? updates.driving_licenses,
       portfolio_images: (updates.portfolioImages || updates.portfolio_images)?.map((p: any) =>
         typeof p === 'object' ? JSON.stringify(p) : p
-      ),
-      awards: updates.awards || []
+      )
     };
 
     // Gehaltsobjekt Fallback
@@ -604,6 +610,21 @@ export const candidateService = {
             continent_id: continentId
           });
         }
+      }
+    }
+
+    // --- Awards (NEW) ---
+    if (updates.awards && Array.isArray(updates.awards)) {
+      await supabase.from('candidate_awards').delete().eq('candidate_id', userId);
+      if (updates.awards.length > 0) {
+        const awardsData = updates.awards.map((award: any) => ({
+          candidate_id: userId,
+          title: award.title,
+          year: award.year,
+          description: award.description,
+          certificate_image: award.certificateImage
+        }));
+        await supabase.from('candidate_awards').insert(awardsData);
       }
     }
   },
