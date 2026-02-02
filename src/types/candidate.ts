@@ -28,6 +28,8 @@ export interface CandidateProfile {
   dateOfBirth?: string;
   nationality?: string;
   gender?: string;
+  latitude?: number;
+  longitude?: number;
   street?: string;
   houseNumber?: string;
   postalCode?: string;

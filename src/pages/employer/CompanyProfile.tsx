@@ -11,6 +11,7 @@ import { useUser } from '../../contexts/UserContext';
 import { employerService } from '../../services/employer.service';
 import { storageService } from '../../services/storage.service';
 import { Upload, Building2, Loader2, X } from 'lucide-react';
+import { LocationPicker } from '../../components/shared/LocationPicker';
 
 const CompanyProfile: React.FC = () => {
   const { showToast } = useToast();
@@ -42,6 +43,12 @@ const CompanyProfile: React.FC = () => {
             companySize: profile.company_size || '',
             city: profile.headquarters_city || '',
             country: profile.headquarters_country || '',
+            street: profile.street || '',
+            houseNumber: profile.house_number || '',
+            postalCode: profile.postal_code || '',
+            state: profile.state || '',
+            latitude: profile.latitude || 0,
+            longitude: profile.longitude || 0,
             linkedinUrl: profile.linkedin_url || '',
             twitterUrl: profile.twitter_url || '',
             facebookUrl: profile.facebook_url || '',
@@ -129,6 +136,12 @@ const CompanyProfile: React.FC = () => {
         company_size: formData.companySize,
         headquarters_city: formData.city,
         headquarters_country: formData.country,
+        street: formData.street,
+        house_number: formData.houseNumber,
+        postal_code: formData.postalCode,
+        state: formData.state,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
         linkedin_url: formData.linkedinUrl,
         twitter_url: formData.twitterUrl,
         facebook_url: formData.facebookUrl,
@@ -311,32 +324,34 @@ const CompanyProfile: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="city" className="text-body-sm font-medium text-foreground mb-2 block">
-                  City (Headquarters)
-                </Label>
-                <Input
-                  id="city"
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="bg-background text-foreground border-border"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="country" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Country
-                </Label>
-                <Input
-                  id="country"
-                  type="text"
-                  value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  className="bg-background text-foreground border-border"
-                />
-              </div>
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                Headquarters Location
+              </Label>
+              <LocationPicker
+                mode="address"
+                value={{
+                  city: formData.city,
+                  country: formData.country,
+                  street: formData.street,
+                  houseNumber: formData.houseNumber,
+                  postalCode: formData.postalCode,
+                  state: formData.state,
+                  lat: formData.latitude,
+                  lon: formData.longitude
+                }}
+                onChange={(val) => setFormData({
+                  ...formData,
+                  city: val.city,
+                  country: val.country,
+                  street: val.street,
+                  houseNumber: val.houseNumber,
+                  postalCode: val.postalCode,
+                  state: val.state,
+                  latitude: val.lat,
+                  longitude: val.lon
+                })}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

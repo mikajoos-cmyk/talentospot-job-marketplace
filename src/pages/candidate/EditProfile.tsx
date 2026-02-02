@@ -15,8 +15,9 @@ import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, Grad
 import { ProjectImageCarousel } from '../../components/shared/ProjectImageCarousel';
 import { Switch } from '../../components/ui/switch';
 import { refugeeOriginCountries } from '../../data/locationData';
-import { locationData } from '../../data/locationData';
 import { AutocompleteInput } from '../../components/shared/AutocompleteInput';
+import { LocationPicker } from '../../components/shared/LocationPicker';
+import { findContinent } from '../../utils/locationUtils';
 import DrivingLicenseSelector from '../../components/shared/DrivingLicenseSelector';
 import {
   Dialog,
@@ -61,7 +62,7 @@ const EditProfile: React.FC = () => {
   const [qualifications, setQualifications] = useState<any[]>([]);
   const [requirements, setRequirements] = useState<string[]>([]);
   const [formData, setFormData] = useState<any>(null);
-  const [selectedCountryId, setSelectedCountryId] = useState<string | null>(null);
+
 
   React.useEffect(() => {
     const fetchProfile = async () => {
@@ -87,6 +88,10 @@ const EditProfile: React.FC = () => {
             houseNumber: profile.houseNumber || '',
             postalCode: profile.postalCode || '',
             state: profile.state || '',
+            latitude: profile.latitude || 0,
+            longitude: profile.longitude || 0,
+            country: profile.country || '',
+            city: profile.city || '',
             tags: profile.tags || [],
             cvUrl: profile.cvUrl || '',
             location: profile.location || '',
@@ -208,11 +213,7 @@ const EditProfile: React.FC = () => {
     images: [] as string[],
   });
 
-  const continents = Object.keys(locationData);
-  const countries = newLocation.continent ? Object.keys(locationData[newLocation.continent] || {}) : [];
-  const cities = newLocation.country && newLocation.continent
-    ? locationData[newLocation.continent]?.[newLocation.country] || []
-    : [];
+
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -485,18 +486,11 @@ const EditProfile: React.FC = () => {
 
 
   const handleAddLocation = () => {
-    if (!newLocation.continent || !newLocation.country || !newLocation.city) {
-      showToast({
-        title: 'Error',
-        description: 'Please select continent, country, and city',
-        variant: 'destructive',
-      });
-      return;
-    }
+
 
     const location: PreferredLocation = {
       id: Date.now().toString(),
-      continent: newLocation.continent,
+      continent: findContinent(newLocation.country),
       country: newLocation.country,
       city: newLocation.city,
     };
@@ -673,6 +667,8 @@ const EditProfile: React.FC = () => {
         state: formData.state,
         city: formData.city,
         country: formData.country,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
         job_title: formData.title,
         sector: formData.sector,
         career_level: formData.careerLevel,
@@ -922,93 +918,31 @@ const EditProfile: React.FC = () => {
                 </Select>
               </div>
 
-              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2">
-                  <Label htmlFor="street" className="text-body-sm font-medium text-foreground mb-2 block">
-                    Street
-                  </Label>
-                  <Input
-                    id="street"
-                    type="text"
-                    placeholder="e.g., Main Street"
-                    value={formData.street}
-                    onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                    className="bg-background text-foreground border-border"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="houseNumber" className="text-body-sm font-medium text-foreground mb-2 block">
-                    House Number
-                  </Label>
-                  <Input
-                    id="houseNumber"
-                    type="text"
-                    placeholder="e.g., 12A"
-                    value={formData.houseNumber}
-                    onChange={(e) => setFormData({ ...formData, houseNumber: e.target.value })}
-                    className="bg-background text-foreground border-border"
-                  />
-                </div>
-              </div>
 
-              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <Label htmlFor="postalCode" className="text-body-sm font-medium text-foreground mb-2 block">
-                    ZIP Code
-                  </Label>
-                  <Input
-                    id="postalCode"
-                    type="text"
-                    placeholder="e.g., 10115"
-                    value={formData.postalCode}
-                    onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                    className="bg-background text-foreground border-border"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="city" className="text-body-sm font-medium text-foreground mb-2 block">
-                    City
-                  </Label>
-                  <AutocompleteInput
-                    category="cities"
-                    id="city"
-                    placeholder="e.g., Berlin"
-                    value={formData.city}
-                    onChange={(val) => setFormData({ ...formData, city: val })}
-                    className="bg-background text-foreground border-border"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="state" className="text-body-sm font-medium text-foreground mb-2 block">
-                    State / Bundesland
-                  </Label>
-                  <AutocompleteInput
-                    category="states"
-                    id="state"
-                    placeholder="e.g., Berlin"
-                    value={formData.state}
-                    filterId={selectedCountryId || undefined}
-                    onChange={(val) => setFormData({ ...formData, state: val })}
-                    className="bg-background text-foreground border-border"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <Label htmlFor="country" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Country
-                </Label>
-                <AutocompleteInput
-                  category="countries"
-                  id="country"
-                  placeholder="e.g., Germany"
-                  value={formData.country}
-                  onChange={(val) => setFormData({ ...formData, country: val })}
-                  onSelect={(suggestion: any) => {
-                    setSelectedCountryId(suggestion.id);
-                    setFormData({ ...formData, country: suggestion.name, state: '', countryCode: suggestion.code });
+              <div className="md:col-span-2 space-y-2">
+                <LocationPicker
+                  value={{
+                    city: formData.city,
+                    street: formData.street,
+                    houseNumber: formData.houseNumber,
+                    country: formData.country,
+                    state: formData.state,
+                    postalCode: formData.postalCode,
+                    lat: formData.latitude,
+                    lon: formData.longitude
                   }}
-                  className="bg-background text-foreground border-border"
+                  onChange={(val) => setFormData({
+                    ...formData,
+                    city: val.city,
+                    street: val.street || '',
+                    houseNumber: val.houseNumber || '',
+                    country: val.country,
+                    state: val.state,
+                    postalCode: val.postalCode,
+                    latitude: val.lat,
+                    longitude: val.lon
+                  })}
                 />
               </div>
 
@@ -2031,10 +1965,10 @@ const EditProfile: React.FC = () => {
             Save Changes
           </Button>
         </div>
-      </div >
+      </div>
 
       {/* Experience Modal */}
-      < Dialog open={experienceModalOpen} onOpenChange={setExperienceModalOpen} >
+      <Dialog open={experienceModalOpen} onOpenChange={setExperienceModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">{editingExperienceId ? 'Update Work Experience' : 'Add Work Experience'}</DialogTitle>
@@ -2150,10 +2084,10 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog >
+      </Dialog>
 
       {/* Education Modal */}
-      < Dialog open={educationModalOpen} onOpenChange={setEducationModalOpen} >
+      <Dialog open={educationModalOpen} onOpenChange={setEducationModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">{editingEducationId ? 'Update Education' : 'Add Education'}</DialogTitle>
@@ -2269,10 +2203,10 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog >
+      </Dialog>
 
       {/* Preferred Location Modal */}
-      < Dialog open={locationModalOpen} onOpenChange={setLocationModalOpen} >
+      <Dialog open={locationModalOpen} onOpenChange={setLocationModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">Add Preferred Work Location</DialogTitle>
@@ -2282,66 +2216,18 @@ const EditProfile: React.FC = () => {
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            <div>
-              <Label htmlFor="locContinent" className="text-body-sm font-medium text-foreground mb-2 block">
-                Continent <span className="text-error">*</span>
-              </Label>
-              <Select
-                value={newLocation.continent}
-                onValueChange={(value) => setNewLocation({ continent: value, country: '', city: '' })}
-              >
-                <SelectTrigger className="bg-background text-foreground border-border">
-                  <SelectValue placeholder="Select continent" />
-                </SelectTrigger>
-                <SelectContent>
-                  {continents.map(continent => (
-                    <SelectItem key={continent} value={continent}>{continent}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {newLocation.continent && (
-              <div>
-                <Label htmlFor="locCountry" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Country <span className="text-error">*</span>
-                </Label>
-                <Select
-                  value={newLocation.country}
-                  onValueChange={(value) => setNewLocation({ ...newLocation, country: value, city: '' })}
-                >
-                  <SelectTrigger className="bg-background text-foreground border-border">
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map(country => (
-                      <SelectItem key={country} value={country}>{country}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {newLocation.country && (
-              <div>
-                <Label htmlFor="locCity" className="text-body-sm font-medium text-foreground mb-2 block">
-                  City <span className="text-error">*</span>
-                </Label>
-                <Select
-                  value={newLocation.city}
-                  onValueChange={(value) => setNewLocation({ ...newLocation, city: value })}
-                >
-                  <SelectTrigger className="bg-background text-foreground border-border">
-                    <SelectValue placeholder="Select city" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cities.map(city => (
-                      <SelectItem key={city} value={city}>{city}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <LocationPicker
+              mode="city"
+              value={{
+                city: newLocation.city,
+                country: newLocation.country,
+              }}
+              onChange={(val) => setNewLocation({
+                ...newLocation,
+                city: val.city,
+                country: val.country
+              })}
+            />
           </div>
 
           <div className="flex justify-end space-x-4">
@@ -2357,17 +2243,17 @@ const EditProfile: React.FC = () => {
             </Button>
             <Button
               onClick={handleAddLocation}
-              disabled={!newLocation.continent || !newLocation.country || !newLocation.city}
+              disabled={!newLocation.country || !newLocation.city}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
               Add Location
             </Button>
           </div>
         </DialogContent>
-      </Dialog >
+      </Dialog>
 
       {/* Portfolio Modal */}
-      < Dialog open={portfolioModalOpen} onOpenChange={setPortfolioModalOpen} >
+      <Dialog open={portfolioModalOpen} onOpenChange={setPortfolioModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">
@@ -2472,7 +2358,7 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog >
+      </Dialog>
 
       {/* Awards Modal */}
       <Dialog open={awardsModalOpen} onOpenChange={setAwardsModalOpen}>
@@ -2594,7 +2480,7 @@ const EditProfile: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </AppLayout >
+    </AppLayout>
   );
 };
 

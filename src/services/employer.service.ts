@@ -14,6 +14,12 @@ export interface EmployerProfile {
   headquarters_address?: string;
   headquarters_city?: string;
   headquarters_country?: string;
+  street?: string;
+  house_number?: string;
+  postal_code?: string;
+  state?: string;
+  latitude?: number;
+  longitude?: number;
   logo_url?: string;
   video_url?: string;
   linkedin_url?: string;

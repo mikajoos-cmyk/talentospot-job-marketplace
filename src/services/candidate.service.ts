@@ -97,6 +97,8 @@ export const candidateService = {
       houseNumber: data.house_number || '',
       postalCode: data.postal_code || '',
       state: data.state || '',
+      latitude: data.latitude,
+      longitude: data.longitude,
       tags: data.tags || [],
       cvUrl: data.cv_url || '',
       dateOfBirth: data.date_of_birth || '',

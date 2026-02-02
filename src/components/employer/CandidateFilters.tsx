@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { X, Plus, Map, ChevronDown, User, Briefcase } from 'lucide-react';
 import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
-import { locationData, refugeeOriginCountries } from '@/data/locationData';
+import { refugeeOriginCountries } from '@/data/locationData';
 import { getLanguageLevelOptions } from '@/utils/language-levels';
 import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
 import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
+import { LocationPicker } from '../../components/shared/LocationPicker';
+import { findContinent } from '../../utils/locationUtils';
 
 interface CandidateFiltersProps {
   filters: CandidateFiltersType;
@@ -185,47 +187,9 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
     });
   };
 
-  const continents = Object.keys(locationData);
-  const countries = filters.location.continent ? Object.keys(locationData[filters.location.continent] || {}) : [];
-  const cities = filters.location.country && filters.location.continent
-    ? locationData[filters.location.continent]?.[filters.location.country] || []
-    : [];
 
-  const handleContinentChange = (continent: string) => {
-    onFiltersChange({
-      ...filters,
-      location: {
-        continent,
-        country: '',
-        cities: [],
-      },
-    });
-  };
 
-  const handleCountryChange = (country: string) => {
-    onFiltersChange({
-      ...filters,
-      location: {
-        ...filters.location,
-        country,
-        cities: [],
-      },
-    });
-  };
 
-  const handleCityToggle = (city: string) => {
-    const cities = filters.location.cities.includes(city)
-      ? filters.location.cities.filter(c => c !== city)
-      : [...filters.location.cities, city];
-
-    onFiltersChange({
-      ...filters,
-      location: {
-        ...filters.location,
-        cities,
-      },
-    });
-  };
 
   const careerLevels = ['junior', 'mid', 'senior', 'lead', 'executive'];
   const jobTypes = ['full-time', 'part-time', 'apprenticeship', 'internship', 'traineeship', 'freelance', 'contract'];
@@ -345,48 +309,21 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
             </Label>
 
             <div className="space-y-3">
-              <Select value={filters.location.continent} onValueChange={handleContinentChange}>
-                <SelectTrigger className="bg-background text-foreground border-border">
-                  <SelectValue placeholder="Select continent" />
-                </SelectTrigger>
-                <SelectContent>
-                  {continents.map(continent => (
-                    <SelectItem key={continent} value={continent}>{continent}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {filters.location.continent && (
-                <Select value={filters.location.country} onValueChange={handleCountryChange}>
-                  <SelectTrigger className="bg-background text-foreground border-border">
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map(country => (
-                      <SelectItem key={country} value={country}>{country}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-
-              {filters.location.country && cities.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-caption text-muted-foreground">Select Cities (Multiple)</Label>
-                  <div className="max-h-32 overflow-y-auto border border-border rounded-md p-2 bg-background">
-                    {cities.map(city => (
-                      <label key={city} className="flex items-center space-x-2 py-1 hover:bg-muted rounded px-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={filters.location.cities.includes(city)}
-                          onChange={() => handleCityToggle(city)}
-                          className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                        />
-                        <span className="text-body-sm text-foreground">{city}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <LocationPicker
+                mode="city"
+                value={{
+                  city: filters.location.cities[0] || '',
+                  country: filters.location.country,
+                }}
+                onChange={(val) => onFiltersChange({
+                  ...filters,
+                  location: {
+                    continent: findContinent(val.country),
+                    country: val.country,
+                    cities: val.city ? [val.city] : [],
+                  }
+                })}
+              />
             </div>
           </div>
         </div>

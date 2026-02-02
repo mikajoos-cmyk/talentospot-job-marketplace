@@ -8,7 +8,7 @@ import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import RichTextEditor from '../../components/ui/rich-text-editor';
 import { useToast } from '../../contexts/ToastContext';
-import { locationData } from '../../data/locationData';
+
 import { jobsService } from '../../services/jobs.service';
 import { masterDataService } from '../../services/master-data.service';
 import { Loader2 } from 'lucide-react';
@@ -18,6 +18,8 @@ import { Slider } from '../../components/ui/slider';
 import { getLanguageLevelOptions } from '../../utils/language-levels';
 import { AutocompleteInput } from '../../components/shared/AutocompleteInput';
 import DrivingLicenseSelector from '../../components/shared/DrivingLicenseSelector';
+import { LocationPicker } from '../../components/shared/LocationPicker';
+import { findContinent } from '../../utils/locationUtils';
 
 const EditJob: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -209,11 +211,7 @@ const EditJob: React.FC = () => {
     );
   }
 
-  const continents = Object.keys(locationData);
-  const countries = formData.location.continent ? Object.keys(locationData[formData.location.continent] || {}) : [];
-  const cities = formData.location.country && formData.location.continent
-    ? locationData[formData.location.continent]?.[formData.location.country] || []
-    : [];
+
 
   return (
     <AppLayout>
@@ -253,62 +251,21 @@ const EditJob: React.FC = () => {
               <Label className="text-body-sm font-medium text-foreground mb-2 block">
                 Location <span className="text-error">*</span>
               </Label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Select
-                  value={formData.location.continent}
-                  onValueChange={(value) => setFormData({
-                    ...formData,
-                    location: { continent: value, country: '', city: '' }
-                  })}
-                >
-                  <SelectTrigger className="bg-background text-foreground border-border">
-                    <SelectValue placeholder="Continent" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {continents.map(continent => (
-                      <SelectItem key={continent} value={continent}>{continent}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {formData.location.continent && (
-                  <Select
-                    value={formData.location.country}
-                    onValueChange={(value) => setFormData({
-                      ...formData,
-                      location: { ...formData.location, country: value, city: '' }
-                    })}
-                  >
-                    <SelectTrigger className="bg-background text-foreground border-border">
-                      <SelectValue placeholder="Country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countries.map(country => (
-                        <SelectItem key={country} value={country}>{country}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-
-                {formData.location.country && (
-                  <Select
-                    value={formData.location.city}
-                    onValueChange={(value) => setFormData({
-                      ...formData,
-                      location: { ...formData.location, city: value }
-                    })}
-                  >
-                    <SelectTrigger className="bg-background text-foreground border-border">
-                      <SelectValue placeholder="City" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cities.map(city => (
-                        <SelectItem key={city} value={city}>{city}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
+              <LocationPicker
+                mode="city"
+                value={{
+                  city: formData.location.city,
+                  country: formData.location.country,
+                }}
+                onChange={(val) => setFormData({
+                  ...formData,
+                  location: {
+                    city: val.city,
+                    country: val.country,
+                    continent: findContinent(val.country)
+                  }
+                })}
+              />
             </div>
 
             <div>

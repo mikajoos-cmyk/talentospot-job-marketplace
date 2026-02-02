@@ -11,13 +11,14 @@ import { useToast } from '../../contexts/ToastContext';
 import { useUser } from '../../contexts/UserContext';
 import { jobsService } from '../../services/jobs.service';
 import { masterDataService } from '../../services/master-data.service';
-import { locationData } from '../../data/locationData';
 import { X, Plus, ArrowLeft, Loader2, Home } from 'lucide-react';
 import { Switch } from '../../components/ui/switch';
 import { Slider } from '../../components/ui/slider';
 import { getLanguageLevelOptions } from '../../utils/language-levels';
 import { AutocompleteInput } from '../../components/shared/AutocompleteInput';
 import DrivingLicenseSelector from '../../components/shared/DrivingLicenseSelector';
+import { LocationPicker } from '../../components/shared/LocationPicker';
+import { findContinent } from '../../utils/locationUtils';
 
 const PostJob: React.FC = () => {
   const navigate = useNavigate();
@@ -56,12 +57,6 @@ const PostJob: React.FC = () => {
   const [skillInput, setSkillInput] = useState('');
   const [benefits, setBenefits] = useState<string[]>([]);
   const [benefitInput, setBenefitInput] = useState('');
-
-  const continents = Object.keys(locationData);
-  const countries = formData.location.continent ? Object.keys(locationData[formData.location.continent] || {}) : [];
-  const cities = formData.location.country && formData.location.continent
-    ? locationData[formData.location.continent]?.[formData.location.country] || []
-    : [];
 
   const handleAddLanguage = () => {
     if (languageInput.trim() && !languages.some(l => l.name.toLowerCase() === languageInput.trim().toLowerCase())) {
@@ -219,7 +214,7 @@ const PostJob: React.FC = () => {
                 category="job_titles"
                 id="title"
                 value={formData.title}
-                onChange={(val) => setFormData({ ...formData, title: val })}
+                onChange={(val: string) => setFormData({ ...formData, title: val })}
                 placeholder="e.g., Senior Frontend Developer"
                 className="bg-background text-foreground border-border"
               />
@@ -229,62 +224,21 @@ const PostJob: React.FC = () => {
               <Label className="text-body-sm font-medium text-foreground mb-2 block">
                 Location <span className="text-error">*</span>
               </Label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Select
-                  value={formData.location.continent}
-                  onValueChange={(value) => setFormData({
-                    ...formData,
-                    location: { continent: value, country: '', city: '' }
-                  })}
-                >
-                  <SelectTrigger className="bg-background text-foreground border-border">
-                    <SelectValue placeholder="Continent" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {continents.map(continent => (
-                      <SelectItem key={continent} value={continent}>{continent}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {formData.location.continent && (
-                  <Select
-                    value={formData.location.country}
-                    onValueChange={(value) => setFormData({
-                      ...formData,
-                      location: { ...formData.location, country: value, city: '' }
-                    })}
-                  >
-                    <SelectTrigger className="bg-background text-foreground border-border">
-                      <SelectValue placeholder="Country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countries.map(country => (
-                        <SelectItem key={country} value={country}>{country}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-
-                {formData.location.country && (
-                  <Select
-                    value={formData.location.city}
-                    onValueChange={(value) => setFormData({
-                      ...formData,
-                      location: { ...formData.location, city: value }
-                    })}
-                  >
-                    <SelectTrigger className="bg-background text-foreground border-border">
-                      <SelectValue placeholder="City" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cities.map(city => (
-                        <SelectItem key={city} value={city}>{city}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
+              <LocationPicker
+                mode="city"
+                value={{
+                  city: formData.location.city,
+                  country: formData.location.country,
+                }}
+                onChange={(val) => setFormData({
+                  ...formData,
+                  location: {
+                    city: val.city,
+                    country: val.country,
+                    continent: findContinent(val.country)
+                  }
+                })}
+              />
             </div>
 
             <div>
@@ -325,7 +279,7 @@ const PostJob: React.FC = () => {
                 <div className="space-y-4">
                   <Slider
                     value={[formData.salary_min, formData.salary_max]}
-                    onValueChange={(value) => setFormData({ ...formData, salary_min: value[0], salary_max: value[1] })}
+                    onValueChange={(value: number[]) => setFormData({ ...formData, salary_min: value[0], salary_max: value[1] })}
                     min={1000}
                     max={250000}
                     step={1000}
@@ -672,11 +626,11 @@ const PostJob: React.FC = () => {
               <Switch
                 id="home-office"
                 checked={formData.homeOfficeAvailable}
-                onCheckedChange={(checked) => setFormData({ ...formData, homeOfficeAvailable: checked })}
+                onCheckedChange={(checked: boolean) => setFormData({ ...formData, homeOfficeAvailable: checked })}
               />
             </div>
-          </div >
-        </Card >
+          </div>
+        </Card>
 
         <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
           <Button
@@ -697,8 +651,8 @@ const PostJob: React.FC = () => {
             Publish Job
           </Button>
         </div>
-      </div >
-    </AppLayout >
+      </div>
+    </AppLayout>
   );
 };
 

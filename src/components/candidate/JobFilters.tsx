@@ -6,11 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, Sparkles, RotateCcw, X, Plus, Users, Briefcase } from 'lucide-react';
-import { locationData } from '@/data/locationData';
+
 import { getLanguageLevelOptions } from '@/utils/language-levels';
 import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
 import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '../../components/ui/switch';
+import { LocationPicker } from '../../components/shared/LocationPicker';
+import { findContinent } from '../../utils/locationUtils';
 
 export interface JobFiltersState {
     title: string;
@@ -162,11 +164,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
         });
     };
 
-    const continents = Object.keys(locationData);
-    const countries = filters.continent && filters.continent !== 'all' ? Object.keys(locationData[filters.continent] || {}) : [];
-    const cities = filters.continent && filters.country && filters.continent !== 'all' && filters.country !== 'all'
-        ? locationData[filters.continent][filters.country] || []
-        : [];
+
 
     const handleReset = () => {
         onFiltersChange({
@@ -331,48 +329,19 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                         <Label className="text-body-sm font-medium text-foreground block">
                             Location
                         </Label>
-                        <Select
-                            value={filters.continent}
-                            onValueChange={(val) => onFiltersChange({ ...filters, continent: val, country: '', city: '' })}
-                        >
-                            <SelectTrigger className="bg-background text-foreground border-border">
-                                <SelectValue placeholder="Continent" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Continents</SelectItem>
-                                {continents.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-
-                        {filters.continent && filters.continent !== 'all' && (
-                            <Select
-                                value={filters.country}
-                                onValueChange={(val) => onFiltersChange({ ...filters, country: val, city: '' })}
-                            >
-                                <SelectTrigger className="bg-background text-foreground border-border">
-                                    <SelectValue placeholder="Country" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Countries</SelectItem>
-                                    {countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        )}
-
-                        {filters.country && filters.country !== 'all' && cities.length > 0 && (
-                            <Select
-                                value={filters.city}
-                                onValueChange={(val) => onFiltersChange({ ...filters, city: val })}
-                            >
-                                <SelectTrigger className="bg-background text-foreground border-border">
-                                    <SelectValue placeholder="City" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Cities</SelectItem>
-                                    {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        )}
+                        <LocationPicker
+                            mode="city"
+                            value={{
+                                city: filters.city,
+                                country: filters.country,
+                            }}
+                            onChange={(val) => onFiltersChange({
+                                ...filters,
+                                city: val.city,
+                                country: val.country,
+                                continent: findContinent(val.country)
+                            })}
+                        />
                     </div>
                 </div>
 
