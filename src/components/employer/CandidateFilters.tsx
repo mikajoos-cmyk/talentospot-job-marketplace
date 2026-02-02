@@ -324,6 +324,24 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
                   }
                 })}
               />
+
+              {filters.location.cities[0] && (
+                <div className="pt-2 pb-2 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                      Search Radius: {filters.workRadius} km
+                    </Label>
+                  </div>
+                  <Slider
+                    value={[filters.workRadius]}
+                    onValueChange={(value) => onFiltersChange({ ...filters, workRadius: value[0] })}
+                    min={10}
+                    max={200}
+                    step={5}
+                    className="py-2"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

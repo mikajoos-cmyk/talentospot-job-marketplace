@@ -90,6 +90,7 @@ const JobSearch: React.FC = () => {
         minMatchThreshold: getInt('threshold', 50),
         benefits: getArray('benefits'),
         minVacationDays: getInt('vacationMin', 0),
+        workRadius: getInt('radius', 200),
       };
     }
 
@@ -127,12 +128,18 @@ const JobSearch: React.FC = () => {
       minMatchThreshold: 50,
       minVacationDays: parseInt(searchParams.get('minVacationDays') || '0'),
       benefits: [],
+      workRadius: 200,
     };
   });
 
+  const [radiusValue, setRadiusValue] = useState(filters.workRadius || 200);
+
   useEffect(() => {
     sessionStorage.setItem('job_search_filters', JSON.stringify(filters));
-  }, [filters]);
+    if (filters.workRadius !== radiusValue) {
+      setRadiusValue(filters.workRadius);
+    }
+  }, [filters, radiusValue]);
 
   useEffect(() => {
     loadJobs();
@@ -140,7 +147,7 @@ const JobSearch: React.FC = () => {
       loadSavedJobs();
       loadAppliedJobs();
     }
-  }, [user?.role, user?.id]);
+  }, [user?.role, user?.id, radiusValue]);
 
   const loadJobs = async (currentFilters: JobFiltersState = filters) => {
     try {
@@ -171,7 +178,7 @@ const JobSearch: React.FC = () => {
         if (currentFilters.homeOffice) searchParams.home_office_available = true;
       }
 
-      const data = await jobsService.searchJobs(searchParams);
+      const data = await jobsService.searchJobs(searchParams, radiusValue);
       let results = data || [];
 
       // Apply client-side filtering/scoring if needed
@@ -265,6 +272,7 @@ const JobSearch: React.FC = () => {
         minMatchThreshold: filters.minMatchThreshold,
         benefits: profile.tags || [],
         minVacationDays: 0,
+        workRadius: 200,
       };
 
       setFilters(matchedFilters);
@@ -306,6 +314,7 @@ const JobSearch: React.FC = () => {
       minMatchThreshold: 50,
       benefits: [],
       minVacationDays: 0,
+      workRadius: 200,
     });
     setSearchQuery('');
   };

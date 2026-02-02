@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { masterDataService } from './master-data.service';
+import { ensureCityExists } from './candidate.service';
 
 export interface JobLanguageRequirement {
   name: string;
@@ -94,6 +95,15 @@ export const jobsService = {
       resolvedJob.required_skills = await this.resolveEntities(job.required_skills, 'skills');
     }
 
+    // Geocode city if provided
+    if (job.city) {
+      const cityData = await ensureCityExists(job.city, job.country);
+      if (cityData?.latitude != null && cityData?.longitude != null) {
+        resolvedJob.latitude = cityData.latitude;
+        resolvedJob.longitude = cityData.longitude;
+      }
+    }
+
     const { data, error } = await supabase
       .from('jobs')
       .insert({
@@ -180,6 +190,15 @@ export const jobsService = {
     }
     if (updates.required_skills) {
       resolvedUpdates.required_skills = await this.resolveEntities(updates.required_skills, 'skills');
+    }
+
+    // Geocode city if updated
+    if (updates.city) {
+      const cityData = await ensureCityExists(updates.city, updates.country);
+      if (cityData?.latitude != null && cityData?.longitude != null) {
+        resolvedUpdates.latitude = cityData.latitude;
+        resolvedUpdates.longitude = cityData.longitude;
+      }
     }
 
     const { data, error } = await supabase
@@ -295,7 +314,9 @@ export const jobsService = {
     return this.mapDbJobToFrontend(data);
   },
 
-  async searchJobs(filters: any = {}) {
+  async searchJobs(filters: any = {}, searchRadius?: number) {
+    console.log('[DEBUG] searchJobs called with filters:', filters, 'radius:', searchRadius);
+
     let query = supabase
       .from('jobs')
       .select(`
@@ -317,7 +338,41 @@ export const jobsService = {
     }
 
     if (filters.city) {
-      query = query.eq('city', filters.city);
+      // 2. RADIUS SEARCH for Jobs
+      let radiusJobIds: string[] | null = null;
+      if (searchRadius) {
+        console.log(`[DEBUG] Performing Radius Search for jobs in ${filters.city} within ${searchRadius}km`);
+        const cityData = await ensureCityExists(filters.city, filters.country);
+        console.log('[DEBUG] City data for job radius:', cityData);
+
+        if (cityData?.latitude != null && cityData?.longitude != null) {
+          console.log(`[DEBUG] Calling search_jobs_radius rpc with lat=${cityData.latitude}, lon=${cityData.longitude}, radius=${searchRadius}`);
+          const { data: radiusData, error: radiusError } = await supabase.rpc('search_jobs_radius', {
+            search_lat: cityData.latitude,
+            search_lon: cityData.longitude,
+            radius_km: searchRadius
+          });
+
+          if (radiusError) {
+            console.error('[DEBUG] Error in search_jobs_radius RPC:', radiusError);
+          } else if (radiusData) {
+            radiusJobIds = radiusData.map((d: any) => d.id);
+            console.log(`[DEBUG] Found ${radiusJobIds?.length} jobs in radius:`, radiusJobIds);
+          }
+        } else {
+          console.warn(`[DEBUG] Could not get coords for job search in ${filters.city}`);
+        }
+      }
+
+      if (radiusJobIds !== null) {
+        if (radiusJobIds.length > 0) {
+          query = query.in('id', radiusJobIds);
+        } else {
+          query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+        }
+      } else {
+        query = query.eq('city', filters.city);
+      }
     }
 
     if (filters.country) {

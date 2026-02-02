@@ -7,6 +7,113 @@ import { getCoordinates } from '../utils/geocoding';
 // Wandelt leere Strings in NULL um, damit Constraints nicht verletzt werden
 const val = (v: any) => (v === '' ? null : v);
 
+export async function ensureCityExists(cityName: string, countryName?: string) {
+  console.log(`[DEBUG] ensureCityExists called for: ${cityName}, country: ${countryName}`);
+  if (!cityName) return null;
+
+  const trimmedCity = cityName.trim();
+  const trimmedCountry = countryName?.trim();
+
+  // 1. Check if city exists in Supabase cities table (use ilike)
+  // We join with countries to ensure we get the right city if country is provided
+  let query = supabase
+    .from('cities')
+    .select('id, latitude, longitude, countries!inner(name)')
+    .ilike('name', trimmedCity);
+
+  if (trimmedCountry && trimmedCountry !== 'any') {
+    query = query.ilike('countries.name', trimmedCountry);
+  }
+
+  const { data: existingCity } = await query.maybeSingle();
+  console.log('[DEBUG] DB Check Result:', existingCity);
+
+  if (existingCity && existingCity.latitude != null && existingCity.longitude != null) {
+    return existingCity;
+  }
+
+  // 2. Fetch coordinates from Nominatim API if missing or not in DB
+  console.log('[DEBUG] Fetching via Nominatim API...');
+  const coords = await getCoordinates(trimmedCity, trimmedCountry);
+  console.log('[DEBUG] API Result:', coords);
+  if (!coords) return existingCity || null;
+
+  // 3. Handle country relation (only if authenticated, otherwise skip persistence)
+  const { data: { session } } = await supabase.auth.getSession();
+  const isAuthenticated = !!session;
+
+  let countryId = null;
+  if (trimmedCountry && isAuthenticated) {
+    const { data: countryData } = await supabase
+      .from('countries')
+      .select('id')
+      .ilike('name', trimmedCountry)
+      .maybeSingle();
+
+    if (countryData) {
+      countryId = countryData.id;
+    } else {
+      // Create country if missing (fallback)
+      const { data: europe } = await supabase.from('continents').select('id').ilike('name', 'Europe').maybeSingle();
+      const code = trimmedCountry.substring(0, 2).toUpperCase() + Math.floor(Math.random() * 100);
+      const { data: newCountry, error: countryError } = await supabase
+        .from('countries')
+        .insert({ name: trimmedCountry, code, continent_id: europe?.id })
+        .select('id')
+        .single();
+
+      if (countryError) {
+        console.error('[DEBUG] Error creating country:', countryError);
+      }
+      countryId = newCountry?.id;
+    }
+  }
+
+  // 4. Update or Insert the city (only if authenticated)
+  if (!isAuthenticated) {
+    console.log('[DEBUG] Guest user - skipping city persistence');
+    return { latitude: coords.latitude, longitude: coords.longitude };
+  }
+
+  if (existingCity) {
+    const { data: updatedCity, error: updateError } = await supabase
+      .from('cities')
+      .update({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        country_id: countryId || undefined
+      })
+      .eq('id', existingCity.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('[DEBUG] Error updating city:', updateError);
+      return { ...existingCity, latitude: coords.latitude, longitude: coords.longitude };
+    }
+    return updatedCity;
+  } else {
+    // If we didn't find the city with the country join, maybe it exists without a country or we just insert it
+    const { data: newCity, error: insertError } = await supabase
+      .from('cities')
+      .insert({
+        name: trimmedCity,
+        country_id: countryId,
+        latitude: coords.latitude,
+        longitude: coords.longitude
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('[DEBUG] Error inserting new city:', insertError);
+      // Fallback: Return coords so search works even if DB insert fails
+      return { latitude: coords.latitude, longitude: coords.longitude };
+    }
+    return newCity;
+  }
+}
+
 export const candidateService = {
   // Data Access Requests
   async requestDataAccess(candidateId: string, employerId: string) {
@@ -327,34 +434,18 @@ export const candidateService = {
     }
 
     // --- GEOCODING (Residence / Wohnort) ---
-    // Wenn Stadt gesetzt wird, hole Koordinaten (Lokal oder API)
     if (updates.city) {
       console.log(`Geocoding residence city: ${updates.city}`);
-
-      // 1. Try finding in DB
-      const { data: cityData } = await supabase
-        .from('cities')
-        .select('latitude, longitude')
-        .ilike('name', updates.city.trim())
-        .maybeSingle();
+      const cityData = await ensureCityExists(updates.city, updates.country);
 
       if (cityData?.latitude && cityData?.longitude) {
         dbUpdates.latitude = cityData.latitude;
         dbUpdates.longitude = cityData.longitude;
-        console.log('Geocoded residence from DB:', cityData);
+        console.log('Geocoded residence:', cityData);
       } else {
-        // 2. Fallback: API Call
-        console.log('Coordinates not found in DB, fetching from API...');
-        const coords = await getCoordinates(updates.city, updates.country);
-        if (coords) {
-          dbUpdates.latitude = coords.latitude;
-          dbUpdates.longitude = coords.longitude;
-          console.log('Geocoded residence from API:', coords);
-        } else {
-          console.warn('Could not geocode residence city:', updates.city);
-          dbUpdates.latitude = null;
-          dbUpdates.longitude = null;
-        }
+        console.warn('Could not geocode residence city:', updates.city);
+        dbUpdates.latitude = null;
+        dbUpdates.longitude = null;
       }
     }
 
@@ -621,27 +712,11 @@ export const candidateService = {
           }
         }
 
-        // 3. Stadt finden oder erstellen (mit Geocoding)
+        // 3. Stadt finden oder erstellen (mit Geocoding via ensureCityExists)
         let cityId;
         if (countryId) {
-          const { data: cityData } = await supabase.from('cities').select('id').eq('name', loc.city).maybeSingle();
-          if (cityData) {
-            cityId = cityData.id;
-          } else {
-            // New City: Get Coordinates first
-            console.log(`Preferred location new city: ${loc.city}. Fetching coordinates...`);
-            const coords = await getCoordinates(loc.city, loc.country);
-
-            const cityInsert = {
-              name: loc.city,
-              country_id: countryId,
-              latitude: coords?.latitude || null,
-              longitude: coords?.longitude || null
-            };
-
-            const { data: newCity } = await supabase.from('cities').insert(cityInsert).select('id').single();
-            cityId = newCity?.id;
-          }
+          const cityData = await ensureCityExists(loc.city, loc.country);
+          cityId = cityData?.id;
         }
 
         // 4. Verknüpfung speichern
@@ -698,28 +773,13 @@ export const candidateService = {
     if (filters.city && radius) {
       console.log(`Performing Radius Search for ${filters.city} within ${radius}km`);
 
-      // Step A: Try logic DB lookup
-      let searchLat, searchLon;
-      const { data: cityData } = await supabase
-        .from('cities')
-        .select('latitude, longitude')
-        .ilike('name', filters.city.trim())
-        .maybeSingle();
-
-      if (cityData?.latitude && cityData?.longitude) {
-        searchLat = cityData.latitude;
-        searchLon = cityData.longitude;
-      } else {
-        // Step B: Use Geocoding API if DB misses coords
-        const coords = await getCoordinates(filters.city, filters.country);
-        if (coords) {
-          searchLat = coords.latitude;
-          searchLon = coords.longitude;
-        }
-      }
+      // Use ensureCityExists to get coordinates (will fetch from API if missing)
+      const cityData = await ensureCityExists(filters.city, filters.country);
+      const searchLat = cityData?.latitude;
+      const searchLon = cityData?.longitude;
 
       // Step C: Execute RPC if we have coords
-      if (searchLat && searchLon) {
+      if (searchLat != null && searchLon != null) {
         const { data: radiusData, error: radiusError } = await supabase.rpc('search_candidates_radius', {
           search_lat: searchLat,
           search_lon: searchLon,
@@ -727,10 +787,10 @@ export const candidateService = {
         });
 
         if (radiusError) {
-          console.error('Error in radius search RPC:', radiusError);
+          console.error('[DEBUG] Error in radius search RPC:', radiusError);
         } else if (radiusData) {
           radiusCandidateIds = radiusData.map((d: any) => d.candidate_id);
-          console.log(`Found ${radiusCandidateIds?.length} candidates in radius`);
+          console.log(`[DEBUG] Found ${radiusCandidateIds?.length} candidates in radius:`, radiusCandidateIds);
         }
       } else {
         console.warn(`City coordinates not found for ${filters.city} (after DB and API check)`);

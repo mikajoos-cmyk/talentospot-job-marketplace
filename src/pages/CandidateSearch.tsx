@@ -131,9 +131,14 @@ const CandidateSearch: React.FC = () => {
     };
   });
 
+  const [radiusValue, setRadiusValue] = useState(filters.workRadius || 200);
+
   useEffect(() => {
     sessionStorage.setItem('candidate_search_filters', JSON.stringify(filters));
-  }, [filters]);
+    if (filters.workRadius !== radiusValue) {
+      setRadiusValue(filters.workRadius);
+    }
+  }, [filters, radiusValue]);
 
   // Load employer's jobs
   useEffect(() => {
@@ -292,7 +297,7 @@ const CandidateSearch: React.FC = () => {
         }
 
         // Pass radius separately. Service handles deciding if radius search applies (needs city).
-        const data = await candidateService.searchCandidates(searchFilters, filters.workRadius);
+        const data = await candidateService.searchCandidates(searchFilters, radiusValue);
         let results = data || [];
 
         if (filters.enablePartialMatch) {
@@ -323,7 +328,7 @@ const CandidateSearch: React.FC = () => {
     };
 
     loadCandidates();
-  }, [filters]);
+  }, [filters, radiusValue]);
 
   return (
     <>
