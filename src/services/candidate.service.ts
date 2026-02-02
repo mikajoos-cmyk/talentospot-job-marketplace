@@ -192,7 +192,8 @@ export const candidateService = {
         endDate: edu.end_date,
         period: `${edu.start_date} - ${edu.end_date || 'Present'}`,
         description: edu.description || ''
-      })) || []
+      })) || [],
+      awards: data.awards || []
     };
   },
 
@@ -305,7 +306,8 @@ export const candidateService = {
       driving_licenses: updates.drivingLicenses ?? updates.driving_licenses,
       portfolio_images: (updates.portfolioImages || updates.portfolio_images)?.map((p: any) =>
         typeof p === 'object' ? JSON.stringify(p) : p
-      )
+      ),
+      awards: updates.awards || []
     };
 
     // Gehaltsobjekt Fallback

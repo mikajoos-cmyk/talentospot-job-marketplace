@@ -11,7 +11,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useUser } from '../../contexts/UserContext';
 import { candidateService } from '../../services/candidate.service';
 import { storageService } from '../../services/storage.service';
-import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, GraduationCap, MapPin, Video, Car, Plane, Loader2, Globe, Edit2 } from 'lucide-react';
+import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, GraduationCap, MapPin, Video, Car, Plane, Loader2, Globe, Edit2, Award } from 'lucide-react';
 import { ProjectImageCarousel } from '../../components/shared/ProjectImageCarousel';
 import { Switch } from '../../components/ui/switch';
 import { refugeeOriginCountries } from '../../data/locationData';
@@ -52,6 +52,7 @@ const EditProfile: React.FC = () => {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const portfolioInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
+  const awardImageInputRef = useRef<HTMLInputElement>(null);
   const [tagInput, setTagInput] = useState('');
 
   const [experience, setExperience] = useState<any[]>([]);
@@ -120,6 +121,7 @@ const EditProfile: React.FC = () => {
           setRequirements(profile.requirements || []);
           setLanguages(profile.languages || []);
           setDrivingLicenses(profile.drivingLicenses || []);
+          setAwards(profile.awards || []);
 
           if (profile.preferredLocations) {
             const locations: PreferredLocation[] = profile.preferredLocations.map((loc: any, i: number) => ({
@@ -177,6 +179,17 @@ const EditProfile: React.FC = () => {
   const [languageInput, setLanguageInput] = useState('');
   const [languageLevel, setLanguageLevel] = useState('B2');
   const [drivingLicenses, setDrivingLicenses] = useState<string[]>([]);
+
+  // Awards state
+  const [awards, setAwards] = useState<any[]>([]);
+  const [awardsModalOpen, setAwardsModalOpen] = useState(false);
+  const [editingAwardId, setEditingAwardId] = useState<string | null>(null);
+  const [newAward, setNewAward] = useState({
+    title: '',
+    year: new Date().getFullYear().toString(),
+    description: '',
+    certificateImage: '',
+  });
 
   const [preferredLocations, setPreferredLocations] = useState<PreferredLocation[]>([]);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
@@ -569,6 +582,74 @@ const EditProfile: React.FC = () => {
     });
   };
 
+  const handleAwardImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0 || !user?.id) return;
+    const file = event.target.files[0];
+    setUploading(true);
+    try {
+      const publicUrl = await storageService.uploadPortfolioImage(user.id, file);
+      setNewAward({ ...newAward, certificateImage: publicUrl });
+      showToast({ title: 'Upload Success', description: 'Certificate image uploaded' });
+    } catch (error) {
+      showToast({ title: 'Error', description: 'Image upload failed', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (event.target) event.target.value = '';
+    }
+  };
+
+  const handleAddAward = () => {
+    if (!newAward.title.trim() || !newAward.year.trim()) {
+      showToast({
+        title: 'Error',
+        description: 'Please fill in all required fields (Title and Year)',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const award = {
+      id: editingAwardId || Date.now().toString(),
+      title: newAward.title,
+      year: newAward.year,
+      description: newAward.description,
+      certificateImage: newAward.certificateImage,
+    };
+
+    if (editingAwardId) {
+      setAwards(awards.map(a => a.id === editingAwardId ? award : a));
+    } else {
+      setAwards([...awards, award]);
+    }
+
+    setNewAward({ title: '', year: new Date().getFullYear().toString(), description: '', certificateImage: '' });
+    setEditingAwardId(null);
+    setAwardsModalOpen(false);
+    showToast({
+      title: editingAwardId ? 'Award Updated' : 'Award Added',
+      description: `Award has been ${editingAwardId ? 'updated' : 'added'} successfully`,
+    });
+  };
+
+  const handleEditAward = (award: any) => {
+    setNewAward({
+      title: award.title,
+      year: award.year,
+      description: award.description || '',
+      certificateImage: award.certificateImage || '',
+    });
+    setEditingAwardId(award.id);
+    setAwardsModalOpen(true);
+  };
+
+  const handleDeleteAward = (awardId: string) => {
+    setAwards(awards.filter(a => a.id !== awardId));
+    showToast({
+      title: 'Award Deleted',
+      description: 'Award has been removed',
+    });
+  };
+
   const handleSave = async () => {
     try {
       if (!user?.id) return;
@@ -628,6 +709,7 @@ const EditProfile: React.FC = () => {
           title: p.title,
           description: p.description
         })),
+        awards: awards,
         isRefugee: formData.isRefugee,
         originCountry: formData.isRefugee ? formData.originCountry : null,
         contractTermPreference: formData.contractTermPreference,
@@ -1793,6 +1875,79 @@ const EditProfile: React.FC = () => {
           )}
         </Card>
 
+        {/* Awards & Achievements */}
+        <Card className="p-6 md:p-8 border border-border bg-card">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-h3 font-heading text-foreground">Awards & Achievements</h3>
+            <Button
+              onClick={() => {
+                setEditingAwardId(null);
+                setNewAward({ title: '', year: new Date().getFullYear().toString(), description: '', certificateImage: '' });
+                setAwardsModalOpen(true);
+              }}
+              className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+            >
+              <Plus className="w-5 h-5 mr-2" strokeWidth={2} />
+              Add Award
+            </Button>
+          </div>
+
+          {awards.length === 0 ? (
+            <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+              <Award className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
+              <p className="text-body text-muted-foreground mb-4">No awards added yet</p>
+              <Button
+                onClick={() => setAwardsModalOpen(true)}
+                variant="outline"
+                className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+              >
+                Add Your First Award
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {awards.map((award) => (
+                <Card key={award.id} className="p-4 border border-border bg-background">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 flex gap-4">
+                      {award.certificateImage && (
+                        <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0">
+                          <img src={award.certificateImage} alt={award.title} className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <h4 className="text-h4 font-heading text-foreground mb-1">{award.title}</h4>
+                        <p className="text-body-sm text-muted-foreground mb-2">{award.year}</p>
+                        {award.description && (
+                          <p className="text-body-sm text-foreground">{award.description}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={() => handleEditAward(award)}
+                        variant="ghost"
+                        size="icon"
+                        className="bg-transparent text-primary hover:bg-primary/10 hover:text-primary"
+                      >
+                        <Award className="w-4 h-4" strokeWidth={1.5} />
+                      </Button>
+                      <Button
+                        onClick={() => handleDeleteAward(award.id)}
+                        variant="ghost"
+                        size="icon"
+                        className="bg-transparent text-error hover:bg-error/10 hover:text-error"
+                      >
+                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </Card>
+
         {/* Portfolio */}
         <Card className="p-6 md:p-8 border border-border bg-card">
           <div className="flex items-center justify-between mb-6">
@@ -2318,6 +2473,127 @@ const EditProfile: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog >
+
+      {/* Awards Modal */}
+      <Dialog open={awardsModalOpen} onOpenChange={setAwardsModalOpen}>
+        <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-h3 font-heading text-foreground">
+              {editingAwardId ? 'Update Award' : 'Add Award'}
+            </DialogTitle>
+            <DialogDescription className="text-body text-muted-foreground">
+              {editingAwardId ? 'Modify your award details' : 'Add an award or achievement to your profile'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            <div>
+              <Label htmlFor="awardTitle" className="text-body-sm font-medium text-foreground mb-2 block">
+                Award Title <span className="text-error">*</span>
+              </Label>
+              <Input
+                id="awardTitle"
+                type="text"
+                placeholder="e.g., Employee of the Year"
+                value={newAward.title}
+                onChange={(e) => setNewAward({ ...newAward, title: e.target.value })}
+                className="bg-background text-foreground border-border"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="awardYear" className="text-body-sm font-medium text-foreground mb-2 block">
+                Year <span className="text-error">*</span>
+              </Label>
+              <Input
+                id="awardYear"
+                type="text"
+                placeholder="e.g., 2023"
+                value={newAward.year}
+                onChange={(e) => setNewAward({ ...newAward, year: e.target.value })}
+                className="bg-background text-foreground border-border"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="awardDescription" className="text-body-sm font-medium text-foreground mb-2 block">
+                Description
+              </Label>
+              <textarea
+                id="awardDescription"
+                placeholder="Describe the award and why you received it..."
+                value={newAward.description}
+                onChange={(e) => setNewAward({ ...newAward, description: e.target.value })}
+                className="w-full min-h-[100px] px-3 py-2 rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                Certificate Image
+              </Label>
+
+              {newAward.certificateImage ? (
+                <div className="relative w-full h-48 rounded-lg overflow-hidden border border-border mb-4">
+                  <img src={newAward.certificateImage} alt="Certificate preview" className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => setNewAward({ ...newAward, certificateImage: '' })}
+                    className="absolute top-2 right-2 p-2 bg-error text-white rounded-full hover:bg-error/80 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => awardImageInputRef.current?.click()}
+                  className="w-full h-32 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center hover:border-primary hover:bg-primary/5 transition-all"
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  ) : (
+                    <>
+                      <ImageIcon className="w-8 h-8 text-muted-foreground mb-2" />
+                      <span className="text-body-sm text-muted-foreground">Click to upload certificate image</span>
+                      <span className="text-caption text-muted-foreground mt-1">PNG, JPG up to 5MB</span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              <input
+                type="file"
+                ref={awardImageInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleAwardImageUpload}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAwardsModalOpen(false);
+                setEditingAwardId(null);
+                setNewAward({ title: '', year: new Date().getFullYear().toString(), description: '', certificateImage: '' });
+              }}
+              className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddAward}
+              disabled={!newAward.title.trim() || !newAward.year.trim()}
+              className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+            >
+              {editingAwardId ? 'Update Award' : 'Save Award'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout >
   );
 };

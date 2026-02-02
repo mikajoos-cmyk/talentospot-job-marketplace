@@ -422,6 +422,7 @@ const CandidateProfile: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
+            {/* Education - First */}
             <Card className="p-6 border border-border bg-card">
               <div className="flex items-center space-x-3 mb-6">
                 <GraduationCap className="w-6 h-6 text-primary" strokeWidth={1.5} />
@@ -459,6 +460,7 @@ const CandidateProfile: React.FC = () => {
               )}
             </Card>
 
+            {/* Work Experience - Second */}
             <Card className="p-6 border border-border bg-card">
               <div className="flex items-center space-x-3 mb-6">
                 <Briefcase className="w-6 h-6 text-primary" strokeWidth={1.5} />
@@ -494,7 +496,35 @@ const CandidateProfile: React.FC = () => {
               )}
             </Card>
 
-            {/* Portfolio - Reordered into the main column if requested */}
+            {/* Awards & Achievements - Third (NEW) */}
+            {candidateData.awards && candidateData.awards.length > 0 && (
+              <Card className="p-6 md:p-8 border border-border bg-card">
+                <div className="flex items-center space-x-3 mb-6">
+                  <Award className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                  <h3 className="text-h3 font-heading text-foreground">Awards & Achievements</h3>
+                </div>
+                <div className="space-y-4">
+                  {candidateData.awards.map((award: any, index: number) => (
+                    <div key={award.id || index} className="flex gap-4 p-4 border border-border rounded-lg bg-muted/30">
+                      {award.certificateImage && (
+                        <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0">
+                          <img src={award.certificateImage} alt={award.title} className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <h4 className="text-h4 font-heading text-foreground mb-1">{award.title}</h4>
+                        <p className="text-body-sm text-muted-foreground mb-2">{award.year}</p>
+                        {award.description && (
+                          <p className="text-body-sm text-foreground">{award.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Portfolio - Fourth */}
             {candidateData.portfolioImages && candidateData.portfolioImages.length > 0 && (
               <Card className="p-6 md:p-8 border border-border bg-card">
                 <div className="flex items-center space-x-3 mb-6">

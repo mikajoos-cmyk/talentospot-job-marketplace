@@ -586,16 +586,6 @@ const EditJob: React.FC = () => {
             </div>
 
             <div>
-              <Label className="text-body-sm font-medium text-foreground mb-4 block">
-                Required Driving Licenses
-              </Label>
-              <DrivingLicenseSelector
-                value={formData.drivingLicenses}
-                onChange={(val) => setFormData({ ...formData, drivingLicenses: val })}
-              />
-            </div>
-
-            <div>
               <Label className="text-body-sm font-medium text-foreground mb-2 block">
                 Required Skills
               </Label>
@@ -678,6 +668,17 @@ const EditJob: React.FC = () => {
                 ))}
               </div>
             </div>
+
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-4 block">
+                Required Driving Licenses
+              </Label>
+              <DrivingLicenseSelector
+                value={formData.drivingLicenses}
+                onChange={(val) => setFormData({ ...formData, drivingLicenses: val })}
+              />
+            </div>
+
 
             <div className="flex items-center justify-between p-4 bg-muted rounded-lg border border-border">
               <div className="flex items-center space-x-3">

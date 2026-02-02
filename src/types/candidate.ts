@@ -81,6 +81,13 @@ export interface CandidateProfile {
     period: string;
     description?: string;
   }>;
+  awards?: Array<{
+    id: string;
+    title: string;
+    year: string;
+    description?: string;
+    certificateImage?: string;
+  }>;
 }
 
 export interface CandidateFilters {

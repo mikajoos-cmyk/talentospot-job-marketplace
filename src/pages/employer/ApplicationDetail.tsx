@@ -9,6 +9,8 @@ import { useToast } from '../../contexts/ToastContext';
 import { applicationsService } from '../../services/applications.service';
 import ReviewModal from '../../components/shared/ReviewModal';
 import { Progress } from '../../components/ui/progress';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
+import { supabase } from '../../lib/supabase';
 
 const ApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +19,9 @@ const ApplicationDetail: React.FC = () => {
   const [application, setApplication] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   React.useEffect(() => {
     const fetchApplication = async () => {
@@ -65,20 +70,66 @@ const ApplicationDetail: React.FC = () => {
 
   const canMessage = applicationStatus === 'accepted' || applicationStatus === 'interview';
 
-  const handleAccept = () => {
-    showToast({
-      title: 'Application Accepted',
-      description: `${candidate?.full_name}'s application has been accepted`,
-    });
-    navigate('/employer/dashboard');
+  const handleAccept = async () => {
+    if (!id) return;
+
+    setProcessing(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      await applicationsService.acceptApplication(id, user.id);
+
+      showToast({
+        title: 'Bewerbung akzeptiert',
+        description: `Die Bewerbung von ${candidate?.full_name} wurde akzeptiert und eine Nachricht wurde gesendet.`,
+      });
+
+      setAcceptDialogOpen(false);
+
+      // Update local state
+      setApplication((prev: any) => ({ ...prev, status: 'accepted' }));
+    } catch (error) {
+      console.error('Error accepting application:', error);
+      showToast({
+        title: 'Fehler',
+        description: 'Die Bewerbung konnte nicht akzeptiert werden. Bitte versuchen Sie es erneut.',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessing(false);
+    }
   };
 
-  const handleReject = () => {
-    showToast({
-      title: 'Application Rejected',
-      description: `${candidate?.full_name}'s application has been rejected`,
-    });
-    navigate('/employer/dashboard');
+  const handleReject = async () => {
+    if (!id) return;
+
+    setProcessing(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      await applicationsService.rejectApplication(id, user.id);
+
+      showToast({
+        title: 'Bewerbung abgelehnt',
+        description: `Die Bewerbung von ${candidate?.full_name} wurde abgelehnt und eine Nachricht wurde gesendet.`,
+      });
+
+      setRejectDialogOpen(false);
+
+      // Update local state
+      setApplication((prev: any) => ({ ...prev, status: 'rejected' }));
+    } catch (error) {
+      console.error('Error rejecting application:', error);
+      showToast({
+        title: 'Fehler',
+        description: 'Die Bewerbung konnte nicht abgelehnt werden. Bitte versuchen Sie es erneut.',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleSubmitReview = (_rating: number, _comment: string) => {
@@ -283,17 +334,28 @@ const ApplicationDetail: React.FC = () => {
                   </Button>
                 )}
                 <Button
-                  onClick={handleAccept}
-                  className="w-full bg-success text-success-foreground hover:bg-success/90 font-normal"
+                  onClick={() => setAcceptDialogOpen(true)}
+                  disabled={applicationStatus === 'accepted' || applicationStatus === 'rejected' || processing}
+                  className="w-full bg-success text-success-foreground hover:bg-success/90 font-normal disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Accept Application
+                  {processing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Verarbeitung...
+                    </>
+                  ) : applicationStatus === 'accepted' ? (
+                    'Bereits akzeptiert'
+                  ) : (
+                    'Bewerbung akzeptieren'
+                  )}
                 </Button>
                 <Button
-                  onClick={handleReject}
+                  onClick={() => setRejectDialogOpen(true)}
+                  disabled={applicationStatus === 'accepted' || applicationStatus === 'rejected' || processing}
                   variant="outline"
-                  className="w-full bg-transparent text-error border-error hover:bg-error hover:text-error-foreground font-normal"
+                  className="w-full bg-transparent text-error border-error hover:bg-error hover:text-error-foreground font-normal disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Reject Application
+                  {applicationStatus === 'rejected' ? 'Bereits abgelehnt' : 'Bewerbung ablehnen'}
                 </Button>
                 <Button
                   onClick={() => setReviewModalOpen(true)}
@@ -401,6 +463,64 @@ const ApplicationDetail: React.FC = () => {
         targetRole="candidate"
         onSubmit={handleSubmitReview}
       />
+
+      <AlertDialog open={acceptDialogOpen} onOpenChange={setAcceptDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bewerbung akzeptieren?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie die Bewerbung von <strong>{candidate?.full_name}</strong> wirklich akzeptieren?
+              Der Kandidat wird automatisch über die Nachrichtenfunktion benachrichtigt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={processing}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleAccept}
+              disabled={processing}
+              className="bg-success text-success-foreground hover:bg-success/90"
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Verarbeitung...
+                </>
+              ) : (
+                'Akzeptieren'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bewerbung ablehnen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie die Bewerbung von <strong>{candidate?.full_name}</strong> wirklich ablehnen?
+              Der Kandidat wird automatisch über die Nachrichtenfunktion benachrichtigt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={processing}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReject}
+              disabled={processing}
+              className="bg-error text-error-foreground hover:bg-error/90"
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Verarbeitung...
+                </>
+              ) : (
+                'Ablehnen'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 };

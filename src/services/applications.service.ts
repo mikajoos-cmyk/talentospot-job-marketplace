@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { invitationsService } from './invitations.service';
+import { messagesService } from './messages.service';
 
 export interface Application {
   job_id: string;
@@ -150,5 +151,84 @@ export const applicationsService = {
 
     if (error) throw error;
     return !!data;
+  },
+
+  async acceptApplication(applicationId: string, employerId: string) {
+    // First, get the full application details
+    const application = await this.getApplicationById(applicationId);
+
+    if (!application) {
+      throw new Error('Application not found');
+    }
+
+    // Update application status to 'accepted'
+    const { data, error } = await supabase
+      .from('job_applications')
+      .update({ status: 'accepted' })
+      .eq('id', applicationId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create or get conversation between employer and candidate
+    const conversation = await messagesService.getOrCreateConversation(
+      employerId,
+      application.candidate_id
+    );
+
+    // Send acceptance message to candidate
+    const jobTitle = application.jobs?.title || 'die Position';
+    const companyName = application.jobs?.employer_profiles?.company_name || 'unser Unternehmen';
+    const jobLocation = `${application.jobs?.city || ''}, ${application.jobs?.country || ''}`.trim().replace(/^,\s*|,\s*$/, '');
+
+    const messageContent = `🎉 Glückwunsch! Ihre Bewerbung für die Position "${jobTitle}" bei ${companyName} wurde akzeptiert!\n\nWir freuen uns, Sie kennenzulernen. Wir werden uns in Kürze mit Ihnen in Verbindung setzen, um die nächsten Schritte zu besprechen.\n\n📍 Standort: ${jobLocation}\n\nBei Fragen können Sie uns gerne über diese Nachrichtenfunktion kontaktieren.`;
+
+    await messagesService.sendMessage(
+      conversation.id,
+      employerId,
+      messageContent
+    );
+
+    return data;
+  },
+
+  async rejectApplication(applicationId: string, employerId: string) {
+    // First, get the full application details
+    const application = await this.getApplicationById(applicationId);
+
+    if (!application) {
+      throw new Error('Application not found');
+    }
+
+    // Update application status to 'rejected'
+    const { data, error } = await supabase
+      .from('job_applications')
+      .update({ status: 'rejected' })
+      .eq('id', applicationId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create or get conversation between employer and candidate
+    const conversation = await messagesService.getOrCreateConversation(
+      employerId,
+      application.candidate_id
+    );
+
+    // Send rejection message to candidate
+    const jobTitle = application.jobs?.title || 'die Position';
+    const companyName = application.jobs?.employer_profiles?.company_name || 'unser Unternehmen';
+
+    const messageContent = `Vielen Dank für Ihr Interesse an der Position "${jobTitle}" bei ${companyName}.\n\nNach sorgfältiger Prüfung Ihrer Bewerbung müssen wir Ihnen leider mitteilen, dass wir uns für andere Kandidaten entschieden haben, die besser zu den aktuellen Anforderungen der Position passen.\n\nWir schätzen die Zeit und Mühe, die Sie in Ihre Bewerbung investiert haben, sehr und ermutigen Sie, sich auf andere Positionen bei uns zu bewerben.\n\nWir wünschen Ihnen viel Erfolg bei Ihrer weiteren Jobsuche!`;
+
+    await messagesService.sendMessage(
+      conversation.id,
+      employerId,
+      messageContent
+    );
+
+    return data;
   },
 };
