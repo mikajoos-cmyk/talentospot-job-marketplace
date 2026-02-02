@@ -25,18 +25,34 @@ export async function ensureCityExists(cityName: string, countryName?: string) {
     query = query.ilike('countries.name', trimmedCountry);
   }
 
-  const { data: existingCity } = await query.maybeSingle();
-  console.log('[DEBUG] DB Check Result:', existingCity);
+  const { data: existingCities, error: lookupError1 } = await query.limit(1);
+  if (lookupError1) console.error('[DEBUG] Lookup Error 1 (with country):', lookupError1);
+  const existingCity = existingCities?.[0] || null;
 
-  if (existingCity && existingCity.latitude != null && existingCity.longitude != null) {
-    return existingCity;
+  // If first check (with country join) failed, try searching by name ONLY to avoid duplicates
+  let finalExistingCity: any = existingCity;
+  if (!finalExistingCity) {
+    const { data: citiesByName, error: lookupError2 } = await supabase
+      .from('cities')
+      .select('id, latitude, longitude')
+      .ilike('name', trimmedCity)
+      .limit(1);
+
+    if (lookupError2) console.error('[DEBUG] Lookup Error 2 (name only):', lookupError2);
+    finalExistingCity = citiesByName?.[0] || null;
+  }
+
+  console.log('[DEBUG] DB Check Result:', finalExistingCity);
+
+  if (finalExistingCity && finalExistingCity.latitude != null && finalExistingCity.longitude != null) {
+    return finalExistingCity;
   }
 
   // 2. Fetch coordinates from Nominatim API if missing or not in DB
   console.log('[DEBUG] Fetching via Nominatim API...');
   const coords = await getCoordinates(trimmedCity, trimmedCountry);
   console.log('[DEBUG] API Result:', coords);
-  if (!coords) return existingCity || null;
+  if (!coords) return finalExistingCity || null;
 
   // 3. Handle country relation (only if authenticated, otherwise skip persistence)
   const { data: { session } } = await supabase.auth.getSession();
@@ -44,11 +60,14 @@ export async function ensureCityExists(cityName: string, countryName?: string) {
 
   let countryId = null;
   if (trimmedCountry && isAuthenticated) {
-    const { data: countryData } = await supabase
+    const { data: countriesData, error: countryLookupError } = await supabase
       .from('countries')
       .select('id')
       .ilike('name', trimmedCountry)
-      .maybeSingle();
+      .limit(1);
+
+    if (countryLookupError) console.error('[DEBUG] Country Lookup Error:', countryLookupError);
+    const countryData = countriesData?.[0] || null;
 
     if (countryData) {
       countryId = countryData.id;
@@ -75,7 +94,7 @@ export async function ensureCityExists(cityName: string, countryName?: string) {
     return { latitude: coords.latitude, longitude: coords.longitude };
   }
 
-  if (existingCity) {
+  if (finalExistingCity) {
     const { data: updatedCity, error: updateError } = await supabase
       .from('cities')
       .update({
@@ -83,17 +102,17 @@ export async function ensureCityExists(cityName: string, countryName?: string) {
         longitude: coords.longitude,
         country_id: countryId || undefined
       })
-      .eq('id', existingCity.id)
+      .eq('id', finalExistingCity.id)
       .select()
       .single();
 
     if (updateError) {
       console.error('[DEBUG] Error updating city:', updateError);
-      return { ...existingCity, latitude: coords.latitude, longitude: coords.longitude };
+      return { ...finalExistingCity, latitude: coords.latitude, longitude: coords.longitude };
     }
     return updatedCity;
   } else {
-    // If we didn't find the city with the country join, maybe it exists without a country or we just insert it
+    // If we didn't find the city anywhere, then and only then insert it
     const { data: newCity, error: insertError } = await supabase
       .from('cities')
       .insert({
