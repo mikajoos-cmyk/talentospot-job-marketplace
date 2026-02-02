@@ -199,7 +199,13 @@ const CandidateSearch: React.FC = () => {
           if (filters.salary[1] < 200000) searchFilters.max_salary = filters.salary[1];
           if (filters.bonus[0] > 0) searchFilters.min_bonus = filters.bonus[0];
           if (filters.bonus[1] < 100000) searchFilters.max_bonus = filters.bonus[1];
-          if (filters.workRadius < 200) searchFilters.work_radius = filters.workRadius;
+          if (filters.bonus[0] > 0) searchFilters.min_bonus = filters.bonus[0];
+          if (filters.bonus[1] < 100000) searchFilters.max_bonus = filters.bonus[1];
+          // Pass radius parameter SEPARATELY from candidate attribute filters
+          // We pass it even if it is 200 (max) to allow "Search in 200km radius"
+          if (filters.location.cities && filters.location.cities.length > 0) {
+            searchFilters.searchRadius = filters.workRadius;
+          }
 
           if (filters.jobTitle) {
             searchFilters.job_title = filters.jobTitle;

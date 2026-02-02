@@ -656,6 +656,7 @@ export const candidateService = {
 
     // 1. IDs für Preferred Locations sammeln (falls Stadt gefiltert wird)
     let preferredLocationCandidateIds: string[] = [];
+    const searchRadius = filters.searchRadius;
 
     if (filters.city) {
       // Suche in den verknüpften Tabellen nach der Stadt
@@ -677,8 +678,8 @@ export const candidateService = {
 
     // 2. RADIUS SEARCH (New Logic)
     let radiusCandidateIds: string[] | null = null;
-    if (filters.city && filters.work_radius) {
-      console.log(`Performing Radius Search for ${filters.city} within ${filters.work_radius}km`);
+    if (filters.city && searchRadius) {
+      console.log(`Performing Radius Search for ${filters.city} within ${searchRadius}km`);
       // Find coordinates of the search city
       const { data: cityData } = await supabase
         .from('cities')
@@ -690,7 +691,7 @@ export const candidateService = {
         const { data: radiusData, error: radiusError } = await supabase.rpc('search_candidates_radius', {
           search_lat: cityData.latitude,
           search_lon: cityData.longitude,
-          radius_km: filters.work_radius
+          radius_km: searchRadius
         });
 
         if (radiusError) {
