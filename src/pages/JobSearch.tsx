@@ -10,6 +10,7 @@ import { Briefcase, Loader2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
 import { jobsService } from '@/services/jobs.service';
+import { getCoordinates } from '@/utils/geocoding';
 import { applicationsService } from '@/services/applications.service';
 import { savedJobsService } from '@/services/saved-jobs.service';
 import { candidateService } from '@/services/candidate.service';
@@ -39,6 +40,7 @@ const JobSearch: React.FC = () => {
   const [applying, setApplying] = useState(false);
 
   const [searchParams] = useSearchParams();
+  const [mapCenter, setMapCenter] = useState<[number, number]>([51.1657, 10.4515]);
   const [filters, setFilters] = useState<JobFiltersState>(() => {
     // 1. Check for URL parameters first
     // 1. Check for URL parameters first
@@ -131,6 +133,23 @@ const JobSearch: React.FC = () => {
       workRadius: 200,
     };
   });
+
+  useEffect(() => {
+    const updateMapCenter = async () => {
+      if (filters.city) {
+        const coords = await getCoordinates(filters.city, filters.country);
+        if (coords) {
+          setMapCenter([coords.latitude, coords.longitude]);
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      updateMapCenter();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [filters.city, filters.country]);
 
   const [radiusValue, setRadiusValue] = useState(filters.workRadius || 200);
 
@@ -481,12 +500,12 @@ const JobSearch: React.FC = () => {
                   onFiltersChange={setFilters}
                   onMatchProfile={handleMatchProfile}
                   onReset={handleResetFilters}
+                  mapCenter={mapCenter}
                 />
               </div>
             )}
 
             <div className="flex-1 min-w-0 space-y-8">
-
 
               <div>
                 {loading ? (

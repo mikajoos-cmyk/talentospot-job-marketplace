@@ -20,22 +20,31 @@ interface MapViewProps {
   onRadiusChange?: (radius: number) => void;
 }
 
-const MapView: React.FC<MapViewProps> = ({ 
-  center, 
-  radius = 50, 
-  showRadius = false, 
+const MapUpdater: React.FC<{ center: [number, number]; zoom: number }> = ({ center, zoom }) => {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
+  return null;
+};
+
+const MapView: React.FC<MapViewProps> = ({
+  center,
+  radius = 50,
+  showRadius = false,
   zoom = 10,
   height = '400px',
-  onRadiusChange 
+  onRadiusChange
 }) => {
   return (
     <div style={{ height, width: '100%', borderRadius: '12px', overflow: 'hidden' }}>
-      <MapContainer 
-        center={center} 
-        zoom={zoom} 
+      <MapContainer
+        center={center}
+        zoom={zoom}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={false}
       >
+        <MapUpdater center={center} zoom={zoom} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -48,8 +57,8 @@ const MapView: React.FC<MapViewProps> = ({
             center={center}
             radius={radius * 1000}
             pathOptions={{
-              color: 'hsl(217, 33%, 50%)',
-              fillColor: 'hsl(217, 33%, 50%)',
+              color: 'hsl(var(--primary))',
+              fillColor: 'hsl(var(--primary))',
               fillOpacity: 0.2,
             }}
           />

@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { X, Plus, Map, ChevronDown, User, Briefcase } from 'lucide-react';
+import { X, Plus, ChevronDown, User, Briefcase } from 'lucide-react';
 import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
 import { refugeeOriginCountries } from '@/data/locationData';
 import { getLanguageLevelOptions } from '@/utils/language-levels';
@@ -14,19 +14,40 @@ import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
 import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
 import { LocationPicker } from '../../components/shared/LocationPicker';
 import { findContinent } from '../../utils/locationUtils';
+import MapView from '../maps/MapView';
+
+// Client-side only wrapper
+const MapLoader: React.FC<{ center: [number, number]; radius: number }> = ({ center, radius }) => {
+  const [isClient, setIsClient] = React.useState(false);
+  React.useEffect(() => { setIsClient(true); }, []);
+  if (!isClient) return null;
+  return (
+    <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+      <div className="rounded-lg overflow-hidden border border-primary/20 shadow-sm">
+        <MapView
+          center={center}
+          radius={radius}
+          showRadius={true}
+          zoom={radius > 100 ? 7 : 9}
+          height="180px"
+        />
+      </div>
+    </div>
+  );
+};
 
 interface CandidateFiltersProps {
   filters: CandidateFiltersType;
   onFiltersChange: (filters: CandidateFiltersType) => void;
+  mapCenter?: [number, number];
 }
 
-const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersChange }) => {
+const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersChange, mapCenter }) => {
   const [skillInput, setSkillInput] = useState('');
   const [qualificationInput, setQualificationInput] = useState('');
   const [languageInput, setLanguageInput] = useState('');
   const [languageLevel, setLanguageLevel] = useState('B2');
   const [tagInput, setTagInput] = useState('');
-  const [showMap, setShowMap] = useState(false);
   const [personalInfoOpen, setPersonalInfoOpen] = useState(false);
   const [conditionsOpen, setConditionsOpen] = useState(false);
 
@@ -326,7 +347,7 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
               />
 
               {filters.location.cities[0] && (
-                <div className="pt-2 pb-2 space-y-3">
+                <div className="pt-2 space-y-3">
                   <div className="flex items-center justify-between">
                     <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                       Search Radius: {filters.workRadius} km
@@ -340,6 +361,9 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
                     step={5}
                     className="py-2"
                   />
+                  {mapCenter && (
+                    <MapLoader center={mapCenter} radius={filters.workRadius} />
+                  )}
                 </div>
               )}
             </div>
@@ -710,43 +734,6 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
                 step={1}
                 className="mt-2"
               />
-            </div>
-
-            {/* Work Radius */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <Label className="text-body-sm font-medium text-foreground">
-                  Work Radius: {filters.workRadius} km
-                </Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowMap(!showMap)}
-                  className="bg-transparent text-primary hover:bg-primary/10 hover:text-primary font-normal h-8 px-2"
-                >
-                  <Map className="w-4 h-4 mr-1" strokeWidth={1.5} />
-                  {showMap ? 'Hide' : 'Show'} Map
-                </Button>
-              </div>
-              <Slider
-                value={[filters.workRadius]}
-                onValueChange={(value) => onFiltersChange({ ...filters, workRadius: value[0] })}
-                min={10}
-                max={200}
-                step={5}
-                className="mt-2"
-              />
-              {showMap && (
-                <div className="mt-4">
-                  <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center border border-border">
-                    <div className="text-center">
-                      <Map className="w-12 h-12 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
-                      <p className="text-body-sm text-muted-foreground">Map View</p>
-                      <p className="text-caption text-muted-foreground">Radius: {filters.workRadius} km</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Willingness to Travel */}

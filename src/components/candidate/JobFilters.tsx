@@ -13,6 +13,27 @@ import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
 import { Switch } from '../../components/ui/switch';
 import { LocationPicker } from '../../components/shared/LocationPicker';
 import { findContinent } from '../../utils/locationUtils';
+import MapView from '../maps/MapView';
+
+// Client-side only wrapper
+const MapLoader: React.FC<{ center: [number, number]; radius: number }> = ({ center, radius }) => {
+    const [isClient, setIsClient] = React.useState(false);
+    React.useEffect(() => { setIsClient(true); }, []);
+    if (!isClient) return null;
+    return (
+        <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="rounded-lg overflow-hidden border border-primary/20 shadow-sm">
+                <MapView
+                    center={center}
+                    radius={radius}
+                    showRadius={true}
+                    zoom={radius > 100 ? 7 : 9}
+                    height="180px"
+                />
+            </div>
+        </div>
+    );
+};
 
 export interface JobFiltersState {
     title: string;
@@ -45,9 +66,10 @@ interface JobFiltersProps {
     onFiltersChange: (filters: JobFiltersState) => void;
     onMatchProfile: () => void;
     onReset: () => void;
+    mapCenter?: [number, number];
 }
 
-const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMatchProfile, onReset }) => {
+const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMatchProfile, onReset, mapCenter }) => {
     const [requirementsOpen, setRequirementsOpen] = useState(false);
     const [conditionsOpen, setConditionsOpen] = useState(false);
     const [skillInput, setSkillInput] = useState('');
@@ -346,7 +368,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                         />
 
                         {filters.city && (
-                            <div className="pt-2 pb-2 space-y-3">
+                            <div className="pt-2 space-y-3">
                                 <div className="flex items-center justify-between">
                                     <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                                         Search Radius: {filters.workRadius} km
@@ -360,6 +382,9 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                                     step={5}
                                     className="py-2"
                                 />
+                                {mapCenter && (
+                                    <MapLoader center={mapCenter} radius={filters.workRadius} />
+                                )}
                             </div>
                         )}
                     </div>

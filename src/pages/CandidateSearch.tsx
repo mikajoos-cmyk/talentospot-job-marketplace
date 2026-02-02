@@ -11,6 +11,7 @@ import { jobsService, Job } from '@/services/jobs.service';
 import { Loader2, Briefcase } from 'lucide-react';
 import { calculateCandidateMatchScore } from '@/utils/match-utils';
 import { Button } from '@/components/ui/button';
+import { getCoordinates } from '@/utils/geocoding';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,7 @@ const CandidateSearch: React.FC = () => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [loadingJobs, setLoadingJobs] = useState(false);
   const [searchParams] = useSearchParams();
+  const [mapCenter, setMapCenter] = useState<[number, number]>([51.1657, 10.4515]);
   const [filters, setFilters] = useState<CandidateFiltersType>(() => {
     // 1. First, check if there are URL parameters (these should override everything)
 
@@ -130,6 +132,26 @@ const CandidateSearch: React.FC = () => {
       customTags: [],
     };
   });
+
+  useEffect(() => {
+    const updateMapCenter = async () => {
+      const city = filters.location.cities?.[0];
+      const country = filters.location.country;
+
+      if (city) {
+        const coords = await getCoordinates(city, country);
+        if (coords) {
+          setMapCenter([coords.latitude, coords.longitude]);
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      updateMapCenter();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [filters.location.cities, filters.location.country]);
 
   const [radiusValue, setRadiusValue] = useState(filters.workRadius || 200);
 
@@ -400,10 +422,15 @@ const CandidateSearch: React.FC = () => {
 
           <div className="flex flex-col layout-sm:flex-row gap-8">
             <div className="w-full layout-sm:w-96 shrink-0">
-              <CandidateFilters filters={filters} onFiltersChange={setFilters} />
+              <CandidateFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                mapCenter={mapCenter}
+              />
             </div>
 
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 space-y-6">
+
               {loading ? (
                 <div className="flex items-center justify-center min-h-[400px]">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
