@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 // Wir nutzen den globalen Typ, um Konflikte zu vermeiden
 import { CandidateProfile } from '../types/candidate';
 import { masterDataService } from './master-data.service';
+import { getCoordinates } from '../utils/geocoding';
 
 // Wandelt leere Strings in NULL um, damit Constraints nicht verletzt werden
 const val = (v: any) => (v === '' ? null : v);
@@ -323,25 +324,35 @@ export const candidateService = {
       if (updates.salary.currency) dbUpdates.currency = updates.salary.currency;
     }
 
-    // --- GEOCODING (New Logic) ---
-    // Wenn Stadt gesetzt wird, hole Koordinaten für Radius-Suche
+    // --- GEOCODING (Residence / Wohnort) ---
+    // Wenn Stadt gesetzt wird, hole Koordinaten (Lokal oder API)
     if (updates.city) {
-      console.log(`Geocoding city: ${updates.city}`);
+      console.log(`Geocoding residence city: ${updates.city}`);
+
+      // 1. Try finding in DB
       const { data: cityData } = await supabase
         .from('cities')
         .select('latitude, longitude')
         .ilike('name', updates.city.trim())
         .maybeSingle();
 
-      if (cityData) {
+      if (cityData?.latitude && cityData?.longitude) {
         dbUpdates.latitude = cityData.latitude;
         dbUpdates.longitude = cityData.longitude;
-        console.log('Geocoded successfully:', cityData);
+        console.log('Geocoded residence from DB:', cityData);
       } else {
-        console.warn('Could not geocode city:', updates.city);
-        // Reset coordinates if city not found to avoid stale data
-        dbUpdates.latitude = null;
-        dbUpdates.longitude = null;
+        // 2. Fallback: API Call
+        console.log('Coordinates not found in DB, fetching from API...');
+        const coords = await getCoordinates(updates.city, updates.country);
+        if (coords) {
+          dbUpdates.latitude = coords.latitude;
+          dbUpdates.longitude = coords.longitude;
+          console.log('Geocoded residence from API:', coords);
+        } else {
+          console.warn('Could not geocode residence city:', updates.city);
+          dbUpdates.latitude = null;
+          dbUpdates.longitude = null;
+        }
       }
     }
 
@@ -572,7 +583,7 @@ export const candidateService = {
       }
     }
 
-    // --- Preferred Locations ---
+    // --- Preferred Locations (Geocoded) ---
     if (updates.preferredLocations && Array.isArray(updates.preferredLocations)) {
       await supabase.from('candidate_preferred_locations').delete().eq('candidate_id', userId);
 
@@ -608,17 +619,25 @@ export const candidateService = {
           }
         }
 
-        // 3. Stadt finden oder erstellen
+        // 3. Stadt finden oder erstellen (mit Geocoding)
         let cityId;
         if (countryId) {
           const { data: cityData } = await supabase.from('cities').select('id').eq('name', loc.city).maybeSingle();
           if (cityData) {
             cityId = cityData.id;
           } else {
-            const { data: newCity } = await supabase.from('cities').insert({
+            // New City: Get Coordinates first
+            console.log(`Preferred location new city: ${loc.city}. Fetching coordinates...`);
+            const coords = await getCoordinates(loc.city, loc.country);
+
+            const cityInsert = {
               name: loc.city,
-              country_id: countryId
-            }).select('id').single();
+              country_id: countryId,
+              latitude: coords?.latitude || null,
+              longitude: coords?.longitude || null
+            };
+
+            const { data: newCity } = await supabase.from('cities').insert(cityInsert).select('id').single();
             cityId = newCity?.id;
           }
         }
@@ -651,21 +670,17 @@ export const candidateService = {
     }
   },
 
-  async searchCandidates(filters: any = {}) {
+  async searchCandidates(filters: any = {}, searchRadius?: number) {
     console.log('Searching candidates with filters:', filters);
 
     // 1. IDs für Preferred Locations sammeln (falls Stadt gefiltert wird)
     let preferredLocationCandidateIds: string[] = [];
-    const searchRadius = filters.searchRadius;
+
+    // Explicitly use the passed arg as the geographic radius
+    const radius = searchRadius;
 
     if (filters.city) {
       // Suche in den verknüpften Tabellen nach der Stadt
-      /*
-        Logic:
-        1. If city matches candidate's residence city -> match.
-        OR
-        2. If candidate has a preferred location that matches the city -> match.
-       */
       const { data: prefData } = await supabase
         .from('candidate_preferred_locations')
         .select('candidate_id, cities!inner(name)')
@@ -676,11 +691,13 @@ export const candidateService = {
       }
     }
 
-    // 2. RADIUS SEARCH (New Logic)
+    // 2. RADIUS SEARCH (Refactored)
     let radiusCandidateIds: string[] | null = null;
-    if (filters.city && searchRadius) {
-      console.log(`Performing Radius Search for ${filters.city} within ${searchRadius}km`);
-      // Find coordinates of the search city
+    if (filters.city && radius) {
+      console.log(`Performing Radius Search for ${filters.city} within ${radius}km`);
+
+      // Step A: Try logic DB lookup
+      let searchLat, searchLon;
       const { data: cityData } = await supabase
         .from('cities')
         .select('latitude, longitude')
@@ -688,10 +705,23 @@ export const candidateService = {
         .maybeSingle();
 
       if (cityData?.latitude && cityData?.longitude) {
+        searchLat = cityData.latitude;
+        searchLon = cityData.longitude;
+      } else {
+        // Step B: Use Geocoding API if DB misses coords
+        const coords = await getCoordinates(filters.city, filters.country);
+        if (coords) {
+          searchLat = coords.latitude;
+          searchLon = coords.longitude;
+        }
+      }
+
+      // Step C: Execute RPC if we have coords
+      if (searchLat && searchLon) {
         const { data: radiusData, error: radiusError } = await supabase.rpc('search_candidates_radius', {
-          search_lat: cityData.latitude,
-          search_lon: cityData.longitude,
-          radius_km: searchRadius
+          search_lat: searchLat,
+          search_lon: searchLon,
+          radius_km: radius
         });
 
         if (radiusError) {
@@ -701,7 +731,9 @@ export const candidateService = {
           console.log(`Found ${radiusCandidateIds?.length} candidates in radius`);
         }
       } else {
-        console.warn(`City coordinates not found for ${filters.city}`);
+        console.warn(`City coordinates not found for ${filters.city} (after DB and API check)`);
+        // If we can't find coords, we can't do a radius search.
+        // We will leave radiusCandidateIds as null, so it falls back to string matching.
       }
     }
 
@@ -770,11 +802,8 @@ export const candidateService = {
           query = query.eq('id', '00000000-0000-0000-0000-000000000000');
         }
       } else if (preferredLocationCandidateIds.length > 0) {
-        // Fallback: No Radius or City not found -> Normal Text Search
-        // Logik: (Wohnort matcht Stadt) ODER (ID ist in Wunschort-Liste)
+        // Fallback: No Radius or City not found -> Normal Text Search including preferred locations
         const idsString = `(${preferredLocationCandidateIds.join(',')})`;
-        // Wir nutzen Query-Builder OR Syntax für Supabase
-        // city.ilike.%Term%,id.in.(ids)
         query = query.or(`city.ilike.%${filters.city.trim()}%,id.in.${idsString}`);
       } else {
         // Keine Wunschorte gefunden -> Nur nach Wohnort filtern
@@ -819,6 +848,8 @@ export const candidateService = {
     }
 
     if (filters.work_radius !== undefined) {
+      // NOTE: This filter applies to the candidate's willingness to travel (attribute),
+      // NOT the radius search of the employer.
       query = query.lte('work_radius_km', filters.work_radius);
     }
 

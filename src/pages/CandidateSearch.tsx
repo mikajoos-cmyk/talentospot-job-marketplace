@@ -29,7 +29,6 @@ const CandidateSearch: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState<CandidateFiltersType>(() => {
     // 1. First, check if there are URL parameters (these should override everything)
-    // 1. First, check if there are URL parameters (these should override everything)
 
     const hasUrlParams = Array.from(searchParams.keys()).length > 0;
 
@@ -201,11 +200,8 @@ const CandidateSearch: React.FC = () => {
           if (filters.bonus[1] < 100000) searchFilters.max_bonus = filters.bonus[1];
           if (filters.bonus[0] > 0) searchFilters.min_bonus = filters.bonus[0];
           if (filters.bonus[1] < 100000) searchFilters.max_bonus = filters.bonus[1];
-          // Pass radius parameter SEPARATELY from candidate attribute filters
-          // We pass it even if it is 200 (max) to allow "Search in 200km radius"
-          if (filters.location.cities && filters.location.cities.length > 0) {
-            searchFilters.searchRadius = filters.workRadius;
-          }
+
+          // Radius logic refactored: Passed separately below.
 
           if (filters.jobTitle) {
             searchFilters.job_title = filters.jobTitle;
@@ -295,7 +291,8 @@ const CandidateSearch: React.FC = () => {
           }
         }
 
-        const data = await candidateService.searchCandidates(searchFilters);
+        // Pass radius separately. Service handles deciding if radius search applies (needs city).
+        const data = await candidateService.searchCandidates(searchFilters, filters.workRadius);
         let results = data || [];
 
         if (filters.enablePartialMatch) {
