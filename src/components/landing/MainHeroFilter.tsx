@@ -358,15 +358,14 @@ const MainHeroFilter = () => {
                     {/* Location (Simplified for main bar) */}
                     <div className={`${searchMode === 'candidates' ? 'md:col-span-3' : 'md:col-span-4'} space-y-1.5 p-2`}>
                         <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider ml-1">Location / Work Preference</Label>
-                        <div className="relative">
-                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
-                            <Input
-                                placeholder="City or ZIP"
-                                className="pl-11 h-12 bg-muted/40 border-none focus-visible:ring-1 focus-visible:ring-primary text-base rounded-xl"
-                                value={filters.location}
-                                onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                            />
-                        </div>
+                        <AutocompleteInput
+                            category="cities"
+                            placeholder="City..."
+                            value={filters.location}
+                            onChange={(val) => setFilters({ ...filters, location: val })}
+                            inputClassName="h-12 bg-muted/40 border-none focus-visible:ring-1 focus-visible:ring-primary text-base rounded-xl"
+                            icon={<MapPin className="w-4 h-4 text-primary" />}
+                        />
                     </div>
 
                     {/* Sector */}

@@ -969,12 +969,12 @@ const EditProfile: React.FC = () => {
                   <Label htmlFor="city" className="text-body-sm font-medium text-foreground mb-2 block">
                     City
                   </Label>
-                  <Input
+                  <AutocompleteInput
+                    category="cities"
                     id="city"
-                    type="text"
                     placeholder="e.g., Berlin"
                     value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    onChange={(val) => setFormData({ ...formData, city: val })}
                     className="bg-background text-foreground border-border"
                   />
                 </div>

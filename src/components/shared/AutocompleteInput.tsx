@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import { masterDataService } from '@/services/master-data.service';
 
 interface AutocompleteInputProps {
-    category: 'skills' | 'qualifications' | 'languages' | 'job_titles' | 'tags' | 'requirements' | 'countries' | 'states' | 'nationalities';
+    category: 'skills' | 'qualifications' | 'languages' | 'job_titles' | 'tags' | 'requirements' | 'countries' | 'states' | 'nationalities' | 'cities';
     value: string;
     onChange: (value: string) => void;
     onSelect?: (value: string | any) => void;
@@ -51,6 +51,7 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                     case 'countries': data = await masterDataService.getCountries(); break;
                     case 'states': data = await masterDataService.getStates(filterId); break;
                     case 'nationalities': data = await masterDataService.getNationalities(); break;
+                    case 'cities': data = await masterDataService.getCities(filterId); break;
                 }
                 setSuggestions(data);
             } catch (error) {

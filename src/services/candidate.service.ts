@@ -323,6 +323,28 @@ export const candidateService = {
       if (updates.salary.currency) dbUpdates.currency = updates.salary.currency;
     }
 
+    // --- GEOCODING (New Logic) ---
+    // Wenn Stadt gesetzt wird, hole Koordinaten für Radius-Suche
+    if (updates.city) {
+      console.log(`Geocoding city: ${updates.city}`);
+      const { data: cityData } = await supabase
+        .from('cities')
+        .select('latitude, longitude')
+        .ilike('name', updates.city.trim())
+        .maybeSingle();
+
+      if (cityData) {
+        dbUpdates.latitude = cityData.latitude;
+        dbUpdates.longitude = cityData.longitude;
+        console.log('Geocoded successfully:', cityData);
+      } else {
+        console.warn('Could not geocode city:', updates.city);
+        // Reset coordinates if city not found to avoid stale data
+        dbUpdates.latitude = null;
+        dbUpdates.longitude = null;
+      }
+    }
+
     console.log('Sende Upsert an DB:', dbUpdates);
     const { error: profileError } = await supabase
       .from('candidate_profiles')
@@ -637,6 +659,12 @@ export const candidateService = {
 
     if (filters.city) {
       // Suche in den verknüpften Tabellen nach der Stadt
+      /*
+        Logic:
+        1. If city matches candidate's residence city -> match.
+        OR
+        2. If candidate has a preferred location that matches the city -> match.
+       */
       const { data: prefData } = await supabase
         .from('candidate_preferred_locations')
         .select('candidate_id, cities!inner(name)')
@@ -644,6 +672,35 @@ export const candidateService = {
 
       if (prefData) {
         preferredLocationCandidateIds = prefData.map((d: any) => d.candidate_id);
+      }
+    }
+
+    // 2. RADIUS SEARCH (New Logic)
+    let radiusCandidateIds: string[] | null = null;
+    if (filters.city && filters.work_radius) {
+      console.log(`Performing Radius Search for ${filters.city} within ${filters.work_radius}km`);
+      // Find coordinates of the search city
+      const { data: cityData } = await supabase
+        .from('cities')
+        .select('latitude, longitude')
+        .ilike('name', filters.city.trim())
+        .maybeSingle();
+
+      if (cityData?.latitude && cityData?.longitude) {
+        const { data: radiusData, error: radiusError } = await supabase.rpc('search_candidates_radius', {
+          search_lat: cityData.latitude,
+          search_lon: cityData.longitude,
+          radius_km: filters.work_radius
+        });
+
+        if (radiusError) {
+          console.error('Error in radius search RPC:', radiusError);
+        } else if (radiusData) {
+          radiusCandidateIds = radiusData.map((d: any) => d.candidate_id);
+          console.log(`Found ${radiusCandidateIds?.length} candidates in radius`);
+        }
+      } else {
+        console.warn(`City coordinates not found for ${filters.city}`);
       }
     }
 
@@ -702,7 +759,17 @@ export const candidateService = {
     }
 
     if (filters.city) {
-      if (preferredLocationCandidateIds.length > 0) {
+      if (radiusCandidateIds !== null) {
+        // RADIUS SEARCH ACTIVE:
+        // Filter by the IDs returned from the RPC
+        if (radiusCandidateIds.length > 0) {
+          query = query.in('id', radiusCandidateIds);
+        } else {
+          // Radius search returned no results -> force empty result
+          query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+        }
+      } else if (preferredLocationCandidateIds.length > 0) {
+        // Fallback: No Radius or City not found -> Normal Text Search
         // Logik: (Wohnort matcht Stadt) ODER (ID ist in Wunschort-Liste)
         const idsString = `(${preferredLocationCandidateIds.join(',')})`;
         // Wir nutzen Query-Builder OR Syntax für Supabase
