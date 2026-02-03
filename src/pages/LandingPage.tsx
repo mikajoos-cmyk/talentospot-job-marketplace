@@ -128,7 +128,7 @@ const LandingPage: React.FC = () => {
               <CandidateListCard
                 key={candidate.id}
                 candidate={candidate}
-                onViewProfile={() => navigate('/login')}
+                onViewProfile={() => navigate(`/candidates/${candidate.id}`)}
               />
             ))}
           </div>
@@ -157,7 +157,7 @@ const LandingPage: React.FC = () => {
               <JobListCard
                 key={job.id}
                 job={job}
-                onViewDetail={() => navigate('/login')}
+                onViewDetail={() => navigate(`/jobs/${job.id}`)}
               />
             ))}
           </div>
@@ -185,11 +185,12 @@ const LandingPage: React.FC = () => {
             {topCompanies.map((company) => (
               <Card
                 key={company.id}
-                className="group p-6 border border-border/60 hover:border-primary/40 hover:shadow-xl transition-all duration-300 relative overflow-hidden"
+                className="group p-6 border border-border/60 hover:border-primary/40 hover:shadow-xl transition-all duration-300 relative overflow-hidden cursor-pointer"
+                onClick={() => navigate(`/companies/${company.id}`)}
               >
                 <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover:bg-primary transition-colors"></div>
                 <div className="flex items-start gap-5">
-                  <div className="w-16 h-16 shrink-0 rounded-xl bg-white shadow-sm border border-border/40 p-1 blur-md select-none">
+                  <div className={`w-16 h-16 shrink-0 rounded-xl bg-white shadow-sm border border-border/40 p-1 ${user.role === 'guest' ? 'blur-md select-none' : ''}`}>
                     <img
                       src={company.logo_url || "https://via.placeholder.com/64"}
                       alt={company.company_name}
@@ -197,7 +198,7 @@ const LandingPage: React.FC = () => {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors truncate blur-md select-none">{company.company_name}</h4>
+                    <h4 className={`text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors truncate ${user.role === 'guest' ? 'blur-md select-none' : ''}`}>{company.company_name}</h4>
                     <p className="text-sm text-muted-foreground mb-3 flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5" />
                       {company.industry}

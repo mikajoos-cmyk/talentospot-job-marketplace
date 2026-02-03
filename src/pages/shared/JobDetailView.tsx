@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import RichTextEditor from '@/components/ui/rich-text-editor';
-import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2, Map as MapIcon, Globe, Award, Clock, Car, FileText, TrendingUp, Users, Loader2 } from 'lucide-react';
+import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2, Map as MapIcon, Award, Clock, FileText, TrendingUp, Loader2 } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
@@ -18,6 +18,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { getCoordinates } from '@/utils/geocoding';
+import MapView from '@/components/maps/MapView';
 // import { Input } from '../../components/ui/input';
 
 const JobDetailView: React.FC = () => {
@@ -30,6 +32,7 @@ const JobDetailView: React.FC = () => {
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
 
   React.useEffect(() => {
     const fetchJob = async () => {
@@ -38,6 +41,14 @@ const JobDetailView: React.FC = () => {
       try {
         const data = await jobsService.getJobById(id);
         setJob(data);
+
+        // Fetch coordinates for the map
+        if (data.city) {
+          const coords = await getCoordinates(data.city, data.country);
+          if (coords) {
+            setMapCenter([coords.latitude, coords.longitude]);
+          }
+        }
       } catch (error) {
         console.error('Error fetching job:', error);
       } finally {
@@ -147,255 +158,275 @@ const JobDetailView: React.FC = () => {
 
   return (
     <AppLayout isPublic={user.role === 'guest'}>
-      <div className="space-y-8 max-w-4xl mx-auto">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="bg-transparent text-foreground hover:bg-muted hover:text-foreground"
-          >
-            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
-          </Button>
-          <div>
-            <h1 className="text-h1 font-heading text-foreground">{job.title}</h1>
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Navigation & Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="bg-background border border-border text-foreground hover:bg-muted"
+            >
+              <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+            </Button>
+            <div>
+              <nav className="flex mb-1" aria-label="Breadcrumb">
+                <ol className="flex items-center space-x-2 text-caption text-muted-foreground uppercase tracking-wider">
+                  <li>Jobs</li>
+                  <li className="flex items-center space-x-2">
+                    <span>/</span>
+                    <span>{job.employment_type?.replace(/_/g, ' ')}</span>
+                  </li>
+                </ol>
+              </nav>
+              <h1 className="text-h2 md:text-h1 font-heading text-foreground">{job.title}</h1>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => {
+                if (!isAuthenticated) {
+                  navigate('/login');
+                  return;
+                }
+                if (user.role !== 'candidate') {
+                  showToast({
+                    title: 'Only Candidates Can Apply',
+                    description: 'Your account type does not allow job applications',
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+                setApplyDialogOpen(true);
+              }}
+              disabled={hasApplied}
+              className={`flex-1 sm:flex-none font-medium h-12 px-8 shadow-lg shadow-primary/20 transition-all active:scale-[0.98] ${hasApplied
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : 'bg-primary text-primary-foreground hover:bg-primary-hover hover:shadow-primary/30'
+                }`}
+            >
+              {hasApplied ? 'Already Applied' : 'Apply Now'}
+            </Button>
           </div>
         </div>
 
-        <Card className="p-8 border border-border bg-card">
-          <div
-            className="flex items-start space-x-6 mb-8 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => {
-              if (job.employer_id) navigate(`/companies/${job.employer_id}`);
-            }}
-          >
-            <img
-              src={job.employer_profiles?.logo_url || "https://via.placeholder.com/80"}
-              alt={job.employer_profiles?.company_name}
-              className="w-20 h-20 rounded-lg object-cover"
-              loading="lazy"
-            />
-            <div className="flex-1">
-              <h2 className="text-h2 font-heading text-foreground mb-2 hover:text-primary transition-colors">{job.employer_profiles?.company_name}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="flex items-center text-body text-foreground">
-                  <MapPin className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{job.city}, {job.country}</span>
-                </div>
-                <div className="flex items-center text-body text-foreground">
-                  <DollarSign className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{job.salary_min && job.salary_max ? `${job.salary_min} - ${job.salary_max} ${job.salary_currency || 'EUR'}` : 'Competitive'}</span>
-                </div>
-                <div className="flex items-center text-body text-foreground">
-                  <Briefcase className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>{job.employment_type?.replace(/_/g, ' ')}</span>
-                </div>
-                <div className="flex items-center text-body text-foreground">
-                  <Calendar className="w-5 h-5 mr-2 text-muted-foreground" strokeWidth={1.5} />
-                  <span>Posted {new Date(job.posted_at).toLocaleDateString()}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Hero Card */}
+            <Card className="overflow-hidden border-none bg-background shadow-sm">
+              <div className="relative h-32 md:h-40 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+                <div className={`absolute -bottom-10 left-8 p-1 bg-background rounded-xl border border-border shadow-md ${user.role === 'guest' ? 'blur-md select-none' : ''}`}>
+                  <img
+                    src={job.employer_profiles?.logo_url || "https://via.placeholder.com/80"}
+                    alt={job.employer_profiles?.company_name}
+                    className="w-20 h-20 md:w-24 md:h-24 rounded-lg object-cover"
+                  />
                 </div>
               </div>
-            </div>
-          </div>
+              <div className="pt-14 pb-8 px-8">
+                <div
+                  className={`group cursor-pointer inline-flex items-center ${user.role === 'guest' ? 'blur-md select-none pointer-events-none' : ''}`}
+                  onClick={() => job.employer_id && navigate(`/companies/${job.employer_id}`)}
+                >
+                  <h2 className="text-h2 font-heading text-foreground group-hover:text-primary transition-colors">
+                    {job.employer_profiles?.company_name}
+                  </h2>
+                  <ArrowLeft className="w-5 h-5 ml-2 rotate-180 opacity-0 group-hover:opacity-100 transition-all text-primary" strokeWidth={1.5} />
+                </div>
 
-          {job.entry_bonus && (
-            <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 mb-8">
-              <div className="flex items-center justify-between">
-                <span className="text-body font-medium text-warning">Entry Bonus</span>
-                <span className="text-h3 font-heading text-warning">€{job.entry_bonus.toLocaleString()}</span>
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center text-body text-foreground/80">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mr-3">
+                      <MapPin className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                    </div>
+                    <div>
+                      <p className="text-caption text-muted-foreground font-medium uppercase tracking-wider">Location</p>
+                      <p>{job.city}, {job.country}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center text-body text-foreground/80">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mr-3">
+                      <DollarSign className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                    </div>
+                    <div>
+                      <p className="text-caption text-muted-foreground font-medium uppercase tracking-wider">Salary</p>
+                      <p className="font-semibold text-primary">
+                        {job.salary_min && job.salary_max
+                          ? `${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()} ${job.salary_currency || 'EUR'}`
+                          : 'Competitive'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            </Card>
 
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-h3 font-heading text-foreground mb-4">Job Description</h3>
+            {/* Entry Bonus */}
+            {job.entry_bonus && (
+              <div className="bg-gradient-to-r from-warning/20 to-warning/5 border border-warning/20 rounded-2xl p-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-warning/20 rounded-xl">
+                    <Award className="w-6 h-6 text-warning-hover" />
+                  </div>
+                  <div>
+                    <h4 className="text-body font-bold text-warning-hover mb-0.5">Joining Bonus</h4>
+                    <p className="text-caption text-warning-hover/80">One-time payment upon successful hire</p>
+                  </div>
+                </div>
+                <span className="text-h2 font-heading text-warning-hover">€{job.entry_bonus.toLocaleString()}</span>
+              </div>
+            )}
+
+            {/* Description Section */}
+            <div className="space-y-4">
+              <h3 className="text-h3 font-heading text-foreground flex items-center border-b border-border pb-4">
+                <FileText className="w-6 h-6 mr-3 text-primary" strokeWidth={1.5} />
+                About the Position
+              </h3>
               <div
-                className="text-body text-foreground prose prose-sm max-w-none"
+                className="text-body text-foreground prose prose-sm max-w-none prose-headings:font-heading prose-p:leading-relaxed prose-strong:text-primary"
                 dangerouslySetInnerHTML={{ __html: job.description }}
               />
             </div>
 
-            {/* Job Details Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Career Level */}
-              {job.career_level && (
-                <div>
-                  <div className="flex items-center mb-2">
-                    <TrendingUp className="w-5 h-5 mr-2 text-primary" strokeWidth={1.5} />
-                    <h4 className="text-body font-semibold text-foreground">Career Level</h4>
-                  </div>
-                  <p className="text-body text-foreground ml-7">{job.career_level}</p>
-                </div>
-              )}
-
-              {/* Experience Years */}
-              {job.experience_years !== undefined && job.experience_years !== null && (
-                <div>
-                  <div className="flex items-center mb-2">
-                    <Clock className="w-5 h-5 mr-2 text-primary" strokeWidth={1.5} />
-                    <h4 className="text-body font-semibold text-foreground">Required Experience</h4>
-                  </div>
-                  <p className="text-body text-foreground ml-7">{job.experience_years} {job.experience_years === 1 ? 'year' : 'years'}</p>
-                </div>
-              )}
-
-              {/* Contract Duration */}
-              {job.contract_duration && (
-                <div>
-                  <div className="flex items-center mb-2">
-                    <FileText className="w-5 h-5 mr-2 text-primary" strokeWidth={1.5} />
-                    <h4 className="text-body font-semibold text-foreground">Contract Duration</h4>
-                  </div>
-                  <p className="text-body text-foreground ml-7">{job.contract_duration}</p>
-                </div>
-              )}
-
-              {/* Home Office */}
-              {job.home_office_available !== undefined && (
-                <div>
-                  <div className="flex items-center mb-2">
-                    <Building2 className="w-5 h-5 mr-2 text-primary" strokeWidth={1.5} />
-                    <h4 className="text-body font-semibold text-foreground">Home Office</h4>
-                  </div>
-                  <p className="text-body text-foreground ml-7">{job.home_office_available ? 'Available' : 'Not Available'}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Required Languages */}
-            {job.required_languages && job.required_languages.length > 0 && (
-              <div>
-                <div className="flex items-center mb-4">
-                  <Globe className="w-6 h-6 mr-2 text-primary" strokeWidth={1.5} />
-                  <h3 className="text-h3 font-heading text-foreground">Required Languages</h3>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {job.required_languages.map((lang: any, index: number) => {
-                    const langName = typeof lang === 'string' ? lang : lang.name;
-                    const langLevel = typeof lang === 'object' && lang.level ? lang.level : null;
-                    return (
-                      <span
-                        key={`${langName}-${index}`}
-                        className="px-4 py-2 bg-primary/10 text-primary text-body-sm rounded-lg font-medium"
-                      >
-                        {langName}{langLevel && ` (${langLevel})`}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Required Skills */}
-            {job.required_skills && job.required_skills.length > 0 && (
-              <div>
-                <div className="flex items-center mb-4">
-                  <Award className="w-6 h-6 mr-2 text-primary" strokeWidth={1.5} />
-                  <h3 className="text-h3 font-heading text-foreground">Required Skills</h3>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {job.required_skills.map((skill: string) => (
-                    <span
-                      key={skill}
-                      className="px-4 py-2 bg-accent/10 text-accent text-body-sm rounded-lg font-medium"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Required Qualifications */}
-            {job.required_qualifications && job.required_qualifications.length > 0 && (
-              <div>
-                <div className="flex items-center mb-4">
-                  <Award className="w-6 h-6 mr-2 text-primary" strokeWidth={1.5} />
-                  <h3 className="text-h3 font-heading text-foreground">Required Qualifications</h3>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {job.required_qualifications.map((qual: string) => (
-                    <span
-                      key={qual}
-                      className="px-4 py-2 bg-accent/10 text-accent text-body-sm rounded-lg font-medium"
-                    >
-                      {qual}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Driving Licenses */}
-            {job.driving_licenses && job.driving_licenses.length > 0 && (
-              <div>
-                <div className="flex items-center mb-4">
-                  <Car className="w-6 h-6 mr-2 text-primary" strokeWidth={1.5} />
-                  <h3 className="text-h3 font-heading text-foreground">Required Driving Licenses</h3>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {job.driving_licenses.map((license: string) => (
-                    <span
-                      key={license}
-                      className="px-4 py-2 bg-secondary/10 text-secondary text-body-sm rounded-lg font-medium"
-                    >
-                      {license}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Contract Terms */}
-            {job.contract_terms && job.contract_terms.length > 0 && (
-              <div>
-                <div className="flex items-center mb-4">
-                  <FileText className="w-6 h-6 mr-2 text-primary" strokeWidth={1.5} />
-                  <h3 className="text-h3 font-heading text-foreground">Contract Terms</h3>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {job.contract_terms.map((term: string) => (
-                    <span
-                      key={term}
-                      className="px-4 py-2 bg-muted text-foreground text-body-sm rounded-lg font-medium"
-                    >
-                      {term}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-8 pt-8 border-t border-border space-y-6">
-            <div>
-              <h3 className="text-h3 font-heading text-foreground mb-4 flex items-center">
-                <MapIcon className="w-6 h-6 mr-2 text-primary" strokeWidth={1.5} />
-                Location
+            {/* Location Section */}
+            <div className="space-y-4">
+              <h3 className="text-h3 font-heading text-foreground flex items-center border-b border-border pb-4">
+                <MapIcon className="w-6 h-6 mr-3 text-primary" strokeWidth={1.5} />
+                Work Location
               </h3>
-              <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center border border-border">
-                <div className="text-center">
-                  <MapPin className="w-12 h-12 mx-auto mb-2 text-primary" strokeWidth={1.5} />
-                  <p className="text-body font-medium text-foreground">{job.city}, {job.country}</p>
-                  <p className="text-caption text-muted-foreground">Interactive map view</p>
+              {mapCenter ? (
+                <div className="rounded-2xl overflow-hidden border border-border shadow-sm">
+                  <MapView
+                    center={mapCenter}
+                    zoom={13}
+                    height="350px"
+                    showRadius={false}
+                  />
+                  <div className="p-4 bg-muted/30 border-t border-border flex items-center justify-between">
+                    <div className="flex items-center">
+                      <MapPin className="w-4 h-4 text-primary mr-2" />
+                      <span className="text-body-sm font-medium">{job.city}, {job.country}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full h-72 bg-muted rounded-2xl flex items-center justify-center border border-border overflow-hidden relative group">
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/50 pointer-events-none" />
+                  <div className="text-center relative z-10 transition-transform duration-500 group-hover:scale-105">
+                    <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-4 border border-border shadow-lg">
+                      <MapPin className="w-8 h-8 text-primary" strokeWidth={1.5} />
+                    </div>
+                    <p className="text-h3 font-heading text-foreground">{job.city}, {job.country}</p>
+                    <p className="text-body-sm text-muted-foreground mt-1">
+                      {loading ? 'Finding location...' : 'Coordinates not available'}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            <Card className="p-6 border border-border bg-card/50 backdrop-blur-sm sticky top-6">
+              <h3 className="text-body font-bold text-foreground mb-6 uppercase tracking-widest text-sm flex items-center">
+                <TrendingUp className="w-4 h-4 mr-2 text-primary" strokeWidth={2} />
+                Job Specifications
+              </h3>
+
+              <div className="space-y-6">
+                {/* Employment Details */}
+                <div className="grid grid-cols-1 gap-4">
+                  {[
+                    { label: 'Employment', value: job.employment_type?.replace(/_/g, ' '), icon: Briefcase },
+                    { label: 'Career Level', value: job.career_level, icon: TrendingUp },
+                    { label: 'Experience', value: job.experience_years !== null ? `${job.experience_years} ${job.experience_years === 1 ? 'year' : 'years'}` : null, icon: Clock },
+                    { label: 'Contract', value: job.contract_duration, icon: FileText },
+                    { label: 'Vacation', value: job.vacation_days ? `${job.vacation_days} Days / Year` : null, icon: Calendar },
+                    { label: 'Work Mode', value: job.home_office_available ? 'Home Office' : 'On-site', icon: Building2 },
+                  ].filter(item => item.value).map((item, idx) => (
+                    <div key={idx} className="flex items-start">
+                      <div className="p-2 bg-muted rounded-lg mr-3">
+                        <item.icon className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+                      </div>
+                      <div>
+                        <p className="text-caption text-muted-foreground uppercase tracking-wider leading-none mb-1">{item.label}</p>
+                        <p className="text-body-sm font-medium text-foreground capitalize">{item.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="h-px bg-border my-6" />
+
+                {/* Skills & Tags */}
+                <div className="space-y-6">
+                  {job.required_skills?.length > 0 && (
+                    <div>
+                      <h4 className="text-caption font-bold text-foreground uppercase tracking-widest mb-3">Skills</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {job.required_skills.map((skill: string) => (
+                          <span key={skill} className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium border border-primary/20">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {job.benefits?.length > 0 && (
+                    <div>
+                      <h4 className="text-caption font-bold text-foreground uppercase tracking-widest mb-3">Benefits</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {job.benefits.map((benefit: string) => (
+                          <span key={benefit} className="px-3 py-1 bg-secondary/10 text-secondary text-xs rounded-full font-medium border border-secondary/20">
+                            {benefit}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {job.required_languages?.length > 0 && (
+                    <div>
+                      <h4 className="text-caption font-bold text-foreground uppercase tracking-widest mb-3">Languages</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {job.required_languages.map((lang: any, index: number) => {
+                          const langName = typeof lang === 'string' ? lang : lang.name;
+                          const langLevel = typeof lang === 'object' && lang.level ? lang.level : null;
+                          return (
+                            <span key={index} className="px-3 py-1 bg-info/10 text-info text-xs rounded-full font-medium border border-info/20">
+                              {langName}{langLevel && ` (${langLevel})`}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {job.driving_licenses?.length > 0 && (
+                    <div>
+                      <h4 className="text-caption font-bold text-foreground uppercase tracking-widest mb-3">Licenses</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {job.driving_licenses.map((license: string) => (
+                          <span key={license} className="px-3 py-1 bg-muted text-muted-foreground text-xs rounded-full font-medium border border-border">
+                            {license}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-
-            <Button
-              onClick={() => setApplyDialogOpen(true)}
-              disabled={hasApplied}
-              className={`w-full md:w-auto font-normal h-12 px-8 ${hasApplied
-                ? 'bg-muted text-muted-foreground'
-                : 'bg-primary text-primary-foreground hover:bg-primary-hover'
-                }`}
-            >
-              {hasApplied ? 'Already Applied' : 'Apply for this Position'}
-            </Button>
+            </Card>
           </div>
-        </Card>
+        </div>
       </div>
+
 
       <Dialog open={applyDialogOpen} onOpenChange={setApplyDialogOpen}>
         <DialogContent className="bg-card border-border max-w-2xl">

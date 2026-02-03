@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/contexts/ToastContext';
+import { Eye, EyeOff } from 'lucide-react';
 
 import { authService } from '@/services/auth.service';
 
@@ -26,6 +27,10 @@ const Settings: React.FC = () => {
   const [currentPassword, setCurrentPassword] = React.useState('');
   const [newPassword, setNewPassword] = React.useState('');
   const [confirmPassword, setConfirmPassword] = React.useState('');
+
+  const [showCurrentPassword, setShowCurrentPassword] = React.useState(false);
+  const [showNewPassword, setShowNewPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
   React.useEffect(() => {
     setIsVisible(user.isVisible ?? true);
@@ -86,6 +91,11 @@ const Settings: React.FC = () => {
 
     try {
       setLoading(true);
+
+      // First reauthenticate with current password
+      await authService.reauthenticate(currentPassword);
+
+      // Then update to new password
       await authService.updatePassword(newPassword);
 
       setCurrentPassword('');
@@ -96,10 +106,11 @@ const Settings: React.FC = () => {
         title: 'Password Updated',
         description: 'Your password has been changed successfully',
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Password update error:', error);
       showToast({
         title: 'Error',
-        description: 'Failed to update password. Please check your credentials.',
+        description: error.message || 'Failed to update password. Please check your credentials.',
         variant: 'destructive',
       });
     } finally {
@@ -179,31 +190,71 @@ const Settings: React.FC = () => {
 
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2">
+                <Label htmlFor="current-password" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Current Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="current-password"
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="bg-background text-foreground border-border pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
               <div>
                 <Label htmlFor="new-password" className="text-body-sm font-medium text-foreground mb-2 block">
                   New Password
                 </Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="bg-background text-foreground border-border"
-                />
+                <div className="relative">
+                  <Input
+                    id="new-password"
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="bg-background text-foreground border-border pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div>
                 <Label htmlFor="confirm-password" className="text-body-sm font-medium text-foreground mb-2 block">
                   Confirm New Password
                 </Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="bg-background text-foreground border-border"
-                />
+                <div className="relative">
+                  <Input
+                    id="confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="bg-background text-foreground border-border pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -211,7 +262,7 @@ const Settings: React.FC = () => {
               <Button
                 onClick={handleChangePassword}
                 variant="outline"
-                disabled={loading || !newPassword || !currentPassword}
+                disabled={loading || !newPassword || !currentPassword || newPassword !== confirmPassword}
                 className="bg-transparent text-primary border-primary hover:bg-primary/10 font-normal"
               >
                 {loading ? 'Updating...' : 'Update Password'}

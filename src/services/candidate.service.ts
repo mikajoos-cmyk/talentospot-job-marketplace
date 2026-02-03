@@ -875,7 +875,9 @@ export const candidateService = {
     if (filters.city) {
       if (radiusCandidateIds !== null) {
         // RADIUS SEARCH ACTIVE:
-        // Filter by the IDs returned from the RPC
+        // Filter by the IDs returned from the RPC. 
+        // NOTE: We do NOT add a strict city/country filter here because the RPC 
+        // already checked "Residence OR Preferred Location" within the radius.
         if (radiusCandidateIds.length > 0) {
           query = query.in('id', radiusCandidateIds);
         } else {
@@ -883,17 +885,28 @@ export const candidateService = {
           query = query.eq('id', '00000000-0000-0000-0000-000000000000');
         }
       } else if (preferredLocationCandidateIds.length > 0) {
-        // Fallback: No Radius or City not found -> Normal Text Search including preferred locations
+        // Fallback: No Radius or City coords not found -> Normal Text Search including preferred locations
+        // We match if city matches residence OR if candidate is in preferredLocationCandidateIds
         const idsString = `(${preferredLocationCandidateIds.join(',')})`;
         query = query.or(`city.ilike.%${filters.city.trim()}%,id.in.${idsString}`);
       } else {
-        // Keine Wunschorte gefunden -> Nur nach Wohnort filtern
+        // No preferred locations found for this city string -> Filter only by residence city
         query = query.ilike('city', `%${filters.city.trim()}%`);
       }
-    }
+    } else if (filters.country) {
+      // If ONLY country is selected (no city), we also want to include preferred locations in that country
+      const { data: countryPrefData } = await supabase
+        .from('candidate_preferred_locations')
+        .select('candidate_id, countries!inner(name)')
+        .ilike('countries.name', filters.country.trim());
 
-    if (filters.country) {
-      query = query.eq('country', filters.country);
+      if (countryPrefData && countryPrefData.length > 0) {
+        const countryPrefIds = countryPrefData.map((d: any) => d.candidate_id);
+        const countryIdsString = `(${countryPrefIds.join(',')})`;
+        query = query.or(`country.eq.${filters.country.trim()},id.in.${countryIdsString}`);
+      } else {
+        query = query.eq('country', filters.country);
+      }
     }
 
     if (filters.career_level) {

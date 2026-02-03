@@ -195,6 +195,8 @@ const JobSearch: React.FC = () => {
         if (currentFilters.drivingLicenses && currentFilters.drivingLicenses.length > 0) searchParams.driving_licenses = currentFilters.drivingLicenses;
         if (currentFilters.contractTerms && currentFilters.contractTerms.length > 0) searchParams.contract_terms = currentFilters.contractTerms;
         if (currentFilters.homeOffice) searchParams.home_office_available = true;
+        if (currentFilters.minVacationDays > 0) searchParams.min_vacation_days = currentFilters.minVacationDays;
+        if (currentFilters.benefits && currentFilters.benefits.length > 0) searchParams.benefits = currentFilters.benefits;
       }
 
       const data = await jobsService.searchJobs(searchParams, radiusValue);
@@ -492,9 +494,9 @@ const JobSearch: React.FC = () => {
             </div>
           )}
 
-          <div className="flex flex-col layout-sm:flex-row gap-8">
+          <div className={`flex flex-col ${user.role === 'guest' ? 'layout-sm:flex-row' : 'layout-md:flex-row'} gap-8`}>
             {(user.role === 'guest' || user.role === 'candidate') && (
-              <div className="w-full layout-sm:w-96 shrink-0">
+              <div className={`w-full ${user.role === 'guest' ? 'layout-sm:w-96' : 'layout-md:w-96'} shrink-0`}>
                 <JobFilters
                   filters={filters}
                   onFiltersChange={setFilters}

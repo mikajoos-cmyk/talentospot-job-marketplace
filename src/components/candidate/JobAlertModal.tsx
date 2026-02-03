@@ -51,6 +51,7 @@ const JobAlertModal: React.FC<JobAlertModalProps> = ({ isOpen, onClose, alert, o
         minMatchThreshold: 50,
         benefits: [],
         minVacationDays: 0,
+        workRadius: 200,
     });
 
     useEffect(() => {
@@ -84,6 +85,7 @@ const JobAlertModal: React.FC<JobAlertModalProps> = ({ isOpen, onClose, alert, o
                     minMatchThreshold: 50,
                     benefits: [],
                     minVacationDays: 0,
+                    workRadius: 200,
                 });
             }
         }
@@ -130,6 +132,7 @@ const JobAlertModal: React.FC<JobAlertModalProps> = ({ isOpen, onClose, alert, o
                 minMatchThreshold: filters.minMatchThreshold,
                 benefits: profile.tags || [],
                 minVacationDays: 0,
+                workRadius: 200,
             };
 
             setFilters(matchedFilters);
@@ -267,6 +270,7 @@ const JobAlertModal: React.FC<JobAlertModalProps> = ({ isOpen, onClose, alert, o
                                 minMatchThreshold: 50,
                                 benefits: [],
                                 minVacationDays: 0,
+                                workRadius: 200,
                             })}
                         />
                     </div>

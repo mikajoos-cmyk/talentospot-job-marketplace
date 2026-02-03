@@ -2,6 +2,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, Calendar, Building2, Bookmark, DollarSign, CheckCircle2, Award, Languages, Briefcase, Sparkles } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
 
 interface JobListCardProps {
     job: any;
@@ -22,6 +23,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
     isApplied = false,
     showMatchScore = false
 }) => {
+    const { isAuthenticated } = useUser();
     // Helper to format currency
     const formatMoney = (amount: number | undefined) => amount?.toLocaleString() ?? '0';
 
@@ -30,10 +32,10 @@ const JobListCard: React.FC<JobListCardProps> = ({
 
     return (
         <Card className="group p-0 overflow-hidden border border-border bg-card hover:shadow-xl transition-all duration-300">
-            <div className="flex flex-col layout-md:flex-row">
+            <div className={`flex flex-col ${isAuthenticated ? 'layout-xl:flex-row' : 'layout-md:flex-row'}`}>
                 {/* Left Section: Identity & Primary Info */}
-                <div className="p-6 layout-md:w-1/4 flex flex-col items-center text-center border-b layout-md:border-b-0 layout-md:border-r border-border bg-muted/5">
-                    <div className="relative mb-4 w-24 h-24 rounded-xl overflow-hidden bg-white shadow-sm border border-border/40 p-1 flex items-center justify-center group-hover:scale-105 transition-transform duration-500 blur-sm select-none">
+                <div className={`p-6 ${isAuthenticated ? 'layout-xl:w-1/4 layout-xl:border-b-0 layout-xl:border-r' : 'layout-md:w-1/4 layout-md:border-b-0 layout-md:border-r'} flex flex-col items-center text-center border-b border-border bg-muted/5`}>
+                    <div className={`relative mb-4 w-24 h-24 rounded-xl overflow-hidden bg-white shadow-sm border border-border/40 p-1 flex items-center justify-center group-hover:scale-105 transition-transform duration-500 ${!isAuthenticated ? 'blur-md select-none' : ''}`}>
                         {job.employer_profiles?.logo_url ? (
                             <img
                                 src={job.employer_profiles.logo_url}
@@ -46,7 +48,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                     </div>
 
                     <h4 className="text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">{job.title}</h4>
-                    <p className="text-sm font-medium text-muted-foreground mb-1 blur-sm select-none">{job.employer_profiles?.company_name}</p>
+                    <p className={`text-sm font-medium text-muted-foreground mb-1 ${!isAuthenticated ? 'blur-md select-none' : ''}`}>{job.employer_profiles?.company_name}</p>
 
                     <div className="w-full pt-4 mt-auto border-t border-border/50 space-y-2">
                         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -209,7 +211,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                 </div>
 
                 {/* Right Section: Actions */}
-                <div className="p-6 layout-md:w-48 flex flex-col justify-center gap-3 border-t layout-md:border-t-0 layout-md:border-l border-border bg-muted/5">
+                <div className={`p-6 ${isAuthenticated ? 'layout-xl:w-48 layout-xl:border-t-0 layout-xl:border-l' : 'layout-md:w-48 layout-md:border-t-0 layout-md:border-l'} flex flex-col justify-center gap-3 border-t border-border bg-muted/5`}>
                     <Button
                         onClick={() => onViewDetail(job.id)}
                         variant="outline"

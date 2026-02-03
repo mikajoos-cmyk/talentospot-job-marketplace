@@ -420,8 +420,8 @@ const CandidateSearch: React.FC = () => {
             </div>
           )}
 
-          <div className="flex flex-col layout-sm:flex-row gap-8">
-            <div className="w-full layout-sm:w-96 shrink-0">
+          <div className={`flex flex-col ${user.role === 'guest' ? 'layout-sm:flex-row' : 'layout-md:flex-row'} gap-8`}>
+            <div className={`w-full ${user.role === 'guest' ? 'layout-sm:w-96' : 'layout-md:w-96'} shrink-0`}>
               <CandidateFilters
                 filters={filters}
                 onFiltersChange={setFilters}

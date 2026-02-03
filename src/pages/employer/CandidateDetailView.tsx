@@ -370,54 +370,67 @@ const CandidateDetailView: React.FC = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  onClick={handleShortlist}
-                  variant={isShortlisted ? 'default' : 'outline'}
-                  className={`font-normal ${isShortlisted
-                    ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
-                    : 'bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground'
-                    }`}
-                >
-                  <Heart className="w-4 h-4 mr-2" strokeWidth={1.5} fill={isShortlisted ? 'currentColor' : 'none'} />
-                  {isShortlisted ? 'Shortlisted' : 'Shortlist'}
-                </Button>
-                {canContact ? (
-                  <>
+              {user.role !== 'guest' ? (
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    onClick={handleShortlist}
+                    variant={isShortlisted ? 'default' : 'outline'}
+                    className={`font-normal ${isShortlisted
+                      ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
+                      : 'bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground'
+                      }`}
+                  >
+                    <Heart className="w-4 h-4 mr-2" strokeWidth={1.5} fill={isShortlisted ? 'currentColor' : 'none'} />
+                    {isShortlisted ? 'Shortlisted' : 'Shortlist'}
+                  </Button>
+                  {canContact ? (
+                    <>
+                      <Button
+                        onClick={handleMessage}
+                        className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                        Send Message
+                      </Button>
+                      <Button
+                        onClick={() => setInviteDialogOpen(true)}
+                        variant="outline"
+                        className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                      >
+                        <UserPlus className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                        Invite to Job
+                      </Button>
+                      <Button
+                        onClick={() => setReviewModalOpen(true)}
+                        variant="outline"
+                        className="bg-transparent text-accent border-accent hover:bg-accent hover:text-accent-foreground font-normal"
+                      >
+                        <Star className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                        Write Review
+                      </Button>
+                    </>
+                  ) : (
                     <Button
-                      onClick={handleMessage}
+                      onClick={handleRequestData}
+                      disabled={accessStatus === 'pending' || accessStatus === 'rejected' || accessStatus === 'approved'}
                       className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                     >
-                      <MessageSquare className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                      Send Message
+                      {accessStatus === 'pending' ? 'Request Pending' : accessStatus === 'rejected' ? 'Request Rejected' : accessStatus === 'approved' ? 'Request Approved' : 'Request Personal Data'}
                     </Button>
-                    <Button
-                      onClick={() => setInviteDialogOpen(true)}
-                      variant="outline"
-                      className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-                    >
-                      <UserPlus className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                      Invite to Job
-                    </Button>
-                    <Button
-                      onClick={() => setReviewModalOpen(true)}
-                      variant="outline"
-                      className="bg-transparent text-accent border-accent hover:bg-accent hover:text-accent-foreground font-normal"
-                    >
-                      <Star className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                      Write Review
-                    </Button>
-                  </>
-                ) : (
+                  )}
+                </div>
+              ) : (
+                <div className="bg-muted/50 p-4 rounded-xl border border-dashed border-border text-center">
+                  <p className="text-body-sm text-muted-foreground mb-3 font-medium">Log in as an employer to contact this candidate or request full access.</p>
                   <Button
-                    onClick={handleRequestData}
-                    disabled={accessStatus === 'pending' || accessStatus === 'rejected' || accessStatus === 'approved'}
-                    className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                    size="sm"
+                    onClick={() => navigate('/login')}
+                    className="bg-primary text-primary-foreground"
                   >
-                    {accessStatus === 'pending' ? 'Request Pending' : accessStatus === 'rejected' ? 'Request Rejected' : accessStatus === 'approved' ? 'Request Approved' : 'Request Personal Data'}
+                    Log In to Connect
                   </Button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </Card>

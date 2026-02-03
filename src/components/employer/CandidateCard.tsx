@@ -155,9 +155,9 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   return (
     <>
       <Card className="group p-0 overflow-hidden border border-border bg-card hover:shadow-xl transition-all duration-300">
-        <div className="flex flex-col layout-md:flex-row">
+        <div className={`flex flex-col ${user.role !== 'guest' ? 'layout-xl:flex-row' : 'layout-md:flex-row'}`}>
           {/* Left Section: Profile Info */}
-          <div className="p-6 layout-md:w-72 flex flex-col items-center text-center border-b layout-md:border-b-0 layout-md:border-r border-border bg-muted/5 shrink-0">
+          <div className={`p-6 ${user.role !== 'guest' ? 'layout-xl:w-72 layout-xl:border-b-0 layout-xl:border-r' : 'layout-md:w-72 layout-md:border-b-0 layout-md:border-r'} flex flex-col items-center text-center border-b border-border bg-muted/5 shrink-0`}>
             <div className="relative mb-4">
               <div className="relative">
                 <Avatar className={`w-24 h-24 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-500 ${shouldBlurIdentity ? 'blur-md' : ''}`}>
@@ -309,7 +309,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
           </div>
 
           {/* Right Section: Action */}
-          <div className="p-6 layout-md:w-48 flex flex-col justify-center items-center gap-3 bg-muted/5 border-t layout-md:border-t-0 layout-md:border-l border-border">
+          <div className={`p-6 ${user.role !== 'guest' ? 'layout-xl:w-48 layout-xl:border-t-0 layout-xl:border-l' : 'layout-md:w-48 layout-md:border-t-0 layout-md:border-l'} flex flex-col justify-center items-center gap-3 bg-muted/5 border-t border-border`}>
             <Button
               onClick={handleAction}
               disabled={requestPending && !canContact}
