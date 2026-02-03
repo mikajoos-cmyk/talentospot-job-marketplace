@@ -139,35 +139,6 @@ const LandingPage: React.FC = () => {
         <div className="container mx-auto px-6 max-w-6xl">
           <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
             <div className="max-w-xl">
-              <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Latest Jobs</h2>
-              <p className="text-muted-foreground">High-impact roles at innovative companies. Updated daily with fresh opportunities.</p>
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/jobs')}
-              className="group border-primary/20 text-primary hover:bg-primary/5 font-bold"
-            >
-              Browse All Jobs
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            {featuredJobs.map((job) => (
-              <JobListCard
-                key={job.id}
-                job={job}
-                onViewDetail={() => navigate(`/jobs/${job.id}`)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-24 bg-background">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div className="max-w-xl">
               <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Top Employers</h2>
               <p className="text-muted-foreground">Shape your career at these market leaders. Vetted for culture and excellence.</p>
             </div>
@@ -215,6 +186,36 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      <section className="py-24 bg-background">
+        <div className="container mx-auto px-6 max-w-6xl">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+            <div className="max-w-xl">
+              <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Latest Jobs</h2>
+              <p className="text-muted-foreground">High-impact roles at innovative companies. Updated daily with fresh opportunities.</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/jobs')}
+              className="group border-primary/20 text-primary hover:bg-primary/5 font-bold"
+            >
+              Browse All Jobs
+              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            {featuredJobs.map((job) => (
+              <JobListCard
+                key={job.id}
+                job={job}
+                onViewDetail={() => navigate(`/jobs/${job.id}`)}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
 
       {/* Stats Section */}
       <section className="py-20 bg-secondary/10 border-y border-secondary/20 relative overflow-hidden">
