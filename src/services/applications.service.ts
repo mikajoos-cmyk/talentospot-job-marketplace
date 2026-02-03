@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { invitationsService } from './invitations.service';
 import { messagesService } from './messages.service';
+import { packagesService } from './packages.service';
 
 export interface Application {
   job_id: string;
@@ -13,6 +14,28 @@ export interface Application {
 
 export const applicationsService = {
   async applyToJob(application: Application) {
+    // Prüfen, ob eine Einladung vorliegt
+    const { data: invitations } = await supabase
+      .from('job_invitations')
+      .select('id')
+      .eq('job_id', application.job_id)
+      .eq('candidate_id', application.candidate_id)
+      .eq('status', 'pending');
+
+    const isInvited = invitations && invitations.length > 0;
+
+    if (!isInvited) {
+      // Es ist eine aktive/initiativ Bewerbung -> Limit prüfen
+      const limitCheck = await packagesService.checkLimit(application.candidate_id, 'applications');
+      if (!limitCheck.allowed) {
+        // Spezielle Fehlermeldung für Free User
+        if (limitCheck.message?.includes('Kein aktives Abonnement')) {
+          throw new Error('Im kostenlosen Tarif können Sie sich nur auf Einladung bewerben.');
+        }
+        throw new Error(limitCheck.message);
+      }
+    }
+
     const { data, error } = await supabase
       .from('job_applications')
       .insert(application)
@@ -20,6 +43,11 @@ export const applicationsService = {
       .single();
 
     if (error) throw error;
+
+    // Usage Increment nur wenn NICHT eingeladen
+    if (!error && !isInvited) {
+      await packagesService.incrementUsage(application.candidate_id, 'applications');
+    }
 
     await supabase.rpc('increment', {
       table_name: 'jobs',

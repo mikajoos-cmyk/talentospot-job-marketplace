@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { masterDataService } from './master-data.service';
 import { ensureCityExists } from './candidate.service';
+import { packagesService } from './packages.service';
 
 export interface JobLanguageRequirement {
   name: string;
@@ -81,6 +82,20 @@ export const jobsService = {
   },
 
   async createJob(job: Job) {
+    // 1. Limit Check: Darf ich überhaupt noch Jobs posten?
+    const limitCheck = await packagesService.checkLimit(job.employer_id, 'jobs');
+    if (!limitCheck.allowed) {
+      throw new Error(limitCheck.message);
+    }
+
+    // 2. Limit Check: Wenn Featured, darf ich noch Featured Jobs posten?
+    if (job.is_featured) {
+      const featuredCheck = await packagesService.checkLimit(job.employer_id, 'featured_jobs');
+      if (!featuredCheck.allowed) {
+        throw new Error(featuredCheck.message);
+      }
+    }
+
     // Resolve names to IDs for array fields
     const resolvedJob: any = { ...job };
 
@@ -114,6 +129,14 @@ export const jobsService = {
       .single();
 
     if (error) throw error;
+
+    // 3. Usage Increment: Zähler hochsetzen
+    if (data) {
+      await packagesService.incrementUsage(job.employer_id, 'jobs');
+      if (job.is_featured) {
+        await packagesService.incrementUsage(job.employer_id, 'featured_jobs');
+      }
+    }
 
     // Now insert language requirements with levels into junction table
     if (languagesWithLevels && languagesWithLevels.length > 0 && data.id) {

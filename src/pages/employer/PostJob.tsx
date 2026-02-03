@@ -168,10 +168,23 @@ const PostJob: React.FC = () => {
       navigate('/employer/jobs');
     } catch (error: any) {
       console.error('Error saving job:', error);
+
+      const isLimitError = error.message?.includes('Limit erreicht') || error.message?.includes('Upgrade');
+
       showToast({
-        title: 'Error',
+        title: isLimitError ? 'Limit Reached' : 'Error',
         description: error.message || 'Failed to save job',
         variant: 'destructive',
+        action: isLimitError ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-white text-black border-none hover:bg-gray-100"
+            onClick={() => navigate('/packages')}
+          >
+            Upgrade
+          </Button>
+        ) : undefined
       });
     } finally {
       setIsSaving(false);

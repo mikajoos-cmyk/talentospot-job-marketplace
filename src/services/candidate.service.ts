@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { CandidateProfile } from '../types/candidate';
 import { masterDataService } from './master-data.service';
 import { getCoordinates } from '../utils/geocoding';
+import { packagesService } from './packages.service';
 
 // Wandelt leere Strings in NULL um, damit Constraints nicht verletzt werden
 const val = (v: any) => (v === '' ? null : v);
@@ -136,6 +137,12 @@ export async function ensureCityExists(cityName: string, countryName?: string) {
 export const candidateService = {
   // Data Access Requests
   async requestDataAccess(candidateId: string, employerId: string) {
+    // 1. Limit Check
+    const limitCheck = await packagesService.checkLimit(employerId, 'contacts');
+    if (!limitCheck.allowed) {
+      throw new Error(limitCheck.message);
+    }
+
     const { data, error } = await supabase
       .from('data_access_requests')
       .insert({
@@ -151,6 +158,13 @@ export const candidateService = {
       if (error.code === '23505' || (error as any).status === 409) return { status: 'exists' };
       throw error;
     }
+    return data;
+
+    // 2. Usage Increment (nur wenn erfolgreich neu angelegt)
+    if (data) {
+      await packagesService.incrementUsage(employerId, 'contacts');
+    }
+
     return data;
   },
 

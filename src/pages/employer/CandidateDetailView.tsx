@@ -146,8 +146,23 @@ const CandidateDetailView: React.FC = () => {
         });
         setAccessStatus('pending');
       }
-    } catch (e) {
-      showToast({ title: 'Error', description: 'Failed to request data.', variant: 'destructive' });
+    } catch (e: any) {
+      const isLimitError = e.message?.includes('Limit erreicht') || e.message?.includes('Upgrade');
+      showToast({
+        title: isLimitError ? 'Limit Reached' : 'Error',
+        description: e.message || 'Failed to request data.',
+        variant: 'destructive',
+        action: isLimitError ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-white text-black border-none hover:bg-gray-100"
+            onClick={() => navigate('/packages')}
+          >
+            Upgrade
+          </Button>
+        ) : undefined
+      });
     }
   };
 

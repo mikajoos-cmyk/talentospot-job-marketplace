@@ -13,7 +13,9 @@ import { jobsService } from '@/services/jobs.service';
 import { getCoordinates } from '@/utils/geocoding';
 import { applicationsService } from '@/services/applications.service';
 import { savedJobsService } from '@/services/saved-jobs.service';
+
 import { candidateService } from '@/services/candidate.service';
+import { packagesService } from '@/services/packages.service';
 import {
   Dialog,
   DialogContent,
@@ -38,6 +40,7 @@ const JobSearch: React.FC = () => {
   const [coverLetter, setCoverLetter] = useState('');
   const [appliedJobIds, setAppliedJobIds] = useState<string[]>([]);
   const [applying, setApplying] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const [searchParams] = useSearchParams();
   const [mapCenter, setMapCenter] = useState<[number, number]>([51.1657, 10.4515]);
@@ -161,7 +164,18 @@ const JobSearch: React.FC = () => {
   }, [filters, radiusValue]);
 
   useEffect(() => {
-    loadJobs();
+    const checkAccess = async () => {
+      if (user.role === 'candidate') {
+        const canSearch = await packagesService.canSearch(user.id);
+        if (!canSearch) {
+          setAccessDenied(true);
+          return;
+        }
+      }
+      loadJobs();
+    };
+
+    checkAccess();
     if (user && user.role === 'candidate') {
       loadSavedJobs();
       loadAppliedJobs();
@@ -495,7 +509,7 @@ const JobSearch: React.FC = () => {
           )}
 
           <div className={`flex flex-col ${user.role === 'guest' ? 'layout-sm:flex-row' : 'layout-md:flex-row'} gap-8`}>
-            {(user.role === 'guest' || user.role === 'candidate') && (
+            {(user.role === 'guest' || user.role === 'candidate') && !accessDenied && (
               <div className={`w-full ${user.role === 'guest' ? 'layout-sm:w-96' : 'layout-md:w-96'} shrink-0`}>
                 <JobFilters
                   filters={filters}
@@ -509,100 +523,115 @@ const JobSearch: React.FC = () => {
 
             <div className="flex-1 min-w-0 space-y-8">
 
-              <div>
-                {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-body text-foreground mb-6">
-                      <span className="font-medium">{filteredJobs.length}</span> jobs found
-                    </p>
+              {accessDenied ? (
+                <Card className="p-12 border border-border bg-card text-center">
+                  <Briefcase className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-h3 font-heading text-foreground mb-4">Search Not Available</h3>
+                  <p className="text-body text-muted-foreground mb-6">
+                    Active job search is available for Starting, Standard and Premium packages.
+                    <br />
+                    As a Free user, you are visible to employers but cannot actively search for jobs.
+                  </p>
+                  <Button onClick={() => navigate('/packages')} className="bg-primary text-primary-foreground hover:bg-primary-hover">
+                    Upgrade Package
+                  </Button>
+                </Card>
+              ) : (
+                <div>
+                  {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-body text-foreground mb-6">
+                        <span className="font-medium">{filteredJobs.length}</span> jobs found
+                      </p>
 
-                    {filteredJobs.length === 0 ? (
-                      <Card className="p-12 border border-border bg-card text-center">
-                        <Briefcase className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                        <h3 className="text-h3 font-heading text-foreground mb-2">No jobs found</h3>
-                        <p className="text-body text-muted-foreground">
-                          Try adjusting your search criteria or check back later for new opportunities.
-                        </p>
-                      </Card>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-6">
-                        {filteredJobs.map((job) => (
-                          <JobListCard
-                            key={job.id}
-                            job={job}
-                            onViewDetail={(id) => navigate(`/jobs/${id}`)}
-                            onApply={handleApply}
-                            onSave={handleSaveJob}
-                            isSaved={savedJobs.includes(job.id)}
-                            isApplied={appliedJobIds.includes(job.id)}
-                            showMatchScore={true}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+                      {filteredJobs.length === 0 ? (
+                        <Card className="p-12 border border-border bg-card text-center">
+                          <Briefcase className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                          <h3 className="text-h3 font-heading text-foreground mb-2">No jobs found</h3>
+                          <p className="text-body text-muted-foreground">
+                            Try adjusting your search criteria or check back later for new opportunities.
+                          </p>
+                        </Card>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-6">
+                          {filteredJobs.map((job) => (
+                            <JobListCard
+                              key={job.id}
+                              job={job}
+                              onViewDetail={(id) => navigate(`/jobs/${id}`)}
+                              onApply={handleApply}
+                              onSave={handleSaveJob}
+                              isSaved={savedJobs.includes(job.id)}
+                              isApplied={appliedJobIds.includes(job.id)}
+                              showMatchScore={true}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
+
+            <Dialog open={applyDialogOpen} onOpenChange={setApplyDialogOpen}>
+              <DialogContent className="bg-card border-border max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-h3 font-heading text-foreground">Apply for {selectedJob?.title}</DialogTitle>
+                  <DialogDescription className="text-body text-muted-foreground">
+                    Submit your application to {selectedJob?.employer_profiles?.company_name || 'this company'}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-6 py-4">
+                  <div>
+                    <Label htmlFor="coverLetter" className="text-body-sm font-medium text-foreground mb-2 block">
+                      Cover Letter <span className="text-error">*</span>
+                    </Label>
+                    <RichTextEditor
+                      value={coverLetter}
+                      onChange={setCoverLetter}
+                      placeholder="Tell us why you're a great fit for this role..."
+                      minHeight="200px"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setApplyDialogOpen(false);
+                      setCoverLetter('');
+                    }}
+                    disabled={applying}
+                    className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubmitApplication}
+                    disabled={!coverLetter.trim() || applying}
+                    className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                  >
+                    {applying ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      'Submit Application'
+                    )}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
-
-        <Dialog open={applyDialogOpen} onOpenChange={setApplyDialogOpen}>
-          <DialogContent className="bg-card border-border max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-h3 font-heading text-foreground">Apply for {selectedJob?.title}</DialogTitle>
-              <DialogDescription className="text-body text-muted-foreground">
-                Submit your application to {selectedJob?.employer_profiles?.company_name || 'this company'}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-6 py-4">
-              <div>
-                <Label htmlFor="coverLetter" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Cover Letter <span className="text-error">*</span>
-                </Label>
-                <RichTextEditor
-                  value={coverLetter}
-                  onChange={setCoverLetter}
-                  placeholder="Tell us why you're a great fit for this role..."
-                  minHeight="200px"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setApplyDialogOpen(false);
-                  setCoverLetter('');
-                }}
-                disabled={applying}
-                className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmitApplication}
-                disabled={!coverLetter.trim() || applying}
-                className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-              >
-                {applying ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  'Submit Application'
-                )}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </AppLayout>
       <Footer />
     </>
