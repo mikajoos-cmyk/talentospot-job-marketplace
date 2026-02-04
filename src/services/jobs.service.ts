@@ -387,15 +387,22 @@ export const jobsService = {
         }
       }
 
-      if (radiusJobIds !== null) {
+      // Check if partial/flexible matching is enabled
+      const useClientSideFiltering = filters.enablePartialMatch || filters.enableFlexibleMatch;
+
+      if (radiusJobIds !== null && !useClientSideFiltering) {
+        // RADIUS SEARCH ACTIVE + Partial/Flexible Match OFF: Filter by IDs (strict exclusion)
         if (radiusJobIds.length > 0) {
           query = query.in('id', radiusJobIds);
         } else {
           query = query.eq('id', '00000000-0000-0000-0000-000000000000');
         }
-      } else {
+      } else if (!useClientSideFiltering) {
+        // Fallback: No Radius or coords not found -> Normal city text search
         query = query.eq('city', filters.city);
       }
+      // If partial/flexible matching is ON: Don't apply radius as exclusion filter
+      // All jobs are returned, and location is used only for scoring
     }
 
     if (filters.country) {

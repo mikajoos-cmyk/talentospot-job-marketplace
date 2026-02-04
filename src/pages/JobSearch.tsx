@@ -195,6 +195,10 @@ const JobSearch: React.FC = () => {
       if (currentFilters.country && currentFilters.country !== 'all') searchParams.country = currentFilters.country;
       if (currentFilters.city && currentFilters.city !== 'all') searchParams.city = currentFilters.city;
 
+      // Pass partial/flexible match flag to backend so it knows whether to exclude by radius
+      searchParams.enablePartialMatch = currentFilters.enablePartialMatch;
+      searchParams.enableFlexibleMatch = currentFilters.enableFlexibleMatch;
+
       // Apply all OTHER filters only when NOT using client-side filtering
       if (!useClientSideFiltering) {
         if (currentFilters.title) searchParams.title = currentFilters.title;

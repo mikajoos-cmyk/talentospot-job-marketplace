@@ -242,6 +242,9 @@ const CandidateSearch: React.FC = () => {
           searchFilters.city = filters.location.cities[0];
         }
 
+        // Pass partial match flag to backend so it knows whether to exclude by radius
+        searchFilters.enablePartialMatch = filters.enablePartialMatch;
+
         // Apply all OTHER filters ONLY when NOT in partial match mode
         if (!filters.enablePartialMatch) {
           if (filters.salary[0] > 20000) searchFilters.min_salary = filters.salary[0];
@@ -341,10 +344,37 @@ const CandidateSearch: React.FC = () => {
         let results = data || [];
 
         if (filters.enablePartialMatch) {
-          results = results.map(candidate => ({
-            ...candidate,
-            matchScore: calculateCandidateMatchScore(candidate, filters)
-          })).filter(candidate => candidate.matchScore >= (filters.minMatchThreshold || 50))
+          // Get coordinates for distance-based scoring if city is selected
+          let filtersWithCoords = { ...filters };
+          if (filters.location.cities && filters.location.cities.length > 0) {
+            const coords = await getCoordinates(filters.location.cities[0], filters.location.country);
+            if (coords) {
+              filtersWithCoords = {
+                ...filters,
+                location: {
+                  ...filters.location,
+                  latitude: coords.latitude,
+                  longitude: coords.longitude
+                }
+              };
+              console.log('[DEBUG] Location scoring with coords:', coords, 'radius:', radiusValue);
+            } else {
+              console.warn('[DEBUG] Could not get coordinates for city:', filters.location.cities[0]);
+            }
+          }
+
+          results = results.map(candidate => {
+            const score = calculateCandidateMatchScore(candidate, filtersWithCoords);
+            console.log(`[DEBUG] Candidate ${candidate.id} (${candidate.city}): score=${score}%`, {
+              lat: candidate.latitude,
+              lon: candidate.longitude,
+              hasFilterCoords: !!filtersWithCoords.location?.latitude
+            });
+            return {
+              ...candidate,
+              matchScore: score
+            };
+          }).filter(candidate => candidate.matchScore >= (filters.minMatchThreshold || 50))
             .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
         }
 

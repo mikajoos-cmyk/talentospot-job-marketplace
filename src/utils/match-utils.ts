@@ -623,8 +623,17 @@ export const calculateCandidateMatchScore = (candidate: any, filters: any): numb
             }
             // Beyond that, 0 points
         }
+        // If candidate has no coords, they get 0 points (but total is still incremented)
+    } else if (filters.location && filters.location.cities && filters.location.cities.length > 0) {
+        // Fallback for city text match if no coordinates available (for CandidateFilters structure)
+        total += 1;
+        const filterCity = filters.location.cities[0];
+        const candCity = candidate.city || '';
+        if (candCity.toLowerCase().includes(filterCity.toLowerCase())) {
+            matched += 1;
+        }
     } else if (filters.city && filters.city !== '') {
-        // Fallback for city text match if no coordinates available
+        // Fallback for city text match if no coordinates available (for JobFilters structure)
         total += 1;
         const candCity = candidate.city || '';
         if (candCity.toLowerCase().includes(filters.city.toLowerCase())) {

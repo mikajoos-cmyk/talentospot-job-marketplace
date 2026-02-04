@@ -2,6 +2,8 @@ export interface LocationHierarchy {
   continent: string;
   country: string;
   cities: string[];
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface CandidateConditions {

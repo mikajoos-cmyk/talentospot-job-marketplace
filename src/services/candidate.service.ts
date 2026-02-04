@@ -870,8 +870,8 @@ export const candidateService = {
     }
 
     if (filters.city) {
-      if (radiusCandidateIds !== null) {
-        // RADIUS SEARCH ACTIVE: Filter by the IDs returned from the RPC (residence location only)
+      if (radiusCandidateIds !== null && !filters.enablePartialMatch) {
+        // RADIUS SEARCH ACTIVE + Partial Match OFF: Filter by the IDs returned from the RPC (strict exclusion)
         if (radiusCandidateIds.length > 0) {
           query = query.in('id', radiusCandidateIds);
         } else {
@@ -882,7 +882,8 @@ export const candidateService = {
         // Fallback: No Radius or City coords not found -> Normal Text Search by residence city only
         query = query.ilike('city', `%${filters.city.trim()}%`);
       }
-      // If enablePartialMatch is true AND radiusCandidateIds is null, we don't apply strict city filtering at the query level
+      // If enablePartialMatch is true: Don't apply radius as exclusion filter at the query level
+      // All candidates are returned, and location is used only for scoring
     } else if (filters.country && !filters.enablePartialMatch) {
       // If ONLY country is selected (no city), filter by residence country only
       query = query.eq('country', filters.country);
