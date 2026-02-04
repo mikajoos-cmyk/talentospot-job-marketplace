@@ -986,6 +986,17 @@ const EditProfile: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              <div className="md:col-span-2 pt-4 border-t border-border mt-4">
+                <Label className="text-body-sm font-medium text-foreground mb-4 block">
+                  <Car className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
+                  Driving Licenses
+                </Label>
+                <DrivingLicenseSelector
+                  value={drivingLicenses}
+                  onChange={setDrivingLicenses}
+                />
+              </div>
             </div>
           </div>
         </Card>
@@ -1134,6 +1145,83 @@ const EditProfile: React.FC = () => {
               </div>
 
               <div>
+                <Label htmlFor="yearsOfExperience" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Professional Experience (Years)
+                </Label>
+                <div className="flex items-center space-x-4">
+                  <Slider
+                    value={[formData.yearsOfExperience]}
+                    onValueChange={(value) => setFormData({ ...formData, yearsOfExperience: value[0] })}
+                    min={0}
+                    max={50}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <span className="text-body-sm font-medium w-12 text-center">{formData.yearsOfExperience}y</span>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="noticePeriod" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Notice Period
+                </Label>
+                <Select value={formData.noticePeriod} onValueChange={(value) => setFormData({ ...formData, noticePeriod: value })}>
+                  <SelectTrigger className="bg-background text-foreground border-border">
+                    <SelectValue placeholder="Select notice period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="immediate">Immediate</SelectItem>
+                    <SelectItem value="1-week">1 Week</SelectItem>
+                    <SelectItem value="2-weeks">2 Weeks</SelectItem>
+                    <SelectItem value="1-month">1 Month</SelectItem>
+                    <SelectItem value="2-months">2 Months</SelectItem>
+                    <SelectItem value="3-months">3 Months</SelectItem>
+                    <SelectItem value="6-months">6 Months</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="md:col-span-2">
+                <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                  Qualifications
+                </Label>
+                <div className="flex space-x-2 mb-3">
+                  <AutocompleteInput
+                    category="qualifications"
+                    value={qualificationInput}
+                    onChange={setQualificationInput}
+                    onKeyPress={(e: any) => e.key === 'Enter' && handleAddQualification()}
+                    placeholder="Add qualification..."
+                    className="flex-1 bg-background text-foreground border-border"
+                  />
+                  <Button
+                    size="icon"
+                    onClick={handleAddQualification}
+                    className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                  >
+                    <Plus className="w-5 h-5" strokeWidth={2} />
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {qualifications.map((qualification) => (
+                    <div
+                      key={qualification}
+                      className="flex items-center space-x-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-body-sm border border-primary/20"
+                    >
+                      <span>{qualification}</span>
+                      <button
+                        onClick={() => handleRemoveQualification(qualification)}
+                        className="hover:text-primary/80"
+                        aria-label={`Remove ${qualification}`}
+                      >
+                        <X className="w-4 h-4" strokeWidth={2} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
                 <Label htmlFor="status" className="text-body-sm font-medium text-foreground mb-2 block">
                   Employment Status
                 </Label>
@@ -1208,191 +1296,103 @@ const EditProfile: React.FC = () => {
               </div>
             </div>
 
-            <div>
-              <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                Qualifications
-              </Label>
-              <div className="flex space-x-2 mb-3">
-                <AutocompleteInput
-                  category="qualifications"
-                  value={qualificationInput}
-                  onChange={setQualificationInput}
-                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddQualification()}
-                  placeholder="Add qualification..."
-                  className="flex-1 bg-background text-foreground border-border"
-                />
-                <Button
-                  size="icon"
-                  onClick={handleAddQualification}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                >
-                  <Plus className="w-5 h-5" strokeWidth={2} />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {qualifications.map((qualification) => (
-                  <div
-                    key={qualification}
-                    className="flex items-center space-x-1 px-3 py-1 bg-accent/10 text-accent rounded-full text-body-sm"
-                  >
-                    <span>{qualification}</span>
-                    <button
-                      onClick={() => handleRemoveQualification(qualification)}
-                      className="hover:text-accent-hover"
-                      aria-label={`Remove ${qualification}`}
-                    >
-                      <X className="w-4 h-4" strokeWidth={2} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
+          </div>
+          {/* End of Professionals Grid */}
 
-            <div>
-              <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                Requirements
-              </Label>
-              <div className="flex space-x-2 mb-3">
-                <AutocompleteInput
-                  category="requirements"
-                  value={requirementInput}
-                  onChange={setRequirementInput}
-                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddRequirement()}
-                  placeholder="Add requirement..."
-                  className="flex-1 bg-background text-foreground border-border"
-                />
-                <Button
-                  size="icon"
-                  onClick={handleAddRequirement}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                >
-                  <Plus className="w-5 h-5" strokeWidth={2} />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {requirements.map((requirement) => (
-                  <div
-                    key={requirement}
-                    className="flex items-center space-x-1 px-3 py-1 bg-secondary/10 text-secondary-foreground rounded-full text-body-sm border border-secondary/20"
-                  >
-                    <span>{requirement}</span>
-                    <button
-                      onClick={() => handleRemoveRequirement(requirement)}
-                      className="hover:text-secondary-foreground/80"
-                      aria-label={`Remove ${requirement}`}
-                    >
-                      <X className="w-4 h-4" strokeWidth={2} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                Languages
-              </Label>
-              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
-                <AutocompleteInput
-                  category="languages"
-                  value={languageInput}
-                  onChange={setLanguageInput}
-                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddLanguage()}
-                  placeholder="Add language..."
-                  className="flex-1 bg-background text-foreground border-border"
-                />
-                <Select value={languageLevel} onValueChange={setLanguageLevel}>
-                  <SelectTrigger className="w-full sm:w-[150px] bg-background text-foreground border-border">
-                    <SelectValue placeholder="Level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A1">A1 (Beginner)</SelectItem>
-                    <SelectItem value="A2">A2 (Elementary)</SelectItem>
-                    <SelectItem value="B1">B1 (Intermediate)</SelectItem>
-                    <SelectItem value="B2">B2 (Upper Intermediate)</SelectItem>
-                    <SelectItem value="C1">C1 (Advanced)</SelectItem>
-                    <SelectItem value="C2">C2 (Proficient)</SelectItem>
-                    <SelectItem value="native">Native</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  size="icon"
-                  onClick={handleAddLanguage}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal w-full sm:w-10"
-                >
-                  <Plus className="w-5 h-5" strokeWidth={2} />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {languages.map((language) => (
-                  <div
-                    key={language.name}
-                    className="flex items-center space-x-1 px-3 py-1 bg-info/10 text-info rounded-full text-body-sm"
-                  >
-                    <span className="capitalize">{language.name} ({language.level.toUpperCase()})</span>
-                    <button
-                      onClick={() => handleRemoveLanguage(language.name)}
-                      className="hover:text-info-hover"
-                      aria-label={`Remove ${language.name}`}
-                    >
-                      <X className="w-4 h-4" strokeWidth={2} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                Additional Tags (e.g., "Handicap accessible", "Pets allowed")
-              </Label>
-              <div className="flex space-x-2 mb-3">
-                <AutocompleteInput
-                  category="tags"
-                  value={tagInput}
-                  onChange={setTagInput}
-                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddTag()}
-                  placeholder="Add a custom tag..."
-                  className="flex-1 bg-background text-foreground border-border"
-                />
-                <Button
-                  size="icon"
-                  onClick={handleAddTag}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                >
-                  <Plus className="w-5 h-5" strokeWidth={2} />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {formData.tags.map((tag: string) => (
-                  <div
-                    key={tag}
-                    className="flex items-center space-x-1 px-3 py-1 bg-muted text-foreground border border-border rounded-full text-body-sm"
-                  >
-                    <span>{tag}</span>
-                    <button
-                      onClick={() => handleRemoveTag(tag)}
-                      className="hover:text-error"
-                      aria-label={`Remove ${tag}`}
-                    >
-                      <X className="w-3 h-3" strokeWidth={2} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-body-sm font-medium text-foreground mb-4 block">
-                <Car className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
-                Driving Licenses
-              </Label>
-              <DrivingLicenseSelector
-                value={drivingLicenses}
-                onChange={setDrivingLicenses}
+          <div>
+            <Label className="text-body-sm font-medium text-foreground mb-2 block">
+              Additional Abilities
+            </Label>
+            <div className="flex space-x-2 mb-3">
+              <AutocompleteInput
+                category="requirements"
+                value={requirementInput}
+                onChange={setRequirementInput}
+                onKeyPress={(e: any) => e.key === 'Enter' && handleAddRequirement()}
+                placeholder="Add additional ability..."
+                className="flex-1 bg-background text-foreground border-border"
               />
+              <Button
+                size="icon"
+                onClick={handleAddRequirement}
+                className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+              >
+                <Plus className="w-5 h-5" strokeWidth={2} />
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {requirements.map((requirement) => (
+                <div
+                  key={requirement}
+                  className="flex items-center space-x-1 px-3 py-1 bg-secondary/10 text-secondary-foreground rounded-full text-body-sm border border-secondary/20"
+                >
+                  <span>{requirement}</span>
+                  <button
+                    onClick={() => handleRemoveRequirement(requirement)}
+                    className="hover:text-secondary-foreground/80"
+                    aria-label={`Remove ${requirement}`}
+                  >
+                    <X className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
+
+          <div>
+            <Label className="text-body-sm font-medium text-foreground mb-2 block">
+              Languages
+            </Label>
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
+              <AutocompleteInput
+                category="languages"
+                value={languageInput}
+                onChange={setLanguageInput}
+                onKeyPress={(e: any) => e.key === 'Enter' && handleAddLanguage()}
+                placeholder="Add language..."
+                className="flex-1 bg-background text-foreground border-border"
+              />
+              <Select value={languageLevel} onValueChange={setLanguageLevel}>
+                <SelectTrigger className="w-full sm:w-[150px] bg-background text-foreground border-border">
+                  <SelectValue placeholder="Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="A1">A1 (Beginner)</SelectItem>
+                  <SelectItem value="A2">A2 (Elementary)</SelectItem>
+                  <SelectItem value="B1">B1 (Intermediate)</SelectItem>
+                  <SelectItem value="B2">B2 (Upper Intermediate)</SelectItem>
+                  <SelectItem value="C1">C1 (Advanced)</SelectItem>
+                  <SelectItem value="C2">C2 (Proficient)</SelectItem>
+                  <SelectItem value="native">Native</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                size="icon"
+                onClick={handleAddLanguage}
+                className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal w-full sm:w-10"
+              >
+                <Plus className="w-5 h-5" strokeWidth={2} />
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {languages.map((language) => (
+                <div
+                  key={language.name}
+                  className="flex items-center space-x-1 px-3 py-1 bg-info/10 text-info rounded-full text-body-sm"
+                >
+                  <span className="capitalize">{language.name} ({language.level.toUpperCase()})</span>
+                  <button
+                    onClick={() => handleRemoveLanguage(language.name)}
+                    className="hover:text-info-hover"
+                    aria-label={`Remove ${language.name}`}
+                  >
+                    <X className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </Card>
 
         {/* Job Preferences */}
@@ -1422,25 +1422,6 @@ const EditProfile: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="noticePeriod" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Notice Period
-                </Label>
-                <Select value={formData.noticePeriod} onValueChange={(value) => setFormData({ ...formData, noticePeriod: value })}>
-                  <SelectTrigger className="bg-background text-foreground border-border">
-                    <SelectValue placeholder="Select notice period" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="immediate">Immediate</SelectItem>
-                    <SelectItem value="1-week">1 Week</SelectItem>
-                    <SelectItem value="2-weeks">2 Weeks</SelectItem>
-                    <SelectItem value="1-month">1 Month</SelectItem>
-                    <SelectItem value="2-months">2 Months</SelectItem>
-                    <SelectItem value="3-months">3 Months</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div>
                 <Label htmlFor="travelWillingness" className="text-body-sm font-medium text-foreground mb-2 block">
                   <Plane className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
@@ -1478,6 +1459,49 @@ const EditProfile: React.FC = () => {
             </div>
 
             <div>
+              <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                Additional Tags (e.g., "Handicap accessible", "Pets allowed")
+                <span className="ml-2 text-[10px] text-muted-foreground font-normal italic">
+                  (These help employers find specific accommodations or traits)
+                </span>
+              </Label>
+              <div className="flex space-x-2 mb-3">
+                <AutocompleteInput
+                  category="tags"
+                  value={tagInput}
+                  onChange={setTagInput}
+                  onKeyPress={(e: any) => e.key === 'Enter' && handleAddTag()}
+                  placeholder="e.g. Barrier-free, Fitness studio..."
+                  className="flex-1 bg-background text-foreground border-border"
+                />
+                <Button
+                  size="icon"
+                  onClick={handleAddTag}
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                >
+                  <Plus className="w-5 h-5" strokeWidth={2} />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {formData.tags.map((tag: string) => (
+                  <div
+                    key={tag}
+                    className="flex items-center space-x-1 px-3 py-1 bg-muted text-foreground rounded-full text-body-sm border border-border"
+                  >
+                    <span>{tag}</span>
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      className="hover:text-foreground/80"
+                      aria-label={`Remove ${tag}`}
+                    >
+                      <X className="w-4 h-4" strokeWidth={2} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
               <Label className="text-body-sm font-medium text-foreground mb-3 block">
                 Preferred Contract Terms
               </Label>
@@ -1501,27 +1525,6 @@ const EditProfile: React.FC = () => {
                     {term.charAt(0).toUpperCase() + term.slice(1)}
                   </button>
                 ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="yearsOfExperience" className="text-body-sm font-medium text-foreground mb-2 block">
-                  <Briefcase className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
-                  Years of Professional Experience
-                </Label>
-                <Input
-                  id="yearsOfExperience"
-                  type="number"
-                  min="0"
-                  max="50"
-                  value={formData.yearsOfExperience}
-                  onChange={(e) => setFormData({ ...formData, yearsOfExperience: parseInt(e.target.value) || 0 })}
-                  className="bg-background text-foreground border-border"
-                />
-                <p className="text-caption text-muted-foreground mt-2">
-                  Total years of professional work experience
-                </p>
               </div>
             </div>
 
@@ -1682,70 +1685,6 @@ const EditProfile: React.FC = () => {
           </div>
         </Card>
 
-        {/* Work Experience */}
-        <Card className="p-6 md:p-8 border border-border bg-card">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-h3 font-heading text-foreground">Work Experience</h3>
-            <Button
-              onClick={() => {
-                setEditingExperienceId(null);
-                setNewExperience({ title: '', company: '', startDate: '', endDate: '', isCurrent: false, description: '' });
-                setExperienceModalOpen(true);
-              }}
-              className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-            >
-              <Plus className="w-5 h-5 mr-2" strokeWidth={2} />
-              Add Experience
-            </Button>
-          </div>
-
-          {experience.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
-              <Briefcase className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
-              <p className="text-body text-muted-foreground mb-4">No work experience added yet</p>
-              <Button
-                onClick={() => setExperienceModalOpen(true)}
-                variant="outline"
-                className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-              >
-                Add Your First Experience
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {experience.map((exp) => (
-                <Card key={exp.id} className="p-4 border border-border bg-background">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="text-h4 font-heading text-foreground mb-1">{exp.title}</h4>
-                      <p className="text-body-sm text-muted-foreground mb-2">{exp.company} • {exp.period}</p>
-                      <p className="text-body-sm text-foreground">{exp.description}</p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        onClick={() => handleEditExperience(exp)}
-                        variant="ghost"
-                        size="icon"
-                        className="bg-transparent text-primary hover:bg-primary/10 hover:text-primary"
-                      >
-                        <Briefcase className="w-4 h-4" strokeWidth={1.5} />
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteExperience(exp.id)}
-                        variant="ghost"
-                        size="icon"
-                        className="bg-transparent text-error hover:bg-error/10 hover:text-error"
-                      >
-                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </Card>
-
         {/* Education */}
         <Card className="p-6 md:p-8 border border-border bg-card">
           <div className="flex items-center justify-between mb-6">
@@ -1763,54 +1702,122 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
 
-          {education.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
-              <GraduationCap className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
-              <p className="text-body text-muted-foreground mb-4">No education added yet</p>
-              <Button
-                onClick={() => setEducationModalOpen(true)}
-                variant="outline"
-                className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-              >
-                Add Your First Education
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {education.map((edu) => (
-                <Card key={edu.id} className="p-4 border border-border bg-background">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
-                      <p className="text-body-sm text-muted-foreground">{edu.institution} • {edu.period}</p>
+          {
+            education.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+                <GraduationCap className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
+                <p className="text-body text-muted-foreground mb-4">No education added yet</p>
+                <Button
+                  onClick={() => setEducationModalOpen(true)}
+                  variant="outline"
+                  className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                >
+                  Add Your First Education
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {education.map((edu) => (
+                  <Card key={edu.id} className="p-4 border border-border bg-background">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
+                        <p className="text-body-sm text-muted-foreground">{edu.institution} • {edu.period}</p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={() => handleEditEducation(edu)}
+                          variant="ghost"
+                          size="icon"
+                          className="bg-transparent text-primary hover:bg-primary/10 hover:text-primary"
+                        >
+                          <GraduationCap className="w-4 h-4" strokeWidth={1.5} />
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteEducation(edu.id)}
+                          variant="ghost"
+                          size="icon"
+                          className="bg-transparent text-error hover:bg-error/10 hover:text-error"
+                        >
+                          <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        onClick={() => handleEditEducation(edu)}
-                        variant="ghost"
-                        size="icon"
-                        className="bg-transparent text-primary hover:bg-primary/10 hover:text-primary"
-                      >
-                        <GraduationCap className="w-4 h-4" strokeWidth={1.5} />
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteEducation(edu.id)}
-                        variant="ghost"
-                        size="icon"
-                        className="bg-transparent text-error hover:bg-error/10 hover:text-error"
-                      >
-                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                      </Button>
+                  </Card>
+                ))}
+              </div>
+            )
+          }
+        </Card >
+
+        {/* Work Experience */}
+        < Card className="p-6 md:p-8 border border-border bg-card" >
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-h3 font-heading text-foreground">Work Experience</h3>
+            <Button
+              onClick={() => {
+                setEditingExperienceId(null);
+                setNewExperience({ title: '', company: '', startDate: '', endDate: '', isCurrent: false, description: '' });
+                setExperienceModalOpen(true);
+              }}
+              className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+            >
+              <Plus className="w-5 h-5 mr-2" strokeWidth={2} />
+              Add Experience
+            </Button>
+          </div>
+
+          {
+            experience.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+                <Briefcase className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
+                <p className="text-body text-muted-foreground mb-4">No work experience added yet</p>
+                <Button
+                  onClick={() => setExperienceModalOpen(true)}
+                  variant="outline"
+                  className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                >
+                  Add Your First Experience
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {experience.map((exp) => (
+                  <Card key={exp.id} className="p-4 border border-border bg-background">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-h4 font-heading text-foreground mb-1">{exp.title}</h4>
+                        <p className="text-body-sm text-muted-foreground mb-2">{exp.company} • {exp.period}</p>
+                        <p className="text-body-sm text-foreground">{exp.description}</p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={() => handleEditExperience(exp)}
+                          variant="ghost"
+                          size="icon"
+                          className="bg-transparent text-primary hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Briefcase className="w-4 h-4" strokeWidth={1.5} />
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteExperience(exp.id)}
+                          variant="ghost"
+                          size="icon"
+                          className="bg-transparent text-error hover:bg-error/10 hover:text-error"
+                        >
+                          <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </Card>
+                  </Card>
+                ))}
+              </div>
+            )
+          }
+        </Card >
 
         {/* Awards & Achievements */}
-        <Card className="p-6 md:p-8 border border-border bg-card">
+        < Card className="p-6 md:p-8 border border-border bg-card" >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-h3 font-heading text-foreground">Awards & Achievements</h3>
             <Button
@@ -1826,64 +1833,66 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
 
-          {awards.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
-              <Award className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
-              <p className="text-body text-muted-foreground mb-4">No awards added yet</p>
-              <Button
-                onClick={() => setAwardsModalOpen(true)}
-                variant="outline"
-                className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-              >
-                Add Your First Award
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {awards.map((award) => (
-                <Card key={award.id} className="p-4 border border-border bg-background">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 flex gap-4">
-                      {award.certificateImage && (
-                        <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0">
-                          <img src={award.certificateImage} alt={award.title} className="w-full h-full object-cover" />
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <h4 className="text-h4 font-heading text-foreground mb-1">{award.title}</h4>
-                        <p className="text-body-sm text-muted-foreground mb-2">{award.year}</p>
-                        {award.description && (
-                          <p className="text-body-sm text-foreground">{award.description}</p>
+          {
+            awards.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+                <Award className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
+                <p className="text-body text-muted-foreground mb-4">No awards added yet</p>
+                <Button
+                  onClick={() => setAwardsModalOpen(true)}
+                  variant="outline"
+                  className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                >
+                  Add Your First Award
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {awards.map((award) => (
+                  <Card key={award.id} className="p-4 border border-border bg-background">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 flex gap-4">
+                        {award.certificateImage && (
+                          <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0">
+                            <img src={award.certificateImage} alt={award.title} className="w-full h-full object-cover" />
+                          </div>
                         )}
+                        <div className="flex-1">
+                          <h4 className="text-h4 font-heading text-foreground mb-1">{award.title}</h4>
+                          <p className="text-body-sm text-muted-foreground mb-2">{award.year}</p>
+                          {award.description && (
+                            <p className="text-body-sm text-foreground">{award.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={() => handleEditAward(award)}
+                          variant="ghost"
+                          size="icon"
+                          className="bg-transparent text-primary hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Award className="w-4 h-4" strokeWidth={1.5} />
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteAward(award.id)}
+                          variant="ghost"
+                          size="icon"
+                          className="bg-transparent text-error hover:bg-error/10 hover:text-error"
+                        >
+                          <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        onClick={() => handleEditAward(award)}
-                        variant="ghost"
-                        size="icon"
-                        className="bg-transparent text-primary hover:bg-primary/10 hover:text-primary"
-                      >
-                        <Award className="w-4 h-4" strokeWidth={1.5} />
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteAward(award.id)}
-                        variant="ghost"
-                        size="icon"
-                        className="bg-transparent text-error hover:bg-error/10 hover:text-error"
-                      >
-                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </Card>
+                  </Card>
+                ))}
+              </div>
+            )
+          }
+        </Card >
 
         {/* Portfolio */}
-        <Card className="p-6 md:p-8 border border-border bg-card">
+        < Card className="p-6 md:p-8 border border-border bg-card" >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-h3 font-heading text-foreground">My Portfolio</h3>
             <Button
@@ -1895,62 +1904,64 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
 
-          {portfolioProjects.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
-              <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
-              <p className="text-body text-muted-foreground mb-4">No portfolio projects yet</p>
-              <Button
-                onClick={() => setPortfolioModalOpen(true)}
-                variant="outline"
-                className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-              >
-                Add Your First Project
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {portfolioProjects.map((project) => (
-                <Card key={project.id} className="overflow-hidden border border-border bg-background hover:shadow-lg transition-all duration-normal group">
-                  <div className="aspect-video bg-muted relative overflow-hidden">
-                    {project.images && project.images.length > 0 ? (
-                      <ProjectImageCarousel images={project.images} title={project.title} />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
-                        <ImageIcon className="w-8 h-8" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h4 className="text-h4 font-heading text-foreground mb-2">{project.title}</h4>
-                    <p className="text-body-sm text-muted-foreground line-clamp-2 mb-4">{project.description}</p>
-                    <div className="flex space-x-2">
-                      <Button
-                        onClick={() => handleEditProject(project)}
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 bg-transparent text-primary border-primary hover:bg-primary hover:text-primary-foreground font-normal"
-                      >
-                        <Edit2 className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                        Edit
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteProject(project.id)}
-                        variant="outline"
-                        size="sm"
-                        className="bg-transparent text-error border-error hover:bg-error hover:text-error-foreground font-normal px-3"
-                      >
-                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                      </Button>
+          {
+            portfolioProjects.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+                <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
+                <p className="text-body text-muted-foreground mb-4">No portfolio projects yet</p>
+                <Button
+                  onClick={() => setPortfolioModalOpen(true)}
+                  variant="outline"
+                  className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                >
+                  Add Your First Project
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {portfolioProjects.map((project) => (
+                  <Card key={project.id} className="overflow-hidden border border-border bg-background hover:shadow-lg transition-all duration-normal group">
+                    <div className="aspect-video bg-muted relative overflow-hidden">
+                      {project.images && project.images.length > 0 ? (
+                        <ProjectImageCarousel images={project.images} title={project.title} />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
+                          <ImageIcon className="w-8 h-8" />
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </Card>
+                    <div className="p-4">
+                      <h4 className="text-h4 font-heading text-foreground mb-2">{project.title}</h4>
+                      <p className="text-body-sm text-muted-foreground line-clamp-2 mb-4">{project.description}</p>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={() => handleEditProject(project)}
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 bg-transparent text-primary border-primary hover:bg-primary hover:text-primary-foreground font-normal"
+                        >
+                          <Edit2 className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                          Edit
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteProject(project.id)}
+                          variant="outline"
+                          size="sm"
+                          className="bg-transparent text-error border-error hover:bg-error hover:text-error-foreground font-normal px-3"
+                        >
+                          <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )
+          }
+        </Card >
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
+        < div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4" >
           <Button
             variant="outline"
             onClick={() => navigate('/candidate/profile')}
@@ -1964,11 +1975,11 @@ const EditProfile: React.FC = () => {
           >
             Save Changes
           </Button>
-        </div>
-      </div>
+        </div >
+      </div >
 
       {/* Experience Modal */}
-      <Dialog open={experienceModalOpen} onOpenChange={setExperienceModalOpen} >
+      < Dialog open={experienceModalOpen} onOpenChange={setExperienceModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">{editingExperienceId ? 'Update Work Experience' : 'Add Work Experience'}</DialogTitle>
@@ -2084,10 +2095,10 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Education Modal */}
-      <Dialog open={educationModalOpen} onOpenChange={setEducationModalOpen} >
+      < Dialog open={educationModalOpen} onOpenChange={setEducationModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">{editingEducationId ? 'Update Education' : 'Add Education'}</DialogTitle>
@@ -2203,10 +2214,10 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Preferred Location Modal */}
-      <Dialog open={locationModalOpen} onOpenChange={setLocationModalOpen} >
+      < Dialog open={locationModalOpen} onOpenChange={setLocationModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">Add Preferred Work Location</DialogTitle>
@@ -2250,10 +2261,10 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Portfolio Modal */}
-      <Dialog open={portfolioModalOpen} onOpenChange={setPortfolioModalOpen} >
+      < Dialog open={portfolioModalOpen} onOpenChange={setPortfolioModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">
@@ -2358,10 +2369,10 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Awards Modal */}
-      <Dialog open={awardsModalOpen} onOpenChange={setAwardsModalOpen}>
+      < Dialog open={awardsModalOpen} onOpenChange={setAwardsModalOpen} >
         <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-h3 font-heading text-foreground">
@@ -2479,8 +2490,8 @@ const EditProfile: React.FC = () => {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
-    </AppLayout>
+      </Dialog >
+    </AppLayout >
   );
 };
 

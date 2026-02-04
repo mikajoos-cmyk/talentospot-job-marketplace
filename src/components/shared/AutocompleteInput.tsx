@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { X } from 'lucide-react';
 import { masterDataService } from '@/services/master-data.service';
+import { searchCities } from '@/utils/geocoding';
 
 interface AutocompleteInputProps {
-    category: 'skills' | 'qualifications' | 'languages' | 'job_titles' | 'tags' | 'requirements' | 'countries' | 'states' | 'nationalities' | 'cities';
+    category: 'skills' | 'qualifications' | 'languages' | 'job_titles' | 'tags' | 'requirements' | 'countries' | 'states' | 'nationalities' | 'cities' | 'sectors';
     value: string;
     onChange: (value: string) => void;
     onSelect?: (value: string | any) => void;
@@ -51,7 +52,12 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                     case 'countries': data = await masterDataService.getCountries(); break;
                     case 'states': data = await masterDataService.getStates(filterId); break;
                     case 'nationalities': data = await masterDataService.getNationalities(); break;
-                    case 'cities': data = await masterDataService.getCities(filterId); break;
+                    case 'cities':
+                        // If no filterId, we use live search, so don't pre-fetch
+                        if (!filterId) data = [];
+                        else data = await masterDataService.getCities(filterId);
+                        break;
+                    case 'sectors': data = await masterDataService.getSectors(); break;
                 }
                 setSuggestions(data);
             } catch (error) {
@@ -63,15 +69,37 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
 
     useEffect(() => {
         if (!value || value.trim() === '') {
-            setFilteredSuggestions([]);
+            if (category === 'cities' && !filterId) {
+                setFilteredSuggestions([]);
+            } else {
+                setFilteredSuggestions(suggestions);
+            }
+            setActiveIndex(0);
             return;
         }
-        const filtered = suggestions.filter(s =>
-            s.name.toLowerCase().includes(value.toLowerCase())
-        );
-        setFilteredSuggestions(filtered);
-        setActiveIndex(0);
-    }, [value, suggestions]);
+
+        if (category === 'cities' && !filterId) {
+            // Live search for cities via Nominatim
+            const searchLive = async () => {
+                const results = await searchCities(value);
+                setFilteredSuggestions(results.map(r => ({
+                    name: r.city || r.displayName,
+                    id: `${r.lat}-${r.lon}`,
+                    ...r
+                })));
+                setActiveIndex(0);
+            };
+
+            const timeoutId = setTimeout(searchLive, 300);
+            return () => clearTimeout(timeoutId);
+        } else {
+            const filtered = suggestions.filter(s =>
+                s.name.toLowerCase().includes(value.toLowerCase())
+            );
+            setFilteredSuggestions(filtered);
+            setActiveIndex(0);
+        }
+    }, [value, suggestions, category, filterId]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

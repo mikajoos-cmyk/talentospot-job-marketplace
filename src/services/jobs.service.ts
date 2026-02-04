@@ -559,4 +559,27 @@ export const jobsService = {
     if (error) throw error;
     return Promise.all((data || []).map(job => this.mapDbJobToFrontend(job)));
   },
+
+  async promoteJob(jobId: string, employerId: string) {
+    // 1. Check Limits
+    const limitCheck = await packagesService.checkLimit(employerId, 'featured_jobs');
+    if (!limitCheck.allowed) {
+      throw new Error(limitCheck.message);
+    }
+
+    // 2. Update Job
+    const { data, error } = await supabase
+      .from('jobs')
+      .update({ is_featured: true })
+      .eq('id', jobId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // 3. Increment Usage
+    await packagesService.incrementUsage(employerId, 'featured_jobs');
+
+    return data;
+  },
 };

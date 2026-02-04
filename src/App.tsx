@@ -9,6 +9,7 @@ import Register from './pages/auth/Register';
 import CandidateDashboard from './pages/CandidateDashboard';
 import EmployerDashboard from './pages/EmployerDashboard';
 import CandidateSearch from './pages/CandidateSearch';
+import CandidateAlerts from './pages/employer/CandidateAlerts';
 import JobSearch from './pages/JobSearch';
 import CandidateProfile from './pages/CandidateProfile';
 import EmployerJobs from './pages/EmployerJobs';
@@ -29,6 +30,8 @@ import JobDetailView from './pages/shared/JobDetailView';
 import CompanyDetail from './pages/shared/CompanyDetail';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Settings from './pages/Settings';
+import AboutUs from './pages/AboutUs';
+import HowItWorks from './pages/HowItWorks';
 
 function App() {
   return (
@@ -156,6 +159,14 @@ function App() {
                 }
               />
               <Route
+                path="/employer/alerts"
+                element={
+                  <ProtectedRoute requiredRole="employer">
+                    <CandidateAlerts />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/employer/jobs"
                 element={
                   <ProtectedRoute requiredRole="employer">
@@ -250,6 +261,9 @@ function App() {
               <Route path="/companies/:id" element={<CompanyDetail />} />
               <Route path="/candidates" element={<CandidateSearch />} />
               <Route path="/candidates/:id" element={<CandidateDetailView />} />
+
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/how-it-works" element={<HowItWorks />} />
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

@@ -27,18 +27,75 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   const navigate = useNavigate();
   const { user } = useUser();
   const { showToast } = useToast();
-  // Strict privacy: Blurred unless request accepted or guest.
-  const isBlurred = user.role === 'guest' || accessStatus !== 'approved';
-  const canContact = user.role !== 'guest' && accessStatus === 'approved';
+
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [requestPending, setRequestPending] = useState(accessStatus === 'pending');
   const [jobs, setJobs] = useState<any[]>([]);
+  const [hasActivePackage, setHasActivePackage] = useState(false);
 
   // Sync state with prop
   useEffect(() => {
     setRequestPending(accessStatus === 'pending' || accessStatus === 'rejected' || accessStatus === 'approved');
   }, [accessStatus]);
+
+  useEffect(() => {
+    const checkPackage = async () => {
+      if (user.role === 'employer' && user.id) {
+        try {
+          // Dynamically import to avoid circular dependency if any, or just use it.
+          // Assuming packagesService is available global or imported
+          const { packagesService } = await import('@/services/packages.service');
+          const sub = await packagesService.getUserSubscription(user.id);
+          setHasActivePackage(!!sub);
+        } catch (e) {
+          console.error("Error checking package", e);
+        }
+      }
+    }
+    checkPackage();
+  }, [user.id, user.role]);
+
+  // Strict privacy: Blurred unless request accepted or guest.
+  // ALSO: If I don't have a package, I shouldn't see details even if it's shortlisted (maybe?)
+  // Prompt: "blurring shortlisted candidates for employers without a purchased package"
+  // If I access this card via Shortlist page, it should be blurred if I don't have package.
+  // We can just rely on `hasActivePackage` combined with `accessStatus`.
+  // If accessStatus is 'approved', wait, if I don't have a package, do I lose access? 
+  // "Restricting direct messaging ... for employers without a purchased package"
+  // So canContact should check hasActivePackage.
+  // "blurring shortlisted candidates ... without a purchased package"
+  // If I have no package, `isBlurred` should be true. (unless access is approved? Maybe approval requires package).
+
+  // Revised Logic:
+  // if guest: blurred
+  // if employer:
+  //   if access approved AND hasPackage: not blurred, contactable.
+  //   if access approved BUT no package: blurred? Or just cannot contact?
+  //   The prompt says "blurring shortlisted candidates".
+  //   Let's assume: No package = Blurred (except maybe name if logic allows, but usually blurred means everything).
+
+  // Actually, standard behavior:
+  // Search results are anonymous (blurred name/contact).
+  // If I have package, I can see more? Or is it about "Shortlisted"?
+  // Let's implement: isBlurred = true if (guest OR (employer AND !hasPackage AND !accessApproved))?
+  // Actually, usually "Shortlisted" means I saved them. If I don't have package, they appear blurred in shortlist.
+
+  // Let's stick to: 
+  const isBlurred = user.role === 'guest' || (user.role === 'employer' && (!hasActivePackage && accessStatus !== 'approved')) || accessStatus !== 'approved';
+  // Wait, if accessStatus !== 'approved' it IS blurred.
+  // So: isBlurred = accessStatus !== 'approved';
+  // Logic: "blurring shortlisted candidates ... without a purchased package"
+  // This implies normally a shortlisted candidate might be visible? 
+  // If I shortlist someone, do I get to see them? No, usually I have to request access.
+  // So if I request access and it's approved, I see them.
+  // If I don't have package, can I request access? Probably not (limit check).
+  // So `accessStatus` check handles most. The only edge case is if I had package, got approval, then package expired.
+  // In that case, `hasActivePackage` is false, but `accessStatus` is `approved`.
+  // Should I blur then? Yes, "Restricting ... for employers without a purchased package".
+  // So:
+  const isBlurredEffect = user.role === 'guest' || accessStatus !== 'approved' || (user.role === 'employer' && !hasActivePackage);
+  const canContact = user.role !== 'guest' && accessStatus === 'approved' && hasActivePackage;
 
   useEffect(() => {
     const loadJobs = async () => {
@@ -127,11 +184,11 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
     }
   };
 
-  const displayName = isBlurred
+  const displayName = isBlurredEffect
     ? `Candidate #${String(candidate.id).slice(-3).padStart(3, '0')}`
     : candidate.profiles?.full_name || candidate.name || 'Candidate';
 
-  const shouldBlurIdentity = isBlurred;
+  const shouldBlurIdentity = isBlurredEffect;
   const candidateAvatar = candidate.profiles?.avatar_url || candidate.avatar;
   const candidateTitle = candidate.job_title || candidate.title || 'Professional';
   const location = candidate.city && candidate.country ? `${candidate.city}, ${candidate.country}` : candidate.location || 'Location not specified';
@@ -250,7 +307,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                   <p className="text-sm font-semibold">
                     {candidate.currency || 'EUR'} {minSalary.toLocaleString()} - {maxSalary.toLocaleString()}
                   </p>
-                  {entryBonus && <p className="text-xs font-bold text-warning">Entry Bonus: €{entryBonus.toLocaleString()}</p>}
+                  {entryBonus && <p className="text-xs font-bold text-[#FFB800]">Entry Bonus: €{entryBonus.toLocaleString()}</p>}
                 </div>
               </div>
 

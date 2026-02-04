@@ -41,11 +41,14 @@ export async function getCoordinates(city: string, country?: string): Promise<{ 
     }
 }
 
-export async function searchCities(query: string, countryCode: string, type?: 'city' | 'address'): Promise<GeoLocation[]> {
+export async function searchCities(query: string, countryCode?: string, type?: 'city' | 'address'): Promise<GeoLocation[]> {
     try {
         if (!query || query.length < 2) return [];
 
-        let url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=${countryCode}&format=json&addressdetails=1&limit=5`;
+        let url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5`;
+        if (countryCode) {
+            url += `&countrycodes=${countryCode}`;
+        }
 
         if (type === 'city') {
             url += '&featuretype=city';

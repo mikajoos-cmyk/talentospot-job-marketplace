@@ -308,9 +308,9 @@ const CandidateProfile: React.FC = () => {
 
             {/* Nur anzeigen, wenn Bonus > 0 */}
             {candidateData.conditions?.entryBonus > 0 && (
-              <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg flex-1 min-w-[200px]">
-                <p className="text-caption text-warning mb-1">Entry Bonus</p>
-                <p className="text-h4 font-heading text-warning">
+              <div className="p-4 bg-[#FFB800]/10 border border-[#FFB800]/30 rounded-lg flex-1 min-w-[200px]">
+                <p className="text-caption text-[#FFB800] mb-1">Entry Bonus</p>
+                <p className="text-h4 font-heading text-[#FFB800] font-bold">
                   {candidateData.currency || '€'}{candidateData.conditions.entryBonus.toLocaleString()}
                 </p>
               </div>
@@ -407,7 +407,7 @@ const CandidateProfile: React.FC = () => {
           <Card className="p-6 md:p-8 border border-border bg-card">
             <div className="flex items-center space-x-3 mb-6">
               <CheckCircle2 className="w-6 h-6 text-primary" strokeWidth={1.5} />
-              <h3 className="text-h3 font-heading text-foreground">My Expectations from Employers</h3>
+              <h3 className="text-h3 font-heading text-foreground">Additional Abilities</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {candidateData.requirements.map((req: string, idx: number) => (

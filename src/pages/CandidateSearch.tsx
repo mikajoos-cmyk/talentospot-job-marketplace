@@ -86,6 +86,8 @@ const CandidateSearch: React.FC = () => {
         noticePeriod: getArray('noticePeriod'),
         preferredWorkLocations: [],
         customTags: getArray('tags'),
+        gender: getArray('gender'),
+        allowOverqualification: searchParams.get('allowOverqualification') === 'true',
       };
     }
 
@@ -130,6 +132,8 @@ const CandidateSearch: React.FC = () => {
       noticePeriod: [],
       preferredWorkLocations: [],
       customTags: [],
+      gender: [],
+      allowOverqualification: false,
     };
   });
 
@@ -315,6 +319,14 @@ const CandidateSearch: React.FC = () => {
 
           if (filters.location.cities && filters.location.cities.length > 0) {
             searchFilters.city = filters.location.cities[0];
+          }
+
+          if (filters.gender && filters.gender.length > 0) {
+            searchFilters.gender = filters.gender;
+          }
+
+          if (filters.allowOverqualification) {
+            searchFilters.allow_overqualification = filters.allowOverqualification;
           }
         }
 

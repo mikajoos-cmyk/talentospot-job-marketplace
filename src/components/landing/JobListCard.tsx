@@ -111,7 +111,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                                     {job.salary_min ? `${formatMoney(job.salary_min)} - ${formatMoney(job.salary_max)} ${job.salary_currency || 'EUR'}` : 'Competitive Salary'}
                                 </p>
                                 {job.entry_bonus && (
-                                    <p className="text-xs font-bold text-warning mt-0.5">Entry Bonus: €{formatMoney(job.entry_bonus)}</p>
+                                    <p className="text-xs font-bold text-[#FFB800] mt-0.5">Entry Bonus: €{formatMoney(job.entry_bonus)}</p>
                                 )}
                             </div>
                         </div>

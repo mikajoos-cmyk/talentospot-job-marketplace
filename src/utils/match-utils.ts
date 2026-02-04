@@ -332,6 +332,15 @@ export const calculateCandidateMatchScore = (candidate: any, filters: any): numb
         }
     }
 
+    // Gender match
+    if (filters.gender && filters.gender.length > 0) {
+        total += 1;
+        const candidateGender = candidate.gender || '';
+        if (filters.gender.includes(candidateGender.toLowerCase())) {
+            matched += 1;
+        }
+    }
+
     // Candidate Status match
     if (filters.candidateStatus && filters.candidateStatus.length > 0) {
         total += 1;
@@ -452,8 +461,15 @@ export const calculateCandidateMatchScore = (candidate: any, filters: any): numb
         total += 1;
         const [min, max] = filters.yearsOfExperience;
         const candidateYears = candidate.years_of_experience || candidate.yearsOfExperience || 0;
-        if (candidateYears >= min && candidateYears <= max) {
-            matched += 1;
+
+        if (filters.allowOverqualification) {
+            if (candidateYears >= min) {
+                matched += 1;
+            }
+        } else {
+            if (candidateYears >= min && candidateYears <= max) {
+                matched += 1;
+            }
         }
     }
 

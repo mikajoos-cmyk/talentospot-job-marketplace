@@ -132,6 +132,16 @@ export const masterDataService = {
     return data;
   },
 
+  async getSectors() {
+    const { data, error } = await supabase
+      .from('sectors')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    return data;
+  },
+
   async getTags() {
     const { data, error } = await supabase
       .from('tags')
@@ -162,7 +172,7 @@ export const masterDataService = {
     return data;
   },
 
-  async syncMasterData(category: 'skills' | 'qualifications' | 'languages' | 'job_titles' | 'tags' | 'requirements', names: string[]) {
+  async syncMasterData(category: 'skills' | 'qualifications' | 'languages' | 'job_titles' | 'tags' | 'requirements' | 'sectors', names: string[]) {
     if (!names || names.length === 0) return;
 
     // Skip languages as they require a code

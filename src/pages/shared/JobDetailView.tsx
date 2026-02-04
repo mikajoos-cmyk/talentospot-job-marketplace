@@ -266,17 +266,17 @@ const JobDetailView: React.FC = () => {
 
             {/* Entry Bonus */}
             {job.entry_bonus && (
-              <div className="bg-gradient-to-r from-warning/20 to-warning/5 border border-warning/20 rounded-2xl p-6 flex items-center justify-between">
+              <div className="bg-gradient-to-r from-[#FFB800]/20 to-[#FFB800]/5 border border-[#FFB800]/20 rounded-2xl p-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-warning/20 rounded-xl">
-                    <Award className="w-6 h-6 text-warning-hover" />
+                  <div className="p-3 bg-[#FFB800]/20 rounded-xl">
+                    <Award className="w-6 h-6 text-[#FFB800]" />
                   </div>
                   <div>
-                    <h4 className="text-body font-bold text-warning-hover mb-0.5">Joining Bonus</h4>
-                    <p className="text-caption text-warning-hover/80">One-time payment upon successful hire</p>
+                    <h4 className="text-body font-bold text-[#FFB800] mb-0.5">Joining Bonus</h4>
+                    <p className="text-caption text-[#FFB800]/80">One-time payment upon successful hire</p>
                   </div>
                 </div>
-                <span className="text-h2 font-heading text-warning-hover">€{job.entry_bonus.toLocaleString()}</span>
+                <span className="text-h2 font-heading text-[#FFB800] font-bold">€{job.entry_bonus.toLocaleString()}</span>
               </div>
             )}
 

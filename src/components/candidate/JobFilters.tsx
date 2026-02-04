@@ -219,7 +219,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
     };
 
     return (
-        <Card className="p-6 border border-border bg-card sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto">
+        <Card className="p-6 border border-primary/30 bg-card sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 group/filters">
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-h4 font-heading text-foreground">Filters</h3>
                 <Button

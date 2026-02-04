@@ -107,7 +107,7 @@ const CandidateListCard: React.FC<CandidateListCardProps> = ({ candidate, onView
                             <div>
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Salary Expectation</p>
                                 <p className="text-sm font-semibold">{salary}</p>
-                                {bonus && <p className="text-xs font-bold text-warning">Entry Bonus: {bonus}</p>}
+                                {bonus && <p className="text-xs font-bold text-[#FFB800]">Entry Bonus: {bonus}</p>}
                             </div>
                         </div>
                     </div>

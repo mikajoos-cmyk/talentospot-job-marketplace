@@ -46,6 +46,7 @@ const CandidateDetailView: React.FC = () => {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [selectedAward, setSelectedAward] = useState<any>(null);
   const [isAwardModalOpen, setIsAwardModalOpen] = useState(false);
+  const [hasActivePackage, setHasActivePackage] = useState(false);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -60,6 +61,15 @@ const CandidateDetailView: React.FC = () => {
         setEmployerJobs(jobsData);
 
         if (user.role === 'employer' && user.profile?.id) {
+          // Check package status
+          try {
+            const { packagesService } = await import('../../services/packages.service');
+            const subAuth = await packagesService.getUserSubscription(user.id);
+            setHasActivePackage(!!subAuth);
+          } catch (e) {
+            console.error("Error checking package", e);
+          }
+
           const status = await candidateService.checkDataAccess(id, user.profile.id);
           setAccessStatus(status);
 
@@ -85,8 +95,9 @@ const CandidateDetailView: React.FC = () => {
 
   // is_refugee etc. from DB
   // Strict privacy: Blurred unless request accepted.
-  const isBlurred = accessStatus !== 'approved';
-  const canContact = accessStatus === 'approved';
+  // ALSO: If no package, enforce blur or restrictions as per requirement "blurring shortlisted candidates for employers without a purchased package"
+  const isBlurred = accessStatus !== 'approved' || (!hasActivePackage && isShortlisted);
+  const canContact = accessStatus === 'approved' && hasActivePackage;
 
   // Reviews placeholder
   const candidateReviews: any[] = [];
@@ -150,18 +161,10 @@ const CandidateDetailView: React.FC = () => {
       const isLimitError = e.message?.includes('Limit erreicht') || e.message?.includes('Upgrade');
       showToast({
         title: isLimitError ? 'Limit Reached' : 'Error',
-        description: e.message || 'Failed to request data.',
+        description: isLimitError
+          ? 'Limit reached. Please upgrade your package to request more data.'
+          : (e.message || 'Failed to request data.'),
         variant: 'destructive',
-        action: isLimitError ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white text-black border-none hover:bg-gray-100"
-            onClick={() => navigate('/packages')}
-          >
-            Upgrade
-          </Button>
-        ) : undefined
       });
     }
   };
@@ -465,9 +468,9 @@ const CandidateDetailView: React.FC = () => {
             </div>
 
             {candidate.conditions?.entryBonus && (
-              <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
-                <p className="text-caption text-warning mb-1">Entry Bonus</p>
-                <p className="text-h4 font-heading text-warning">
+              <div className="p-4 bg-[#FFB800]/10 border border-[#FFB800]/30 rounded-lg">
+                <p className="text-caption text-[#FFB800] mb-1">Entry Bonus</p>
+                <p className="text-h4 font-heading text-[#FFB800]">
                   {candidate.currency || 'EUR'} {candidate.conditions.entryBonus.toLocaleString()}
                 </p>
               </div>

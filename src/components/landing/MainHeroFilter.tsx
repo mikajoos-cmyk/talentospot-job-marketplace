@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
     Search, MapPin, Briefcase, ChevronDown,
     SlidersHorizontal, Plus, X, Globe,
     Languages, GraduationCap, Clock, Coins, Umbrella,
-    Sparkles, Truck, Car, ArrowRight, User
+    Sparkles, Car, ArrowRight, User
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -16,8 +15,10 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
 import { Separator } from '@/components/ui/separator';
-import { locationData, refugeeOriginCountries } from '@/data/locationData';
+import { refugeeOriginCountries } from '@/data/locationData';
 import { getLanguageLevelOptions } from '@/utils/language-levels';
+import { LocationPicker, LocationValue } from '@/components/shared/LocationPicker';
+import { findContinent } from '@/utils/locationUtils';
 
 const MainHeroFilter = () => {
     const navigate = useNavigate();
@@ -71,29 +72,17 @@ const MainHeroFilter = () => {
         enablePartialMatch: false,
         minMatchThreshold: 50,
         enableFlexibleMatch: false,
+        allowOverqualification: false,
+        gender: [] as string[],
     });
 
     const [skillInput, setSkillInput] = useState('');
     const [qualificationInput, setQualificationInput] = useState('');
     const [languageInput, setLanguageInput] = useState('');
     const [languageLevel, setLanguageLevel] = useState('B2');
-    const [customPkwInput, setCustomPkwInput] = useState('');
-    const [customLkwInput, setCustomLkwInput] = useState('');
     const [tagInput, setTagInput] = useState('');
     const [benefitInput, setBenefitInput] = useState('');
 
-    const [suggestions, setSuggestions] = useState({
-        jobTitles: [] as string[],
-        sectors: [] as string[],
-    });
-
-    // Mocked suggestions for now, in a real app these would come from the service
-    useEffect(() => {
-        setSuggestions({
-            jobTitles: ['Software Engineer', 'Project Manager', 'Sales Specialist', 'Truck Driver', 'Nurse'],
-            sectors: ['IT', 'Healthcare', 'Finance', 'Engineering', 'Marketing', 'Sales', 'Education', 'Manufacturing', 'Retail', 'Logistics', 'Construction', 'Other'],
-        });
-    }, []);
 
     const handleSearch = () => {
         const searchParams = new URLSearchParams();
@@ -144,6 +133,9 @@ const MainHeroFilter = () => {
             if (filters.hasLkw !== null) searchParams.set('hasLkw', filters.hasLkw.toString());
             const allLkw = [...filters.lkwClasses, ...(filters.customLkw ? [filters.customLkw] : [])];
             if (allLkw.length > 0) searchParams.set('lkwClasses', allLkw.join(','));
+
+            if (filters.gender.length > 0) searchParams.set('gender', filters.gender.join(','));
+            if (filters.allowOverqualification) searchParams.set('allowOverqualification', 'true');
 
             if (filters.enablePartialMatch) {
                 searchParams.set('partialMatch', 'true');
@@ -240,37 +232,6 @@ const MainHeroFilter = () => {
         });
     };
 
-    const togglePkwClass = (cls: string) => {
-        setFilters(prev => ({
-            ...prev,
-            pkwClasses: prev.pkwClasses.includes(cls)
-                ? prev.pkwClasses.filter(c => c !== cls)
-                : [...prev.pkwClasses, cls]
-        }));
-    };
-
-    const toggleLkwClass = (cls: string) => {
-        setFilters(prev => ({
-            ...prev,
-            lkwClasses: prev.lkwClasses.includes(cls)
-                ? prev.lkwClasses.filter(c => c !== cls)
-                : [...prev.lkwClasses, cls]
-        }));
-    };
-
-    const handleAddCustomPkw = () => {
-        if (customPkwInput.trim()) {
-            setFilters({ ...filters, customPkw: customPkwInput.trim() });
-            setCustomPkwInput('');
-        }
-    };
-
-    const handleAddCustomLkw = () => {
-        if (customLkwInput.trim()) {
-            setFilters({ ...filters, customLkw: customLkwInput.trim() });
-            setCustomLkwInput('');
-        }
-    };
 
     const handleAddTag = () => {
         if (tagInput.trim() && !filters.customTags.includes(tagInput.trim())) {
@@ -306,12 +267,22 @@ const MainHeroFilter = () => {
         });
     };
 
-    // Location helpers
-    const continents = Object.keys(locationData);
-    const countries = filters.continent !== 'any' ? Object.keys(locationData[filters.continent] || {}) : [];
-    const cities = (filters.continent !== 'any' && filters.country !== 'any')
-        ? locationData[filters.continent]?.[filters.country] || []
-        : [];
+    // Location helpers - keeping for backward compatibility if needed, but using LocationPicker now
+    // const continents = Object.keys(locationData);
+    // const countries = filters.continent !== 'any' ? Object.keys(locationData[filters.continent] || {}) : [];
+    // const cities = (filters.continent !== 'any' && filters.country !== 'any')
+    //     ? locationData[filters.continent]?.[filters.country] || []
+    //     : [];
+
+    const handleLocationChange = (val: LocationValue) => {
+        setFilters({
+            ...filters,
+            location: val.city,
+            city: val.city,
+            country: val.country,
+            continent: findContinent(val.country)
+        });
+    };
 
     return (
         <div className="w-full max-w-5xl mx-auto px-4 relative z-10">
@@ -339,7 +310,7 @@ const MainHeroFilter = () => {
                 </div>
             </div>
 
-            <Card className="p-3 md:p-6 shadow-2xl border-none bg-white/95 backdrop-blur-md rounded-2xl overflow-hidden">
+            <Card className="p-3 md:p-6 shadow-2xl border-2 border-primary/20 bg-white/95 backdrop-blur-md rounded-2xl overflow-hidden hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-500">
                 {/* Main Search Bar */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                     {/* Job Title */}
@@ -371,20 +342,14 @@ const MainHeroFilter = () => {
                     {/* Sector */}
                     <div className="md:col-span-2 space-y-1.5 p-2">
                         <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider ml-1">Sector</Label>
-                        <Select value={filters.sector} onValueChange={(val) => setFilters({ ...filters, sector: val })}>
-                            <SelectTrigger className="h-12 bg-muted/40 border-none focus:ring-1 focus:ring-primary text-base shadow-none rounded-xl">
-                                <div className="flex items-center truncate">
-                                    <Briefcase className="w-4 h-4 mr-3 text-primary shrink-0" />
-                                    <SelectValue placeholder="Sector" />
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="any">Any Sector</SelectItem>
-                                {suggestions.sectors.map(s => (
-                                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <AutocompleteInput
+                            category="sectors"
+                            placeholder="Any Sector"
+                            value={filters.sector === 'any' ? '' : filters.sector}
+                            onChange={(val) => setFilters({ ...filters, sector: val || 'any' })}
+                            inputClassName="h-12 bg-muted/40 border-none focus-visible:ring-1 focus-visible:ring-primary text-base rounded-xl"
+                            icon={<Briefcase className="w-4 h-4 text-primary" />}
+                        />
                     </div>
 
                     {/* Hero Quick Filter Slot - Only for Candidates */}
@@ -445,7 +410,7 @@ const MainHeroFilter = () => {
 
                     <CollapsibleContent className="px-4 py-8 border-t border-border mt-2 space-y-12 animate-in slide-in-from-top duration-300 overflow-visible">
 
-                        {/* 1. Precise Location Hierarchy */}
+                        {/* 1. Precise Location & Radius */}
                         <section className="space-y-6">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -453,46 +418,21 @@ const MainHeroFilter = () => {
                                 </div>
                                 <h3 className="font-bold text-lg">Precise Location</h3>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs font-bold text-muted-foreground uppercase">Continent</Label>
-                                    <Select value={filters.continent} onValueChange={(val) => setFilters({ ...filters, continent: val, country: 'any', city: 'any' })}>
-                                        <SelectTrigger className="h-10 bg-muted/40 border-none rounded-lg"><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="any">All Continents</SelectItem>
-                                            {continents.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
+
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                                <div className="md:col-span-8">
+                                    <LocationPicker
+                                        mode="city"
+                                        value={{
+                                            city: filters.city !== 'any' ? filters.city : '',
+                                            country: filters.country !== 'any' ? filters.country : ''
+                                        }}
+                                        onChange={handleLocationChange}
+                                        className="space-y-4"
+                                    />
                                 </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs font-bold text-muted-foreground uppercase">Country</Label>
-                                    <Select
-                                        value={filters.country}
-                                        onValueChange={(val) => setFilters({ ...filters, country: val, city: 'any' })}
-                                        disabled={filters.continent === 'any'}
-                                    >
-                                        <SelectTrigger className="h-10 bg-muted/40 border-none rounded-lg"><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="any">All Countries</SelectItem>
-                                            {countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs font-bold text-muted-foreground uppercase">City</Label>
-                                    <Select
-                                        value={filters.city}
-                                        onValueChange={(val) => setFilters({ ...filters, city: val })}
-                                        disabled={filters.country === 'any'}
-                                    >
-                                        <SelectTrigger className="h-10 bg-muted/40 border-none rounded-lg"><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="any">All Cities</SelectItem>
-                                            {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-4">
+
+                                <div className="md:col-span-4 space-y-4 pt-1">
                                     <div className="flex justify-between items-center">
                                         <Label className="text-xs font-bold text-muted-foreground uppercase">Radius Search</Label>
                                         <span className="text-xs font-bold text-primary">{filters.radius} km</span>
@@ -503,6 +443,9 @@ const MainHeroFilter = () => {
                                         max={200}
                                         step={5}
                                     />
+                                    <p className="text-[10px] text-muted-foreground italic">
+                                        Select a city above to enable radius matching based on your location.
+                                    </p>
                                 </div>
                             </div>
                         </section>
@@ -561,6 +504,34 @@ const MainHeroFilter = () => {
                                                 </div>
                                             </div>
 
+                                            {/* Driving Licenses */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                                                    <Car className="w-3 h-3" />
+                                                    Driving Licenses
+                                                </Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        onClick={() => setFilters({ ...filters, hasPkw: filters.hasPkw === true ? null : true })}
+                                                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.hasPkw === true
+                                                            ? 'bg-warning border-warning text-white shadow-sm'
+                                                            : 'bg-white border-border text-foreground hover:border-warning/50'
+                                                            }`}
+                                                    >
+                                                        PKW (Car)
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setFilters({ ...filters, hasLkw: filters.hasLkw === true ? null : true })}
+                                                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.hasLkw === true
+                                                            ? 'bg-warning border-warning text-white shadow-sm'
+                                                            : 'bg-white border-border text-foreground hover:border-warning/50'
+                                                            }`}
+                                                    >
+                                                        LKW (Truck)
+                                                    </button>
+                                                </div>
+                                            </div>
+
                                             {/* Experience Slider */}
                                             <div className="space-y-4">
                                                 <div className="flex justify-between items-center">
@@ -573,6 +544,25 @@ const MainHeroFilter = () => {
                                                     max={30}
                                                     step={1}
                                                 />
+                                            </div>
+
+                                            {/* Notice Period */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Notice Period</Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {['immediately', '1-month', '2-months', '3-months', '6-months'].map(period => (
+                                                        <button
+                                                            key={period}
+                                                            onClick={() => toggleFilterItem('noticePeriod', period)}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.noticePeriod.includes(period)
+                                                                ? 'bg-warning border-warning text-white shadow-sm'
+                                                                : 'bg-white border-border text-foreground hover:border-warning/50'
+                                                                }`}
+                                                        >
+                                                            {period.replace('-', ' ')}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
 
                                             {/* Refugee Status */}
@@ -602,6 +592,25 @@ const MainHeroFilter = () => {
                                                 </div>
                                             )}
 
+                                            {/* Gender */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Gender</Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {['Male', 'Female', 'Non-binary', 'Other'].map(g => (
+                                                        <button
+                                                            key={g}
+                                                            onClick={() => toggleFilterItem('gender', g)}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.gender.includes(g)
+                                                                ? 'bg-primary border-primary text-white shadow-sm'
+                                                                : 'bg-white border-border text-foreground hover:border-primary/50'
+                                                                }`}
+                                                        >
+                                                            {g}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
                                             {/* Travel Willingness */}
                                             <div className="space-y-4">
                                                 <div className="flex justify-between items-center">
@@ -616,24 +625,7 @@ const MainHeroFilter = () => {
                                                 />
                                             </div>
 
-                                            {/* Notice Period */}
-                                            <div className="space-y-3">
-                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Notice Period</Label>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {['immediately', '1-month', '2-months', '3-months', '6-months'].map(period => (
-                                                        <button
-                                                            key={period}
-                                                            onClick={() => toggleFilterItem('noticePeriod', period)}
-                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.noticePeriod.includes(period)
-                                                                ? 'bg-warning border-warning text-white shadow-sm'
-                                                                : 'bg-white border-border text-foreground hover:border-warning/50'
-                                                                }`}
-                                                        >
-                                                            {period.replace('-', ' ')}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
+
 
                                             {/* Custom Tags */}
                                             <div className="space-y-3">
@@ -907,171 +899,7 @@ const MainHeroFilter = () => {
 
                         <Separator className="opacity-50" />
 
-                        {/* 4. Refined Driving Licenses Logic */}
-                        <section className="space-y-8">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
-                                    <Car className="w-4 h-4 text-warning" />
-                                </div>
-                                <h3 className="font-bold text-lg">Driving Licenses</h3>
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                                {/* PKW (Car) Section */}
-                                <div className="space-y-6 p-6 bg-muted/20 rounded-2xl border border-border/40 relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                        <Car className="w-20 h-20" />
-                                    </div>
-
-                                    <div className="flex items-center justify-between relative z-10">
-                                        <div className="space-y-1">
-                                            <h4 className="font-bold text-xl flex items-center gap-2">
-                                                PKW <span className="text-muted-foreground text-sm font-normal">(Car)</span>
-                                            </h4>
-                                            <p className="text-xs text-muted-foreground">Standard passenger vehicle licenses</p>
-                                        </div>
-                                        <div className="flex gap-2 bg-white p-1 rounded-full shadow-inner border border-border/20">
-                                            <Button
-                                                size="sm"
-                                                variant={filters.hasPkw === true ? 'default' : 'ghost'}
-                                                onClick={() => setFilters({ ...filters, hasPkw: true })}
-                                                className={`rounded-full px-4 h-9 font-bold ${filters.hasPkw === true ? 'shadow-md' : 'text-muted-foreground'}`}
-                                            >
-                                                YES
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant={filters.hasPkw === false ? 'default' : 'ghost'}
-                                                onClick={() => setFilters({ ...filters, hasPkw: false, pkwClasses: [], customPkw: '' })}
-                                                className={`rounded-full px-4 h-9 font-bold ${filters.hasPkw === false ? 'shadow-md' : 'text-muted-foreground'}`}
-                                            >
-                                                NO
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    {filters.hasPkw === true && (
-                                        <div className="space-y-5 animate-in fade-in zoom-in-95 duration-300 relative z-10">
-                                            <Separator className="bg-border/60" />
-                                            <div className="space-y-3">
-                                                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Common Classes</Label>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {['B', 'BE', 'B96', 'AM', 'L', 'T'].map(cls => (
-                                                        <button
-                                                            key={cls}
-                                                            onClick={() => togglePkwClass(cls)}
-                                                            className={`w-12 h-12 rounded-xl text-sm font-black transition-all border-2 flex items-center justify-center ${filters.pkwClasses.includes(cls)
-                                                                ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105'
-                                                                : 'bg-white border-border/60 text-foreground hover:border-primary/40'
-                                                                }`}
-                                                        >
-                                                            {cls}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Custom Option</Label>
-                                                <div className="flex gap-2">
-                                                    <Input
-                                                        placeholder="Add specific class..."
-                                                        value={customPkwInput}
-                                                        onChange={(e) => setCustomPkwInput(e.target.value)}
-                                                        className="h-10 bg-white"
-                                                    />
-                                                    <Button size="icon" variant="ghost" className="border-dashed border-2 border-border h-10 w-10 shrink-0" onClick={handleAddCustomPkw}>
-                                                        <Plus className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
-                                                {filters.customPkw && (
-                                                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-primary/5 text-primary text-xs font-bold rounded-lg border border-primary/20">
-                                                        {filters.customPkw} <X className="w-3 h-3 cursor-pointer" onClick={() => setFilters({ ...filters, customPkw: '' })} />
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* LKW (Truck) Section */}
-                                <div className="space-y-6 p-6 bg-muted/20 rounded-2xl border border-border/40 relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                        <Truck className="w-20 h-20" />
-                                    </div>
-
-                                    <div className="flex items-center justify-between relative z-10">
-                                        <div className="space-y-1">
-                                            <h4 className="font-bold text-xl flex items-center gap-2">
-                                                LKW <span className="text-muted-foreground text-sm font-normal">(Truck)</span>
-                                            </h4>
-                                            <p className="text-xs text-muted-foreground">Commercial heavy vehicle licenses</p>
-                                        </div>
-                                        <div className="flex gap-2 bg-white p-1 rounded-full shadow-inner border border-border/20">
-                                            <Button
-                                                size="sm"
-                                                variant={filters.hasLkw === true ? 'secondary' : 'ghost'}
-                                                onClick={() => setFilters({ ...filters, hasLkw: true })}
-                                                className={`rounded-full px-4 h-9 font-bold ${filters.hasLkw === true ? 'shadow-md' : 'text-muted-foreground'}`}
-                                            >
-                                                YES
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant={filters.hasLkw === false ? 'secondary' : 'ghost'}
-                                                onClick={() => setFilters({ ...filters, hasLkw: false, lkwClasses: [], customLkw: '' })}
-                                                className={`rounded-full px-4 h-9 font-bold ${filters.hasLkw === false ? 'shadow-md' : 'text-muted-foreground'}`}
-                                            >
-                                                NO
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    {filters.hasLkw === true && (
-                                        <div className="space-y-5 animate-in fade-in zoom-in-95 duration-300 relative z-10">
-                                            <Separator className="bg-border/60" />
-                                            <div className="space-y-3">
-                                                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Common Classes</Label>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {['C', 'CE', 'C1', 'C1E', 'D', 'DE'].map(cls => (
-                                                        <button
-                                                            key={cls}
-                                                            onClick={() => toggleLkwClass(cls)}
-                                                            className={`w-12 h-12 rounded-xl text-sm font-black transition-all border-2 flex items-center justify-center ${filters.lkwClasses.includes(cls)
-                                                                ? 'bg-secondary border-secondary text-secondary-foreground shadow-lg shadow-secondary/20 scale-105'
-                                                                : 'bg-white border-border/60 text-foreground hover:border-secondary/40'
-                                                                }`}
-                                                        >
-                                                            {cls}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Custom Option</Label>
-                                                <div className="flex gap-2">
-                                                    <Input
-                                                        placeholder="Add specific class..."
-                                                        value={customLkwInput}
-                                                        onChange={(e) => setCustomLkwInput(e.target.value)}
-                                                        className="h-10 bg-white"
-                                                    />
-                                                    <Button size="icon" variant="ghost" className="border-dashed border-2 border-border h-10 w-10 shrink-0" onClick={handleAddCustomLkw}>
-                                                        <Plus className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
-                                                {filters.customLkw && (
-                                                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-secondary/5 text-secondary text-xs font-bold rounded-lg border border-secondary/20">
-                                                        {filters.customLkw} <X className="w-3 h-3 cursor-pointer" onClick={() => setFilters({ ...filters, customLkw: '' })} />
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </section>
 
                         <Separator className="opacity-50" />
 
@@ -1121,8 +949,8 @@ const MainHeroFilter = () => {
                                             <p className="text-[10px] text-muted-foreground">Show jobs where candidate exceeds requirements</p>
                                         </div>
                                         <Switch
-                                            checked={filters.enableFlexibleMatch}
-                                            onCheckedChange={(checked) => setFilters({ ...filters, enableFlexibleMatch: checked })}
+                                            checked={filters.allowOverqualification}
+                                            onCheckedChange={(checked) => setFilters({ ...filters, allowOverqualification: checked })}
                                         />
                                     </div>
                                     <p className="text-xs text-muted-foreground italic px-2">

@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, DollarSign, Users, MoreVertical, Edit, Eye, Archive, Trash2, CheckCircle, Loader2 } from 'lucide-react';
+import { MapPin, DollarSign, Users, MoreVertical, Edit, Eye, Archive, Trash2, CheckCircle, Loader2, TrendingUp } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
 import { jobsService } from '@/services/jobs.service';
@@ -100,6 +100,30 @@ const EmployerJobs: React.FC = () => {
     }
   };
 
+  const handlePromoteJob = async (jobId: string) => {
+    if (!user.profile?.id) return;
+
+    try {
+      await jobsService.promoteJob(jobId, user.profile.id);
+
+      setJobs(jobs.map(job =>
+        job.id === jobId ? { ...job, is_featured: true } : job
+      ));
+
+      showToast({
+        title: 'Job Promoted',
+        description: 'Your job is now featured!',
+      });
+    } catch (error: any) {
+      console.error('Error promoting job:', error);
+      showToast({
+        title: 'Promotion Failed',
+        description: error.message || 'Failed to promote job.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleDeleteJob = async (jobId: string, jobTitle: string) => {
     try {
       await jobsService.deleteJob(jobId);
@@ -131,108 +155,120 @@ const EmployerJobs: React.FC = () => {
             <h3 className="text-h4 font-heading text-foreground mb-1">{job.title}</h3>
             <p className="text-body-sm text-muted-foreground">Posted {formatDate(job.created_at)}</p>
           </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <MoreVertical className="w-5 h-5" strokeWidth={1.5} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-card border-border">
-            <DropdownMenuItem 
-              onClick={() => handleManageJob(job.id)}
-              className="cursor-pointer text-foreground hover:bg-muted focus:bg-muted"
-            >
-              <Edit className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              Edit Job
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => handleViewJob(job.id)}
-              className="cursor-pointer text-foreground hover:bg-muted focus:bg-muted"
-            >
-              <Eye className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              View Public Page
-            </DropdownMenuItem>
-            
-            <DropdownMenuSeparator className="bg-border" />
-            
-            {job.status !== 'active' && (
-              <DropdownMenuItem 
-                onClick={() => handleChangeStatus(job.id, 'active')}
-                className="cursor-pointer text-success hover:bg-success/10 focus:bg-success/10"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
               >
-                <CheckCircle className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                Mark as Active
-              </DropdownMenuItem>
-            )}
-            
-            {job.status !== 'draft' && (
-              <DropdownMenuItem 
-                onClick={() => handleChangeStatus(job.id, 'draft')}
-                className="cursor-pointer text-warning hover:bg-warning/10 focus:bg-warning/10"
+                <MoreVertical className="w-5 h-5" strokeWidth={1.5} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-card border-border">
+              <DropdownMenuItem
+                onClick={() => handleManageJob(job.id)}
+                className="cursor-pointer text-foreground hover:bg-muted focus:bg-muted"
               >
-                <Archive className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                Move to Draft
+                <Edit className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                Edit Job
               </DropdownMenuItem>
-            )}
-            
-            {job.status !== 'closed' && (
-              <DropdownMenuItem 
-                onClick={() => handleChangeStatus(job.id, 'closed')}
-                className="cursor-pointer text-muted-foreground hover:bg-muted focus:bg-muted"
+              <DropdownMenuItem
+                onClick={() => handleViewJob(job.id)}
+                className="cursor-pointer text-foreground hover:bg-muted focus:bg-muted"
               >
-                <Archive className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                Close Job
+                <Eye className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                View Public Page
               </DropdownMenuItem>
-            )}
-            
-            <DropdownMenuSeparator className="bg-border" />
-            
-            <DropdownMenuItem 
-              onClick={() => handleDeleteJob(job.id, job.title)}
-              className="cursor-pointer text-error hover:bg-error/10 focus:bg-error/10"
-            >
-              <Trash2 className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              Delete Job
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
-      <div className="space-y-2 mb-4">
-        <div className="flex items-center text-body-sm text-muted-foreground">
-          <MapPin className="w-4 h-4 mr-2" strokeWidth={1.5} />
-          <span>{job.location || 'Location not specified'}</span>
-        </div>
-        <div className="flex items-center text-body-sm text-muted-foreground">
-          <DollarSign className="w-4 h-4 mr-2" strokeWidth={1.5} />
-          <span>{salaryText}</span>
-        </div>
-        <div className="flex items-center text-body-sm text-muted-foreground">
-          <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
-          <span>{job.applications_count || 0} applicants</span>
-        </div>
-      </div>
+              <DropdownMenuSeparator className="bg-border" />
 
-      <div className="flex items-center space-x-2">
-        <Button
-          onClick={() => handleManageJob(job.id)}
-          className="flex-1 bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-        >
-          Manage
-        </Button>
-        <Button
-          onClick={() => handleViewJob(job.id)}
-          variant="outline"
-          className="flex-1 bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-        >
-          View
-        </Button>
-      </div>
-    </Card>
+              {job.status === 'active' && !job.is_featured && (
+                <DropdownMenuItem
+                  onClick={() => handlePromoteJob(job.id)}
+                  className="cursor-pointer text-primary hover:bg-primary/10 focus:bg-primary/10"
+                >
+                  <TrendingUp className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  Promote Job
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuSeparator className="bg-border" />
+
+              {job.status !== 'active' && (
+                <DropdownMenuItem
+                  onClick={() => handleChangeStatus(job.id, 'active')}
+                  className="cursor-pointer text-success hover:bg-success/10 focus:bg-success/10"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  Mark as Active
+                </DropdownMenuItem>
+              )}
+
+              {job.status !== 'draft' && (
+                <DropdownMenuItem
+                  onClick={() => handleChangeStatus(job.id, 'draft')}
+                  className="cursor-pointer text-warning hover:bg-warning/10 focus:bg-warning/10"
+                >
+                  <Archive className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  Move to Draft
+                </DropdownMenuItem>
+              )}
+
+              {job.status !== 'closed' && (
+                <DropdownMenuItem
+                  onClick={() => handleChangeStatus(job.id, 'closed')}
+                  className="cursor-pointer text-muted-foreground hover:bg-muted focus:bg-muted"
+                >
+                  <Archive className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  Close Job
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuSeparator className="bg-border" />
+
+              <DropdownMenuItem
+                onClick={() => handleDeleteJob(job.id, job.title)}
+                className="cursor-pointer text-error hover:bg-error/10 focus:bg-error/10"
+              >
+                <Trash2 className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                Delete Job
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center text-body-sm text-muted-foreground">
+            <MapPin className="w-4 h-4 mr-2" strokeWidth={1.5} />
+            <span>{job.location || 'Location not specified'}</span>
+          </div>
+          <div className="flex items-center text-body-sm text-muted-foreground">
+            <DollarSign className="w-4 h-4 mr-2" strokeWidth={1.5} />
+            <span>{salaryText}</span>
+          </div>
+          <div className="flex items-center text-body-sm text-muted-foreground">
+            <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
+            <span>{job.applications_count || 0} applicants</span>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Button
+            onClick={() => handleManageJob(job.id)}
+            className="flex-1 bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+          >
+            Manage
+          </Button>
+          <Button
+            onClick={() => handleViewJob(job.id)}
+            variant="outline"
+            className="flex-1 bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+          >
+            View
+          </Button>
+        </div>
+      </Card>
     );
   };
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
-import { ArrowRight, Users, Briefcase, TrendingUp, Loader2, Star } from 'lucide-react';
+import { ArrowRight, Loader2, Star, Briefcase } from 'lucide-react';
 import { jobsService } from '../services/jobs.service';
 import { employerService } from '../services/employer.service';
 import { candidateService } from '../services/candidate.service';
@@ -12,6 +12,8 @@ import MainHeroFilter from '../components/landing/MainHeroFilter';
 import QuickAccessStatus from '../components/landing/QuickAccessStatus';
 import CandidateListCard from '../components/landing/CandidateListCard';
 import JobListCard from '../components/landing/JobListCard';
+import Footer from '../components/layout/Footer';
+import { Globe } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +26,7 @@ const LandingPage: React.FC = () => {
     }
   }, [isAuthenticated, user.role, navigate]);
 
+  const [latestJobs, setLatestJobs] = useState<any[]>([]);
   const [featuredJobs, setFeaturedJobs] = useState<any[]>([]);
   const [topCompanies, setTopCompanies] = useState<any[]>([]);
   const [previewCandidates, setPreviewCandidates] = useState<any[]>([]);
@@ -48,15 +51,22 @@ const LandingPage: React.FC = () => {
           return [];
         });
 
-        const [jobs, companies, candidates] = await Promise.all([
+        const featuredPromise = jobsService.getFeaturedJobs(3).catch(err => {
+          console.error('Failed to fetch featured jobs:', err);
+          return [];
+        });
+
+        const [jobs, companies, candidates, featured] = await Promise.all([
           jobsPromise,
           companiesPromise,
-          candidatesPromise
+          candidatesPromise,
+          featuredPromise
         ]);
 
-        setFeaturedJobs(jobs);
+        setLatestJobs(jobs);
         setTopCompanies(companies);
         setPreviewCandidates(candidates);
+        setFeaturedJobs(featured);
       } catch (error) {
         console.error('Error fetching landing page data:', error);
       } finally {
@@ -100,86 +110,143 @@ const LandingPage: React.FC = () => {
             Automated matching, verified profiles, and seamless communication.
           </p>
 
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+            <Button
+              size="lg"
+              onClick={() => navigate('/register')}
+              className="w-full sm:w-auto px-8 bg-primary text-primary-foreground hover:bg-primary/90 font-bold h-14 rounded-xl"
+            >
+              Get Started Now
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => navigate('/how-it-works')}
+              className="w-full sm:w-auto px-8 border-primary/20 text-primary hover:bg-primary/5 font-bold h-14 rounded-xl"
+            >
+              How it works
+            </Button>
+          </div>
+
           <MainHeroFilter />
+
+          {/* Registration Prompts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto mt-8 mb-12">
+            <Card
+              className="p-6 border-2 border-primary/20 hover:border-primary/40 bg-white/50 backdrop-blur-sm cursor-pointer group transition-all duration-300 hover:-translate-y-1"
+              onClick={() => navigate('/register?role=candidate')}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                  <Star className="w-6 h-6" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-foreground">For Candidates</h3>
+                  <p className="text-sm text-muted-foreground">Find your dream job now</p>
+                </div>
+                <ArrowRight className="ml-auto w-5 h-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </Card>
+
+            <Card
+              className="p-6 border-2 border-accent/20 hover:border-accent/40 bg-white/50 backdrop-blur-sm cursor-pointer group transition-all duration-300 hover:-translate-y-1"
+              onClick={() => navigate('/register?role=employer')}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-accent group-hover:scale-110 transition-transform">
+                  <Briefcase className="w-6 h-6" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-foreground">For Employers</h3>
+                  <p className="text-sm text-muted-foreground">Hire top talent today</p>
+                </div>
+                <ArrowRight className="ml-auto w-5 h-5 text-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </Card>
+          </div>
+
           <QuickAccessStatus />
         </div>
       </section>
 
-      {/* Redesigned Sections: List Layouts */}
-      <section className="py-24 bg-background border-t border-border/40">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div className="max-w-xl">
+      {/* Featured Talent Section */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="flex items-end justify-between mb-12">
+            <div>
               <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Featured Talents</h2>
-              <p className="text-muted-foreground">Premium professionals currently looking for their next challenge. Quick matching guaranteed.</p>
+              <p className="text-muted-foreground">Discover skilled professionals available for hire.</p>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/candidates')}
-              className="group border-primary/20 text-primary hover:bg-primary/5 font-bold"
-            >
-              Explore All Talents
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <Button variant="ghost" className="text-primary hover:text-primary/80 font-bold" onClick={() => navigate('/candidates')}>
+              View All Candidates
+              <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </div>
 
-          <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {previewCandidates.map((candidate) => (
               <CandidateListCard
                 key={candidate.id}
                 candidate={candidate}
-                onViewProfile={() => navigate(`/candidates/${candidate.id}`)}
+                onViewProfile={(id) => navigate(`/candidates/${id}`)}
               />
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-24 bg-muted/20 border-y border-border/40">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div className="max-w-xl">
-              <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Top Employers</h2>
-              <p className="text-muted-foreground">Shape your career at these market leaders. Vetted for culture and excellence.</p>
+      {/* Featured Jobs Section */}
+      {featuredJobs.length > 0 && (
+        <section className="py-24 bg-primary/5">
+          <div className="container mx-auto px-6">
+            <div className="flex items-end justify-between mb-12">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Featured Jobs</h2>
+                <p className="text-muted-foreground">Top opportunities selected for you.</p>
+              </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/register')}
-              className="group border-primary/20 text-primary hover:bg-primary/5 font-bold"
-            >
-              All Companies
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
+
+            <div className="grid grid-cols-1 gap-6">
+              {featuredJobs.map((job) => (
+                <JobListCard
+                  key={job.id}
+                  job={job}
+                  onViewDetail={(id) => navigate(`/jobs/${id}`)}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Top Employers Section */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Top Employers</h2>
+            <p className="text-muted-foreground">Work with industry leaders and innovative companies.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {topCompanies.map((company) => (
-              <Card
-                key={company.id}
-                className="group p-6 border border-border/60 hover:border-primary/40 hover:shadow-xl transition-all duration-300 relative overflow-hidden cursor-pointer"
-                onClick={() => navigate(`/companies/${company.id}`)}
-              >
-                <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover:bg-primary transition-colors"></div>
-                <div className="flex items-start gap-5">
-                  <div className={`w-16 h-16 shrink-0 rounded-xl bg-white shadow-sm border border-border/40 p-1 ${user.role === 'guest' ? 'blur-md select-none' : ''}`}>
-                    <img
-                      src={company.logo_url || "https://via.placeholder.com/64"}
-                      alt={company.company_name}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className={`text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors truncate ${user.role === 'guest' ? 'blur-md select-none' : ''}`}>{company.company_name}</h4>
-                    <p className="text-sm text-muted-foreground mb-3 flex items-center gap-1.5">
-                      <Briefcase className="w-3.5 h-3.5" />
-                      {company.industry}
-                    </p>
-                    {company.open_for_refugees && (
-                      <span className="inline-flex items-center px-2 py-0.5 bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider rounded border border-accent/20">
-                        Open for Refugees
-                      </span>
+              <Card key={company.id} className="p-6 border border-primary/10 hover:border-primary/30 transition-all duration-300 group cursor-pointer bg-white overflow-hidden relative" onClick={() => navigate(`/companies/${company.id}`)}>
+                <div className="flex items-center gap-4 mb-4 blur-md select-none">
+                  <div className="w-16 h-16 rounded-xl bg-primary/5 flex items-center justify-center p-2 border border-primary/5 group-hover:bg-primary/10 transition-colors overflow-hidden">
+                    {company.logo_url ? (
+                      <img src={company.logo_url} alt={company.company_name} className="w-full h-full object-contain" />
+                    ) : (
+                      <Globe className="w-8 h-8 text-primary/40" />
                     )}
                   </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">{company.company_name}</h3>
+                    <p className="text-sm text-muted-foreground">{company.industry || 'Technology & Software'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-primary text-sm font-bold opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0 absolute bottom-6 right-6">
+                  View Company Profile
+                  <ArrowRight className="w-4 h-4" />
                 </div>
               </Card>
             ))}
@@ -187,119 +254,33 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      <section className="py-24 bg-background">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div className="max-w-xl">
-              <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Latest Jobs</h2>
-              <p className="text-muted-foreground">High-impact roles at innovative companies. Updated daily with fresh opportunities.</p>
+      {/* Latest Jobs Section */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="flex items-end justify-between mb-12">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Latest Opportunities</h2>
+              <p className="text-muted-foreground">Explore the most recent job postings.</p>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/jobs')}
-              className="group border-primary/20 text-primary hover:bg-primary/5 font-bold"
-            >
+            <Button variant="ghost" className="text-primary hover:text-primary/80 font-bold" onClick={() => navigate('/jobs')}>
               Browse All Jobs
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </div>
 
-          <div className="flex flex-col gap-4">
-            {featuredJobs.map((job) => (
+          <div className="grid grid-cols-1 gap-6">
+            {latestJobs.map((job) => (
               <JobListCard
                 key={job.id}
                 job={job}
-                onViewDetail={() => navigate(`/jobs/${job.id}`)}
+                onViewDetail={(id) => navigate(`/jobs/${id}`)}
               />
             ))}
           </div>
         </div>
       </section>
 
-
-      {/* Stats Section */}
-      <section className="py-20 bg-secondary/10 border-y border-secondary/20 relative overflow-hidden">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
-            <div className="text-center group">
-              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-primary shadow-lg shadow-primary/30 flex items-center justify-center group-hover:-translate-y-2 transition-transform duration-300">
-                <Users className="w-8 h-8 text-white" strokeWidth={1.5} />
-              </div>
-              <h3 className="text-3xl font-heading text-foreground mb-2">10,000+</h3>
-              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Professionals</p>
-            </div>
-            <div className="text-center group">
-              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-accent shadow-lg shadow-accent/30 flex items-center justify-center group-hover:-translate-y-2 transition-transform duration-300">
-                <Briefcase className="w-8 h-8 text-white" strokeWidth={1.5} />
-              </div>
-              <h3 className="text-3xl font-heading text-foreground mb-2">5,000+</h3>
-              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Companies</p>
-            </div>
-            <div className="text-center group">
-              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-info shadow-lg shadow-info/30 flex items-center justify-center group-hover:-translate-y-2 transition-transform duration-300">
-                <TrendingUp className="w-8 h-8 text-white" strokeWidth={1.5} />
-              </div>
-              <h3 className="text-3xl font-heading text-foreground mb-2">95%</h3>
-              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Success Rate</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <footer className="bg-foreground text-background py-20">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 border-b border-background/10 pb-16">
-            <div className="col-span-1 md:col-span-1">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-8 h-8 bg-primary rounded-lg"></div>
-                <span className="text-2xl font-heading font-black tracking-tighter">TalentoSpot</span>
-              </div>
-              <p className="text-sm text-background/60 leading-relaxed">
-                Empowering the next generation of global talent through smart technology and human-centric design.
-              </p>
-            </div>
-
-            <div>
-              <h5 className="text-sm font-bold uppercase tracking-widest mb-6 text-primary">Explore</h5>
-              <ul className="space-y-4">
-                <li><button onClick={() => navigate('/candidates')} className="text-sm text-background/80 hover:text-white transition-colors">Find Talent</button></li>
-                <li><button onClick={() => navigate('/jobs')} className="text-sm text-background/80 hover:text-white transition-colors">Find Jobs</button></li>
-                <li><button onClick={() => navigate('/login')} className="text-sm text-background/80 hover:text-white transition-colors">Candidate Sign In</button></li>
-                <li><button onClick={() => navigate('/login')} className="text-sm text-background/80 hover:text-white transition-colors">Employer Portal</button></li>
-              </ul>
-            </div>
-
-            <div>
-              <h5 className="text-sm font-bold uppercase tracking-widest mb-6 text-primary">Platforms</h5>
-              <ul className="space-y-4">
-                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">How it Works</a></li>
-                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">Pricing Plans</a></li>
-                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">Success Stories</a></li>
-                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">FAQ</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h5 className="text-sm font-bold uppercase tracking-widest mb-6 text-primary">Connect</h5>
-              <ul className="space-y-4">
-                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">LinkedIn</a></li>
-                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">Instagram</a></li>
-                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">Twitter (X)</a></li>
-                <li><a href="#" className="text-sm text-background/80 hover:text-white transition-colors">Contact Support</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-xs text-background/40">© 2026 TalentoSpot. Engineering Excellence in Recruitment.</p>
-            <div className="flex gap-8">
-              <a href="#" className="text-xs text-background/40 hover:text-white transition-colors font-medium underline-offset-4 hover:underline">Imprint</a>
-              <a href="#" className="text-xs text-background/40 hover:text-white transition-colors font-medium underline-offset-4 hover:underline">Privacy Policy</a>
-              <a href="#" className="text-xs text-background/40 hover:text-white transition-colors font-medium underline-offset-4 hover:underline">Terms of Service</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

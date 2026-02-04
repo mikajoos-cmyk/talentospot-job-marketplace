@@ -1017,6 +1017,10 @@ export const candidateService = {
       query = query.overlaps('driving_licenses', filters.driving_licenses);
     }
 
+    if (filters.gender && Array.isArray(filters.gender) && filters.gender.length > 0) {
+      query = query.in('gender', filters.gender);
+    }
+
     if (filters.min_salary) {
       query = query.gte('salary_expectation_min', filters.min_salary);
     }

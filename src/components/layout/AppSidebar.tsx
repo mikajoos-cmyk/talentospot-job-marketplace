@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
-import { LayoutDashboard, User, Briefcase, Settings, Users, Building2, ChevronLeft, ChevronRight, CreditCard, Bookmark, Mail, MessageSquare, Network as NetworkIcon, Bell } from 'lucide-react';
+import { LayoutDashboard, User, Briefcase, Settings, Users, Building2, ChevronLeft, ChevronRight, CreditCard, Bookmark, Mail, MessageSquare, Network as NetworkIcon, Bell, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import logoImg from '@/assets/logo.png';
@@ -12,7 +12,7 @@ interface AppSidebarProps {
 }
 
 const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const location = useLocation();
 
   const candidateMenuItems = [
@@ -31,6 +31,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
   const employerMenuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/employer/dashboard' },
     { icon: Users, label: 'Find Candidates', path: '/employer/candidates' },
+    { icon: Bell, label: 'Candidate Alerts', path: '/employer/alerts' },
     { icon: Briefcase, label: 'My Jobs', path: '/employer/jobs' },
     { icon: Building2, label: 'Company Profile', path: '/employer/profile' },
     { icon: MessageSquare, label: 'Messages', path: '/employer/messages' },
@@ -113,6 +114,21 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
                 </li>
               );
             })}
+            {/* Logout Button in Menu List under Settings if desired, but sticking to bottom area or end of list */}
+            {user.role !== 'guest' && (
+              <li>
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center h-11 px-4 rounded-lg transition-all duration-200 text-error hover:bg-error/10"
+                  title={collapsed ? 'Logout' : undefined}
+                >
+                  <LogOut className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
+                  {!collapsed && (
+                    <span className="ml-3 text-body font-bold">Logout</span>
+                  )}
+                </button>
+              </li>
+            )}
           </ul>
         </nav>
 

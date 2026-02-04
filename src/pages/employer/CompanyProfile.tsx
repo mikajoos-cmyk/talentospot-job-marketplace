@@ -10,7 +10,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useUser } from '../../contexts/UserContext';
 import { employerService } from '../../services/employer.service';
 import { storageService } from '../../services/storage.service';
-import { Upload, Building2, Loader2, X } from 'lucide-react';
+import { Upload, Building2, Loader2, X, Eye } from 'lucide-react';
 import { LocationPicker } from '../../components/shared/LocationPicker';
 
 const CompanyProfile: React.FC = () => {
@@ -460,6 +460,14 @@ const CompanyProfile: React.FC = () => {
         </Card>
 
         <div className="flex justify-end space-x-4">
+          <Button
+            variant="outline"
+            className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+            onClick={() => window.open(`/companies/${user.id}`, '_blank')}
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            Preview Profile
+          </Button>
           <Button
             variant="outline"
             className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"

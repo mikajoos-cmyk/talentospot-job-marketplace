@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { X, Plus, ChevronDown, User, Briefcase } from 'lucide-react';
+import { X, Plus, ChevronDown, User, Briefcase, Sparkles, MapPin } from 'lucide-react';
 import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
 import { refugeeOriginCountries } from '@/data/locationData';
 import { getLanguageLevelOptions } from '@/utils/language-levels';
@@ -174,6 +174,14 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
     onFiltersChange({ ...filters, candidateStatus: updated });
   };
 
+  const handleGenderToggle = (gender: 'male' | 'female' | 'diverse') => {
+    const current = filters.gender || [];
+    const updated = current.includes(gender)
+      ? current.filter(g => g !== gender)
+      : [...current, gender];
+    onFiltersChange({ ...filters, gender: updated });
+  };
+
   const handleReset = () => {
     onFiltersChange({
       salary: [20000, 200000],
@@ -205,6 +213,8 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
       noticePeriod: [],
       preferredWorkLocations: [],
       customTags: [],
+      gender: [],
+      allowOverqualification: false,
     });
   };
 
@@ -216,11 +226,10 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
   const jobTypes = ['full-time', 'part-time', 'apprenticeship', 'internship', 'traineeship', 'freelance', 'contract'];
   const contractTerms = ['unlimited', 'temporary'];
   const candidateStatuses = ['Unemployed', 'Employed', 'Trainee', 'Apprentice', 'Pupil', 'Student', 'Civil Servant', 'Freelancer', 'Entrepreneur', 'Retired', 'Other'];
-  const sectors = ['IT', 'Healthcare', 'Finance', 'Engineering', 'Marketing', 'Sales', 'Education', 'Manufacturing', 'Retail', 'Other'];
   const noticePeriods = ['immediate', '1-week', '2-weeks', '1-month', '2-months', '3-months'];
 
   return (
-    <Card className="p-6 border border-border bg-card sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto">
+    <Card className="p-6 border border-primary/30 bg-card sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 group/filters">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-h4 font-heading text-foreground">Filters</h3>
         <Button
@@ -310,17 +319,13 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
             <Label className="text-body-sm font-medium text-foreground mb-2 block">
               Sector
             </Label>
-            <Select value={filters.sector || ''} onValueChange={(value) => onFiltersChange({ ...filters, sector: value })}>
-              <SelectTrigger className="bg-background text-foreground border-border">
-                <SelectValue placeholder="Select sector" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sectors</SelectItem>
-                {sectors.map(sector => (
-                  <SelectItem key={sector} value={sector}>{sector}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <AutocompleteInput
+              category="sectors"
+              placeholder="Type sector..."
+              value={filters.sector === 'any' ? '' : filters.sector || ''}
+              onChange={(val) => onFiltersChange({ ...filters, sector: val || 'any' })}
+              className="bg-background text-foreground border-border"
+            />
           </div>
 
           {/* Location */}
@@ -366,6 +371,34 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
                   )}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Desired Work Location */}
+          <div>
+            <Label className="text-body-sm font-medium text-foreground mb-3 block">
+              Desired Work Location
+            </Label>
+            <div className="space-y-3">
+              <AutocompleteInput
+                category="cities"
+                placeholder="Search for cities..."
+                value={filters.preferredWorkLocations && filters.preferredWorkLocations.length > 0 ? filters.preferredWorkLocations[0].city : ''}
+                onChange={(val) => {
+                  // For simplicity in the sidebar, we just handle the first preferred location
+                  onFiltersChange({
+                    ...filters,
+                    preferredWorkLocations: val ? [{
+                      city: val,
+                      country: '', // We could enhance this to also select country
+                      continent: '',
+                      radius: 50
+                    }] : []
+                  });
+                }}
+                className="bg-background text-foreground border-border"
+                icon={<MapPin className="w-4 h-4 text-primary" />}
+              />
             </div>
           </div>
         </div>
@@ -415,6 +448,46 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
                 </Select>
               </div>
             )}
+
+            {/* Gender */}
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-3 block">
+                Gender
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {['Male', 'Female', 'Non-binary', 'Other'].map(g => (
+                  <button
+                    key={g}
+                    onClick={() => {
+                      const genderMap: Record<string, any> = {
+                        'Male': 'male',
+                        'Female': 'female',
+                        'Non-binary': 'diverse',
+                        'Other': 'diverse'
+                      };
+                      handleGenderToggle(genderMap[g]);
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${(filters.gender || []).includes(g.toLowerCase() === 'non-binary' || g.toLowerCase() === 'other' ? 'diverse' : g.toLowerCase())
+                      ? 'bg-primary border-primary text-white shadow-sm'
+                      : 'bg-white border-border text-foreground hover:border-primary/50'
+                      }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Driving Licenses */}
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-3 block">
+                Driving Licenses
+              </Label>
+              <DrivingLicenseSelector
+                value={filters.drivingLicenses || []}
+                onChange={(val) => onFiltersChange({ ...filters, drivingLicenses: val })}
+              />
+            </div>
 
             {/* Qualifications */}
             <div>
@@ -628,6 +701,25 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
           </CollapsibleTrigger>
 
           <CollapsibleContent className="space-y-6 mt-6">
+            {/* Matching Preferences */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                <Label className="text-sm font-bold">Matching Preferences</Label>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-muted/20 rounded-xl border border-border/40">
+                <div className="space-y-0.5">
+                  <Label className="text-xs font-bold block">Allow Overqualification</Label>
+                  <p className="text-[10px] text-muted-foreground">Show candidates exceeding requirements</p>
+                </div>
+                <Switch
+                  checked={filters.allowOverqualification || false}
+                  onCheckedChange={(checked) => onFiltersChange({ ...filters, allowOverqualification: checked })}
+                />
+              </div>
+            </div>
+
             {/* Job Type */}
             <div>
               <Label className="text-body-sm font-medium text-foreground mb-3 block">
@@ -751,16 +843,7 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
               />
             </div>
 
-            {/* Driving Licenses */}
-            <div>
-              <Label className="text-body-sm font-medium text-foreground mb-3 block">
-                Driving Licenses
-              </Label>
-              <DrivingLicenseSelector
-                value={filters.drivingLicenses || []}
-                onChange={(val) => onFiltersChange({ ...filters, drivingLicenses: val })}
-              />
-            </div>
+
 
             {/* Custom Tags */}
             <div>
@@ -808,7 +891,7 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
           </CollapsibleContent>
         </Collapsible>
       </div>
-    </Card >
+    </Card>
   );
 };
 

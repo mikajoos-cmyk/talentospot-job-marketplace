@@ -285,23 +285,47 @@ const Settings: React.FC = () => {
 
             <Separator className="bg-border" />
 
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-body-sm font-medium text-foreground">Job Alerts</p>
-                <p className="text-caption text-muted-foreground">Get notified about new opportunities</p>
-              </div>
-              <Switch defaultChecked />
-            </div>
+            {user.role === 'employer' ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-body-sm font-medium text-foreground">Candidate Alerts</p>
+                    <p className="text-caption text-muted-foreground">Get notified when new candidates match your criteria</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
 
-            <Separator className="bg-border" />
+                <Separator className="bg-border" />
 
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-body-sm font-medium text-foreground">Application Updates</p>
-                <p className="text-caption text-muted-foreground">Track your application status</p>
-              </div>
-              <Switch defaultChecked />
-            </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-body-sm font-medium text-foreground">New Applications</p>
+                    <p className="text-caption text-muted-foreground">Get notified when you receive a new application</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-body-sm font-medium text-foreground">Job Alerts</p>
+                    <p className="text-caption text-muted-foreground">Get notified about new opportunities</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+
+                <Separator className="bg-border" />
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-body-sm font-medium text-foreground">Application Updates</p>
+                    <p className="text-caption text-muted-foreground">Track your application status</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+              </>
+            )}
           </div>
         </Card>
 
@@ -312,7 +336,11 @@ const Settings: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-body-sm font-medium text-foreground">Profile Visibility</p>
-                <p className="text-caption text-muted-foreground">Make your profile visible to employers</p>
+                <p className="text-caption text-muted-foreground">
+                  {user.role === 'employer'
+                    ? 'Make your company profile visible to candidates'
+                    : 'Make your profile visible to employers'}
+                </p>
               </div>
               <Switch
                 checked={isVisible}

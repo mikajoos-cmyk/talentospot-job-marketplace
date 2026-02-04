@@ -117,7 +117,9 @@ export interface CandidateFilters {
   minMatchThreshold?: number;
   // New fields
   sector?: string;
+  gender?: string[];
   candidateStatus?: string[];
+  allowOverqualification?: boolean;
   homeOfficePreference?: ('yes' | 'no' | 'hybrid')[];
   vacationDays?: number[];
   noticePeriod?: string[];
