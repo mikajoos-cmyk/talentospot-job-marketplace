@@ -3,17 +3,19 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/card';
 import AppLayout from '../../components/layout/AppLayout';
 import { Button } from '../../components/ui/button';
-import { MapPin, Users, Building2, Globe, ArrowLeft, Briefcase, DollarSign, Calendar, Heart, Send, Star, Loader2, MapIcon } from 'lucide-react';
+import { MapPin, Users, Building2, Globe, ArrowLeft, Briefcase, DollarSign, Calendar, Heart, Send, Star, Loader2, MapIcon, Crown } from 'lucide-react';
 import { getCoordinates } from '../../utils/geocoding';
 import MapView from '../../components/maps/MapView';
 import { employerService } from '../../services/employer.service';
 import { jobsService } from '../../services/jobs.service';
+import { packagesService } from '../../services/packages.service';
 import { useToast } from '../../contexts/ToastContext';
 import ReviewCard from '../../components/shared/ReviewCard';
 // import ReviewModal from '../../components/shared/ReviewModal';
 import { useUser } from '../../contexts/UserContext';
 import { followsService } from '../../services/follows.service';
 import { analyticsService } from '../../services/analytics.service';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 
 const CompanyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +28,7 @@ const CompanyDetail: React.FC = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
+  const [hasActivePackage, setHasActivePackage] = useState(false);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -43,6 +46,10 @@ const CompanyDetail: React.FC = () => {
         if (user?.profile?.id && user.role === 'candidate') {
           const following = await followsService.isFollowing(user.profile.id, id);
           setIsFollowing(following);
+
+          // Check package status
+          const canMessage = await packagesService.canSendMessages(user.id);
+          setHasActivePackage(canMessage);
 
           // Record profile view
           try {
@@ -203,14 +210,35 @@ const CompanyDetail: React.FC = () => {
                       />
                       {isFollowing ? 'Following' : 'Follow'}
                     </Button>
-                    <Button
-                      onClick={handleMessage}
-                      variant="outline"
-                      className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-                    >
-                      <Send className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                      Send Message
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-block">
+                            <Button
+                              onClick={handleMessage}
+                              disabled={!hasActivePackage}
+                              variant="outline"
+                              className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal disabled:opacity-50"
+                            >
+                              {!hasActivePackage ? (
+                                <Crown className="w-4 h-4 mr-2 text-yellow-500" strokeWidth={1.5} />
+                              ) : (
+                                <Send className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                              )}
+                              Send Message
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        {!hasActivePackage && (
+                          <TooltipContent>
+                            <div className="flex items-center gap-2">
+                              <Crown className="w-4 h-4 text-yellow-500" />
+                              <p>Upgrade to send messages</p>
+                            </div>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                     <Button
                       onClick={() => setReviewModalOpen(true)}
                       variant="outline"

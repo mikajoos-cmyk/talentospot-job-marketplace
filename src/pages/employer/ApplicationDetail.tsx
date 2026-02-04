@@ -4,12 +4,14 @@ import AppLayout from '../../components/layout/AppLayout';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
-import { MapPin, DollarSign, ArrowLeft, Mail, Phone, MessageSquare, Star, Loader2, Globe, Briefcase, GraduationCap, Award, Plane, Car } from 'lucide-react';
+import { MapPin, DollarSign, ArrowLeft, Mail, Phone, MessageSquare, Star, Loader2, Globe, Briefcase, GraduationCap, Award, Plane, Car, Crown } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import { applicationsService } from '../../services/applications.service';
+import { packagesService } from '../../services/packages.service';
 import ReviewModal from '../../components/shared/ReviewModal';
 import { Progress } from '../../components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { supabase } from '../../lib/supabase';
 
 const ApplicationDetail: React.FC = () => {
@@ -22,12 +24,18 @@ const ApplicationDetail: React.FC = () => {
   const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [hasActivePackage, setHasActivePackage] = useState(false);
 
   React.useEffect(() => {
     const fetchApplication = async () => {
       if (!id) return;
       setLoading(true);
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const canMessage = await packagesService.canSendMessages(user.id);
+          setHasActivePackage(canMessage);
+        }
         const data = await applicationsService.getApplicationById(id);
         setApplication(data);
       } catch (error) {
@@ -325,13 +333,34 @@ const ApplicationDetail: React.FC = () => {
 
               <div className="space-y-3">
                 {canMessage && (
-                  <Button
-                    onClick={() => navigate(`/employer/messages?conversationId=${id}`)}
-                    className="w-full bg-info text-info-foreground hover:bg-info/90 font-normal"
-                  >
-                    <MessageSquare className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                    Send Message
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-block w-full">
+                          <Button
+                            onClick={() => navigate(`/employer/messages?conversationId=${id}`)}
+                            disabled={!hasActivePackage}
+                            className="w-full bg-info text-info-foreground hover:bg-info/90 font-normal disabled:opacity-50"
+                          >
+                            {!hasActivePackage ? (
+                              <Crown className="w-4 h-4 mr-2 text-yellow-500" strokeWidth={1.5} />
+                            ) : (
+                              <MessageSquare className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                            )}
+                            Send Message
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!hasActivePackage && (
+                        <TooltipContent>
+                          <div className="flex items-center gap-2">
+                            <Crown className="w-4 h-4 text-yellow-500" />
+                            <p>Upgrade to send messages</p>
+                          </div>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
                 <Button
                   onClick={() => setAcceptDialogOpen(true)}

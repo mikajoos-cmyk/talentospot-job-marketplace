@@ -22,20 +22,30 @@ export const packagesService = {
 
   // Aktives Abo des Users holen
   async getUserSubscription(userId: string) {
-    // Holt das Abo, das "active" ist UND noch nicht abgelaufen ist
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .select(`
-        *,
-        packages (*)
-      `)
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .gt('expires_at', new Date().toISOString())
-      .maybeSingle();
+    try {
+      // Holt das Abo, das "active" ist UND noch nicht abgelaufen ist
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select(`
+          *,
+          packages (*)
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle();
 
-    if (error) throw error;
-    return data;
+      if (error) {
+        console.error('Error fetching subscription:', error);
+        return null;
+      }
+
+      console.log('getUserSubscription result for', userId, ':', data);
+      return data;
+    } catch (error) {
+      console.error('Exception in getUserSubscription:', error);
+      return null;
+    }
   },
 
   // Ein neues Abo zuweisen (z.B. nach Stripe Payment)
@@ -119,5 +129,58 @@ export const packagesService = {
     // Wenn kein Abo oder can_search_jobs false ist
     if (!sub || sub.packages?.can_search_jobs === false) return false;
     return true;
+  },
+
+  // Check if user has an active package (not free tier)
+  async hasActivePackage(userId: string): Promise<boolean> {
+    try {
+      const subscription = await this.getUserSubscription(userId);
+
+      // No subscription at all
+      if (!subscription || subscription.status !== 'active') {
+        return false;
+      }
+
+      // Check if it's a free package (by name or price)
+      const packageName = subscription.packages?.name?.toLowerCase() || '';
+      const packagePrice = subscription.packages?.price_amount || 0;
+
+      // Free packages should not grant premium access
+      if (packageName.includes('kostenlos') || packageName.includes('free') || packagePrice === 0) {
+        console.log('User has free package, denying premium features');
+        return false;
+      }
+
+      console.log('User has paid package:', packageName);
+      return true;
+    } catch (error) {
+      console.error('Error checking active package:', error);
+      return false;
+    }
+  },
+
+  // Check if user can send messages
+  async canSendMessages(userId: string): Promise<boolean> {
+    return await this.hasActivePackage(userId);
+  },
+
+  // Check if user can send attachments
+  async canSendAttachments(userId: string): Promise<boolean> {
+    return await this.hasActivePackage(userId);
+  },
+
+  // Check if user can view shortlist details (employer)
+  async canViewShortlistDetails(userId: string): Promise<boolean> {
+    return await this.hasActivePackage(userId);
+  },
+
+  // Check if user can view saved jobs details (candidate)
+  async canViewSavedJobsDetails(userId: string): Promise<boolean> {
+    return await this.hasActivePackage(userId);
+  },
+
+  // Check if user can view contact details
+  async canViewContactDetails(userId: string): Promise<boolean> {
+    return await this.hasActivePackage(userId);
   }
 };

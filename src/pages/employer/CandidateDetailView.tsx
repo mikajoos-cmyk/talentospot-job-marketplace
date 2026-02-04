@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { getYouTubeEmbedUrl } from '../../lib/utils';
 import { ProjectImageCarousel } from '../../components/shared/ProjectImageCarousel';
 
@@ -64,10 +65,11 @@ const CandidateDetailView: React.FC = () => {
           // Check package status
           try {
             const { packagesService } = await import('../../services/packages.service');
-            const subAuth = await packagesService.getUserSubscription(user.id);
-            setHasActivePackage(!!subAuth);
+            const canMessage = await packagesService.canSendMessages(user.id);
+            setHasActivePackage(canMessage);
           } catch (e) {
             console.error("Error checking package", e);
+            setHasActivePackage(false);
           }
 
           const status = await candidateService.checkDataAccess(id, user.profile.id);
@@ -403,13 +405,34 @@ const CandidateDetailView: React.FC = () => {
                   </Button>
                   {canContact ? (
                     <>
-                      <Button
-                        onClick={handleMessage}
-                        className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                      >
-                        <MessageSquare className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                        Send Message
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-block">
+                              <Button
+                                onClick={handleMessage}
+                                disabled={!hasActivePackage}
+                                className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal disabled:opacity-50"
+                              >
+                                {!hasActivePackage ? (
+                                  <Crown className="w-4 h-4 mr-2 text-yellow-500" strokeWidth={1.5} />
+                                ) : (
+                                  <MessageSquare className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                                )}
+                                Send Message
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          {!hasActivePackage && (
+                            <TooltipContent>
+                              <div className="flex items-center gap-2">
+                                <Crown className="w-4 h-4 text-yellow-500" />
+                                <p>Upgrade to send messages</p>
+                              </div>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
                       <Button
                         onClick={() => setInviteDialogOpen(true)}
                         variant="outline"

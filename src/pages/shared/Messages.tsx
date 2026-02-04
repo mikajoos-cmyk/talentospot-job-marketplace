@@ -5,7 +5,7 @@ import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
-import { Send, Search, ArrowLeft, Loader2, Paperclip, Check, CheckCheck, X, Download, FileText, MoreVertical, Flag, Ban } from 'lucide-react';
+import { Send, Search, ArrowLeft, Loader2, Paperclip, Check, CheckCheck, X, Download, FileText, MoreVertical, Flag, Ban, Crown } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import { useToast } from '../../contexts/ToastContext';
 import {
@@ -25,7 +25,9 @@ import {
 import { messagesService } from '../../services/messages.service';
 import { storageService } from '../../services/storage.service';
 import { userActionsService } from '../../services/user-actions.service';
+import { packagesService } from '../../services/packages.service';
 import { MessageAttachment } from '@/components/shared/MessageAttachment';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const Messages: React.FC = () => {
   const navigate = useNavigate();
@@ -53,6 +55,8 @@ const Messages: React.FC = () => {
   const [reportReason, setReportReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [blockStatus, setBlockStatus] = useState<{ isBlocked: boolean; blockedByMe: boolean } | null>(null);
+  const [canSendMessages, setCanSendMessages] = useState(false);
+  const [canSendAttachments, setCanSendAttachments] = useState(false);
 
   const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString);
@@ -130,6 +134,12 @@ const Messages: React.FC = () => {
         console.log('🔍 Loaded conversations:', convData);
         console.log('🔍 First conversation:', convData?.[0]);
         setConversations(convData || []);
+
+        // Check messaging permissions
+        const canMessage = await packagesService.canSendMessages(user.id);
+        const canAttach = await packagesService.canSendAttachments(user.id);
+        setCanSendMessages(canMessage);
+        setCanSendAttachments(canAttach);
       } catch (error) {
         console.error('Error loading conversations:', error);
       } finally {
@@ -301,6 +311,26 @@ const Messages: React.FC = () => {
     const content = text || messageInput.trim();
     if (!content && !fileUrl) return;
     if (!selectedConversation) return;
+
+    // Check if user can send messages
+    if (!canSendMessages) {
+      showToast({
+        title: 'Upgrade Required',
+        description: 'You need an active package to send messages.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Check if user can send attachments
+    if (fileUrl && !canSendAttachments) {
+      showToast({
+        title: 'Upgrade Required',
+        description: 'You need an active package to send attachments.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       await messagesService.sendMessage(selectedConversation, user.id, content, fileUrl, fileType, fileName);
@@ -743,23 +773,39 @@ const Messages: React.FC = () => {
                           onChange={handleFileSelect}
                           accept="image/*,application/pdf,.doc,.docx"
                         />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="rounded-full w-9 h-9 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/5"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isUploading}
-                        >
-                          {isUploading ? (
-                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                          ) : (
-                            <Paperclip className="w-4 h-4" />
-                          )}
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="rounded-full w-9 h-9 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/5 disabled:opacity-50"
+                                  onClick={() => canSendAttachments && fileInputRef.current?.click()}
+                                  disabled={isUploading || !canSendAttachments}
+                                >
+                                  {isUploading ? (
+                                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                                  ) : (
+                                    <Paperclip className="w-4 h-4" />
+                                  )}
+                                </Button>
+                              </span>
+                            </TooltipTrigger>
+                            {!canSendAttachments && (
+                              <TooltipContent>
+                                <div className="flex items-center gap-2">
+                                  <Crown className="w-4 h-4 text-yellow-500" />
+                                  <p>Upgrade to send attachments</p>
+                                </div>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
                         <textarea
                           ref={textareaRef}
                           rows={1}
-                          placeholder="Type a message..."
+                          placeholder={canSendMessages ? "Type a message..." : "Upgrade to send messages..."}
                           value={messageInput}
                           onChange={(e) => setMessageInput(e.target.value)}
                           onKeyDown={(e) => {
@@ -768,16 +814,37 @@ const Messages: React.FC = () => {
                               handleSendMessage();
                             }
                           }}
-                          className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-1 resize-none max-h-32 min-h-[36px] overflow-y-auto custom-scrollbar font-medium"
+                          disabled={!canSendMessages}
+                          className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-1 resize-none max-h-32 min-h-[36px] overflow-y-auto custom-scrollbar font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         />
-                        <Button
-                          onClick={() => handleSendMessage()}
-                          disabled={!messageInput.trim() && !isUploading}
-                          className="bg-primary text-primary-foreground hover:bg-primary/90 w-9 h-9 rounded-full p-0 flex items-center justify-center shrink-0 shadow-sm disabled:opacity-50"
-                          aria-label="Send message"
-                        >
-                          <Send className="w-4 h-4" />
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span>
+                                <Button
+                                  onClick={() => handleSendMessage()}
+                                  disabled={!messageInput.trim() || !canSendMessages || isUploading}
+                                  className="bg-primary text-primary-foreground hover:bg-primary/90 w-9 h-9 rounded-full p-0 flex items-center justify-center shrink-0 shadow-sm disabled:opacity-50"
+                                  aria-label="Send message"
+                                >
+                                  {!canSendMessages ? (
+                                    <Crown className="w-4 h-4 text-yellow-500" />
+                                  ) : (
+                                    <Send className="w-4 h-4" />
+                                  )}
+                                </Button>
+                              </span>
+                            </TooltipTrigger>
+                            {!canSendMessages && (
+                              <TooltipContent>
+                                <div className="flex items-center gap-2">
+                                  <Crown className="w-4 h-4 text-yellow-500" />
+                                  <p>Upgrade to send messages</p>
+                                </div>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     )}
                   </div>

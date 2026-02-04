@@ -11,6 +11,8 @@ import { useUser } from '../../contexts/UserContext';
 import { savedJobsService } from '../../services/saved-jobs.service';
 import { applicationsService } from '../../services/applications.service';
 import { candidateService } from '../../services/candidate.service';
+import { packagesService } from '../../services/packages.service';
+import BlurredContent from '../../components/shared/BlurredContent';
 import {
   Dialog,
   DialogContent,
@@ -30,18 +32,21 @@ const SavedJobs: React.FC = () => {
   const [coverLetter, setCoverLetter] = useState('');
   const [appliedJobIds, setAppliedJobIds] = useState<string[]>([]);
   const [applying, setApplying] = useState(false);
+  const [hasActivePackage, setHasActivePackage] = useState(false);
 
   React.useEffect(() => {
     const fetchSavedJobs = async () => {
       if (!user?.id) return;
       setLoading(true);
       try {
-        const [savedData, appsData] = await Promise.all([
+        const [savedData, appsData, hasPackage] = await Promise.all([
           savedJobsService.getSavedJobs(user.id),
-          loadAppliedJobIds(user.id)
+          loadAppliedJobIds(user.id),
+          packagesService.canViewSavedJobsDetails(user.id)
         ]);
         setSavedJobs(savedData);
         setAppliedJobIds(appsData);
+        setHasActivePackage(hasPackage);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -151,8 +156,8 @@ const SavedJobs: React.FC = () => {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {savedJobs.map((job) => (
-              <Card key={job.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
+            {savedJobs.map((job) => {
+              const cardContent = (
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
                     <img
@@ -221,6 +226,7 @@ const SavedJobs: React.FC = () => {
                       onClick={() => navigate(`/jobs/${job.job_id}`)}
                       variant="outline"
                       className="flex-1 min-w-[120px] bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
+                      disabled={!hasActivePackage}
                     >
                       <Eye className="w-4 h-4 mr-2" strokeWidth={1.5} />
                       View Details
@@ -231,14 +237,26 @@ const SavedJobs: React.FC = () => {
                         ? 'bg-muted text-muted-foreground'
                         : 'bg-primary text-primary-foreground hover:bg-primary-hover'
                         }`}
-                      disabled={appliedJobIds.includes(job.job_id)}
+                      disabled={appliedJobIds.includes(job.job_id) || !hasActivePackage}
                     >
                       {appliedJobIds.includes(job.job_id) ? 'Already Applied' : 'Apply Now'}
                     </Button>
                   </div>
                 </div>
-              </Card>
-            ))}
+              );
+
+              return (
+                <Card key={job.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
+                  <BlurredContent
+                    isBlurred={!hasActivePackage}
+                    message="Upgrade to view saved jobs"
+                    upgradeLink="/candidate/packages"
+                  >
+                    {cardContent}
+                  </BlurredContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </div>

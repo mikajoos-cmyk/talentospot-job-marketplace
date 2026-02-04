@@ -9,8 +9,10 @@ import { Heart, MapPin, Users, Building2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { followsService } from '@/services/follows.service';
 import { shortlistsService } from '@/services/shortlists.service';
+import { packagesService } from '@/services/packages.service';
 import { Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import BlurredContent from '@/components/shared/BlurredContent';
 
 const Network: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ const Network: React.FC = () => {
   const [followers, setFollowers] = React.useState<any[]>([]);
   const [shortlistedCandidates, setShortlistedCandidates] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [hasActivePackage, setHasActivePackage] = React.useState(false);
 
   const isEmployer = user?.role === 'employer';
   const isCandidate = user?.role === 'candidate';
@@ -30,6 +33,10 @@ const Network: React.FC = () => {
 
       try {
         setLoading(true);
+
+        // Check if user has active package
+        const hasPackage = await packagesService.hasActivePackage(user.id);
+        setHasActivePackage(hasPackage);
 
         if (isCandidate) {
           // Fetch companies I follow
@@ -64,7 +71,7 @@ const Network: React.FC = () => {
     if (user?.profile?.id) {
       fetchData();
     }
-  }, [user?.profile?.id, user?.role, isCandidate, isEmployer]);
+  }, [user?.profile?.id, user?.role, user.id, isCandidate, isEmployer]);
 
   const handleUnfollow = async (companyId: string, companyName: string) => {
     if (!user?.profile?.id) return;
@@ -253,56 +260,67 @@ const Network: React.FC = () => {
                     const candidate = shortlist.candidate_profiles;
                     if (!candidate) return null;
 
-                    return (
-                      <Card key={shortlist.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
-                        <div className="space-y-4">
-                          <div className="flex items-start justify-between">
-                            <div
-                              className="flex items-center space-x-3 cursor-pointer flex-1"
-                              onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
-                            >
-                              <Avatar className="w-12 h-12">
-                                <AvatarImage src={candidate.profiles?.avatar_url} alt={candidate.profiles?.full_name} />
-                                <AvatarFallback className="bg-primary text-primary-foreground text-h4 font-heading">
-                                  {candidate.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <h3 className="text-h4 font-heading text-foreground hover:text-primary transition-colors">
-                                  {candidate.profiles?.full_name || 'Anonymous'}
-                                </h3>
-                                <p className="text-body-sm text-muted-foreground">{candidate.job_title}</p>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleRemoveFromShortlist(candidate.id, candidate.profiles?.full_name || 'Candidate')}
-                              className="bg-transparent text-error hover:bg-error/10 hover:text-error"
-                              aria-label="Remove from shortlist"
-                            >
-                              <Heart className="w-5 h-5" strokeWidth={1.5} fill="currentColor" />
-                            </Button>
-                          </div>
-
-                          <div className="space-y-2">
-                            <div className="flex items-center text-body-sm text-muted-foreground">
-                              <MapPin className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                              <span>{candidate.city}, {candidate.country}</span>
-                            </div>
-                            <div className="flex items-center text-caption text-muted-foreground">
-                              <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                              <span>Shortlisted {new Date(shortlist.created_at).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-
-                          <Button
-                            onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
-                            className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                    const cardContent = (
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div
+                            className="flex items-center space-x-3 cursor-pointer flex-1"
+                            onClick={() => hasActivePackage && navigate(`/employer/candidates/${candidate.id}`)}
                           >
-                            View Profile
+                            <Avatar className="w-12 h-12">
+                              <AvatarImage src={candidate.profiles?.avatar_url} alt={candidate.profiles?.full_name} />
+                              <AvatarFallback className="bg-primary text-primary-foreground text-h4 font-heading">
+                                {candidate.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <h3 className="text-h4 font-heading text-foreground hover:text-primary transition-colors">
+                                {candidate.profiles?.full_name || 'Anonymous'}
+                              </h3>
+                              <p className="text-body-sm text-muted-foreground">{candidate.job_title}</p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveFromShortlist(candidate.id, candidate.profiles?.full_name || 'Candidate')}
+                            className="bg-transparent text-error hover:bg-error/10 hover:text-error"
+                            aria-label="Remove from shortlist"
+                          >
+                            <Heart className="w-5 h-5" strokeWidth={1.5} fill="currentColor" />
                           </Button>
                         </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center text-body-sm text-muted-foreground">
+                            <MapPin className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                            <span>{candidate.city}, {candidate.country}</span>
+                          </div>
+                          <div className="flex items-center text-caption text-muted-foreground">
+                            <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                            <span>Shortlisted {new Date(shortlist.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
+                          className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                          disabled={!hasActivePackage}
+                        >
+                          View Profile
+                        </Button>
+                      </div>
+                    );
+
+                    return (
+                      <Card key={shortlist.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
+                        <BlurredContent
+                          isBlurred={!hasActivePackage}
+                          message="Upgrade to view shortlisted candidates"
+                          upgradeLink={`/${user.role}/packages`}
+                        >
+                          {cardContent}
+                        </BlurredContent>
                       </Card>
                     );
                   })}
