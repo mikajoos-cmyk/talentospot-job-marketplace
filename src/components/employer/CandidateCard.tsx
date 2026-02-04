@@ -200,9 +200,8 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   const sector = candidate.sector || candidate.industry || 'General';
   const careerLevel = candidate.career_level || candidate.careerLevel || 'Not specified';
 
-  // Robust availability parsing
-  const rawAvailability = candidate.available_from || candidate.availableFrom || candidate.conditions?.startDate;
-  const availability = rawAvailability ? new Date(rawAvailability).toLocaleDateString() : 'Immediate';
+  // Notice period parsing
+  const noticePeriod = candidate.notice_period || candidate.noticePeriod || 'Immediate';
 
   const skills = candidate.candidate_skills || candidate.skills || [];
   const languages = candidate.candidate_languages || candidate.languages || [];
@@ -307,13 +306,13 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                   <p className="text-sm font-semibold">
                     {candidate.currency || 'EUR'} {minSalary.toLocaleString()} - {maxSalary.toLocaleString()}
                   </p>
-                  {entryBonus && <p className="text-xs font-bold text-[#FFB800]">Entry Bonus: €{entryBonus.toLocaleString()}</p>}
+                  {entryBonus && <p className="text-sm font-bold text-[#FFB800]">Entry Bonus: €{entryBonus.toLocaleString()}</p>}
                 </div>
               </div>
 
               <div className="flex items-center gap-2 text-muted-foreground pt-2">
                 <Calendar className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-bold uppercase tracking-wide">Available: {availability}</span>
+                <span className="text-[11px] font-bold uppercase tracking-wide">Notice Period: {noticePeriod}</span>
               </div>
             </div>
 

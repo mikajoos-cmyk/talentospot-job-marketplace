@@ -783,25 +783,10 @@ export const candidateService = {
   async searchCandidates(filters: any = {}, searchRadius?: number) {
     console.log('Searching candidates with filters:', filters);
 
-    // 1. IDs für Preferred Locations sammeln (falls Stadt gefiltert wird)
-    let preferredLocationCandidateIds: string[] = [];
-
     // Explicitly use the passed arg as the geographic radius
     const radius = searchRadius;
 
-    if (filters.city) {
-      // Suche in den verknüpften Tabellen nach der Stadt
-      const { data: prefData } = await supabase
-        .from('candidate_preferred_locations')
-        .select('candidate_id, cities!inner(name)')
-        .ilike('cities.name', `%${filters.city.trim()}%`);
-
-      if (prefData) {
-        preferredLocationCandidateIds = prefData.map((d: any) => d.candidate_id);
-      }
-    }
-
-    // 2. RADIUS SEARCH (Refactored)
+    // RADIUS SEARCH - Only based on candidate residence location
     let radiusCandidateIds: string[] | null = null;
     if (filters.city && radius) {
       console.log(`Performing Radius Search for ${filters.city} within ${radius}km`);
@@ -811,7 +796,7 @@ export const candidateService = {
       const searchLat = cityData?.latitude;
       const searchLon = cityData?.longitude;
 
-      // Step C: Execute RPC if we have coords
+      // Execute RPC if we have coords
       if (searchLat != null && searchLon != null) {
         const { data: radiusData, error: radiusError } = await supabase.rpc('search_candidates_radius', {
           search_lat: searchLat,
@@ -850,13 +835,11 @@ export const candidateService = {
       sector,
       career_level,
       employment_status,
+      currency,
+      created_at,
+      latitude,
+      longitude,
       profiles!inner(full_name, avatar_url, email, is_visible),
-      candidate_preferred_locations(
-        id,
-        cities(name),
-        countries(name),
-        continents(name)
-      ),
       candidate_skills${filters.skills?.length ? '!inner' : ''}(
         id,
         proficiency_percentage,
@@ -888,39 +871,21 @@ export const candidateService = {
 
     if (filters.city) {
       if (radiusCandidateIds !== null) {
-        // RADIUS SEARCH ACTIVE:
-        // Filter by the IDs returned from the RPC. 
-        // NOTE: We do NOT add a strict city/country filter here because the RPC 
-        // already checked "Residence OR Preferred Location" within the radius.
+        // RADIUS SEARCH ACTIVE: Filter by the IDs returned from the RPC (residence location only)
         if (radiusCandidateIds.length > 0) {
           query = query.in('id', radiusCandidateIds);
         } else {
           // Radius search returned no results -> force empty result
           query = query.eq('id', '00000000-0000-0000-0000-000000000000');
         }
-      } else if (preferredLocationCandidateIds.length > 0) {
-        // Fallback: No Radius or City coords not found -> Normal Text Search including preferred locations
-        // We match if city matches residence OR if candidate is in preferredLocationCandidateIds
-        const idsString = `(${preferredLocationCandidateIds.join(',')})`;
-        query = query.or(`city.ilike.%${filters.city.trim()}%,id.in.${idsString}`);
-      } else {
-        // No preferred locations found for this city string -> Filter only by residence city
+      } else if (!filters.enablePartialMatch) {
+        // Fallback: No Radius or City coords not found -> Normal Text Search by residence city only
         query = query.ilike('city', `%${filters.city.trim()}%`);
       }
-    } else if (filters.country) {
-      // If ONLY country is selected (no city), we also want to include preferred locations in that country
-      const { data: countryPrefData } = await supabase
-        .from('candidate_preferred_locations')
-        .select('candidate_id, countries!inner(name)')
-        .ilike('countries.name', filters.country.trim());
-
-      if (countryPrefData && countryPrefData.length > 0) {
-        const countryPrefIds = countryPrefData.map((d: any) => d.candidate_id);
-        const countryIdsString = `(${countryPrefIds.join(',')})`;
-        query = query.or(`country.eq.${filters.country.trim()},id.in.${countryIdsString}`);
-      } else {
-        query = query.eq('country', filters.country);
-      }
+      // If enablePartialMatch is true AND radiusCandidateIds is null, we don't apply strict city filtering at the query level
+    } else if (filters.country && !filters.enablePartialMatch) {
+      // If ONLY country is selected (no city), filter by residence country only
+      query = query.eq('country', filters.country);
     }
 
     if (filters.career_level) {
@@ -1065,7 +1030,14 @@ export const candidateService = {
     }
 
     console.log(`Search returned ${data?.length || 0} candidates`);
-    return data?.map((item: any) => this.mapDbToProfile(item)) || [];
+    // Return raw data including notice_period instead of mapping through mapDbToProfile
+    // which might lose some fields needed for search results
+    return data?.map((item: any) => ({
+      ...item,
+      notice_period: item.notice_period,
+      currency: item.currency || 'EUR',
+      created_at: item.created_at
+    })) || [];
   },
 
   async getFeaturedTalent(limit: number = 6) {

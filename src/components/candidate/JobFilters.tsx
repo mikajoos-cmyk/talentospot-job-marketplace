@@ -491,7 +491,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                                         <SelectValue placeholder="Lvl" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {getLanguageLevelOptions(true).map(opt => (
+                                        {getLanguageLevelOptions().map(opt => (
                                             <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                                         ))}
                                     </SelectContent>

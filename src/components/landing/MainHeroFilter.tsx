@@ -52,7 +52,6 @@ const MainHeroFilter = () => {
         vacationDays: [0, 50] as [number, number],
         travelWillingness: [0, 100] as [number, number],
         customTags: [] as string[],
-        preferredWorkLocations: [] as { continent: string, country: string, city: string, radius: number }[],
 
         // Job Search specific
         benefits: [] as string[],
@@ -716,7 +715,7 @@ const MainHeroFilter = () => {
                                                     <Select value={languageLevel} onValueChange={setLanguageLevel}>
                                                         <SelectTrigger className="h-10 w-24"><SelectValue /></SelectTrigger>
                                                         <SelectContent>
-                                                            {getLanguageLevelOptions(true).map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                                                            {getLanguageLevelOptions().map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                                                         </SelectContent>
                                                     </Select>
                                                     <Button size="icon" variant="secondary" onClick={handleAddLanguage} className="h-10 w-10 shrink-0"><Plus className="w-4 h-4" /></Button>

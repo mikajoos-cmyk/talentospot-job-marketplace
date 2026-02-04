@@ -123,6 +123,5 @@ export interface CandidateFilters {
   homeOfficePreference?: ('yes' | 'no' | 'hybrid')[];
   vacationDays?: number[];
   noticePeriod?: string[];
-  preferredWorkLocations?: Array<{ continent: string; country: string; city: string; radius: number }>;
   customTags?: string[];
 }

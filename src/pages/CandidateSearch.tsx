@@ -8,7 +8,7 @@ import { useUser } from '@/contexts/UserContext';
 import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
 import { candidateService } from '@/services/candidate.service';
 import { jobsService, Job } from '@/services/jobs.service';
-import { Loader2, Briefcase } from 'lucide-react';
+import { Loader2, Briefcase, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { calculateCandidateMatchScore } from '@/utils/match-utils';
 import { Button } from '@/components/ui/button';
 import { getCoordinates } from '@/utils/geocoding';
@@ -17,7 +17,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+
+type SortOption = 'newest' | 'random' | 'salary' | 'distance' | 'match';
 
 const CandidateSearch: React.FC = () => {
   const { user } = useUser();
@@ -29,6 +32,8 @@ const CandidateSearch: React.FC = () => {
   const [loadingJobs, setLoadingJobs] = useState(false);
   const [searchParams] = useSearchParams();
   const [mapCenter, setMapCenter] = useState<[number, number]>([51.1657, 10.4515]);
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [sortAscending, setSortAscending] = useState<boolean>(false);
   const [filters, setFilters] = useState<CandidateFiltersType>(() => {
     // 1. First, check if there are URL parameters (these should override everything)
 
@@ -224,15 +229,25 @@ const CandidateSearch: React.FC = () => {
         setLoading(true);
         const searchFilters: any = {};
 
+        // Location filters - ALWAYS apply (needed for radius search to work)
+        if (filters.location.continent) {
+          searchFilters.continent = filters.location.continent;
+        }
+
+        if (filters.location.country) {
+          searchFilters.country = filters.location.country;
+        }
+
+        if (filters.location.cities && filters.location.cities.length > 0) {
+          searchFilters.city = filters.location.cities[0];
+        }
+
+        // Apply all OTHER filters ONLY when NOT in partial match mode
         if (!filters.enablePartialMatch) {
           if (filters.salary[0] > 20000) searchFilters.min_salary = filters.salary[0];
           if (filters.salary[1] < 200000) searchFilters.max_salary = filters.salary[1];
           if (filters.bonus[0] > 0) searchFilters.min_bonus = filters.bonus[0];
           if (filters.bonus[1] < 100000) searchFilters.max_bonus = filters.bonus[1];
-          if (filters.bonus[0] > 0) searchFilters.min_bonus = filters.bonus[0];
-          if (filters.bonus[1] < 100000) searchFilters.max_bonus = filters.bonus[1];
-
-          // Radius logic refactored: Passed separately below.
 
           if (filters.jobTitle) {
             searchFilters.job_title = filters.jobTitle;
@@ -309,18 +324,6 @@ const CandidateSearch: React.FC = () => {
             searchFilters.qualifications = filters.qualifications;
           }
 
-          if (filters.location.continent) {
-            searchFilters.continent = filters.location.continent;
-          }
-
-          if (filters.location.country) {
-            searchFilters.country = filters.location.country;
-          }
-
-          if (filters.location.cities && filters.location.cities.length > 0) {
-            searchFilters.city = filters.location.cities[0];
-          }
-
           if (filters.gender && filters.gender.length > 0) {
             searchFilters.gender = filters.gender;
           }
@@ -330,7 +333,10 @@ const CandidateSearch: React.FC = () => {
           }
         }
 
-        // Pass radius separately. Service handles deciding if radius search applies (needs city).
+        // Always pass radius to ensure location filtering works
+        // The radius determines which candidates are geographically relevant
+        // With partial match ON: candidates within radius get scored on all criteria
+        // With partial match OFF: candidates outside radius are excluded (strict filtering)
         const data = await candidateService.searchCandidates(searchFilters, radiusValue);
         let results = data || [];
 
@@ -363,6 +369,96 @@ const CandidateSearch: React.FC = () => {
 
     loadCandidates();
   }, [filters, radiusValue]);
+
+  // Sort candidates based on selected option
+  const sortedCandidates = React.useMemo(() => {
+    let sorted = [...candidates];
+    const direction = sortAscending ? 1 : -1;
+
+    switch (sortBy) {
+      case 'newest':
+        // Sort by created_at or id
+        sorted.sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return direction * (dateB - dateA || b.id - a.id);
+        });
+        break;
+
+      case 'random':
+        // Shuffle array (ignore direction for random)
+        for (let i = sorted.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
+        }
+        break;
+
+      case 'salary':
+        // Sort by salary expectation
+        sorted.sort((a, b) => {
+          const salaryA = a.salary_expectation_max || a.salary?.max || 0;
+          const salaryB = b.salary_expectation_max || b.salary?.max || 0;
+          return direction * (salaryB - salaryA);
+        });
+        break;
+
+      case 'distance':
+        // Sort by distance to work location
+        sorted.sort((a, b) => {
+          // Calculate distance from latitude/longitude if available
+          const distA = a.distance || (a.latitude && a.longitude && filters.location.cities?.[0] ?
+            calculateDistance(mapCenter[0], mapCenter[1], a.latitude, a.longitude) : Infinity);
+          const distB = b.distance || (b.latitude && b.longitude && filters.location.cities?.[0] ?
+            calculateDistance(mapCenter[0], mapCenter[1], b.latitude, b.longitude) : Infinity);
+          return direction * (distA - distB);
+        });
+        break;
+
+      case 'match':
+        // Sort by match score (only when partial match is enabled)
+        sorted.sort((a, b) => {
+          const scoreA = a.matchScore || 0;
+          const scoreB = b.matchScore || 0;
+          return direction * (scoreB - scoreA);
+        });
+        break;
+
+      default:
+        break;
+    }
+
+    return sorted;
+  }, [candidates, sortBy, sortAscending, mapCenter, filters.location.cities]);
+
+  // Helper function to calculate distance between two coordinates (Haversine formula)
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  const getSortLabel = (option: SortOption): string => {
+    switch (option) {
+      case 'newest': return 'Neueste';
+      case 'random': return 'Zufällig';
+      case 'salary': return 'Gehaltshöhe';
+      case 'distance': return 'Nächste zur Work Location';
+      case 'match': return 'Match %';
+      default: return 'Sortieren';
+    }
+  };
+
+  const toggleSortDirection = () => {
+    if (sortBy !== 'random') {
+      setSortAscending(!sortAscending);
+    }
+  };
 
   return (
     <>
@@ -449,10 +545,57 @@ const CandidateSearch: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  <div className="mb-4">
+                  <div className="mb-4 flex items-center justify-between">
                     <p className="text-body text-foreground">
                       <span className="font-medium">{candidates.length}</span> candidates found
                     </p>
+
+                    {/* Sort Controls */}
+                    <div className="flex items-center gap-2">
+                      {/* Sort Direction Toggle (only show if not random) */}
+                      {sortBy !== 'random' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={toggleSortDirection}
+                          className="px-2"
+                        >
+                          {sortAscending ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                        </Button>
+                      )}
+
+                      {/* Sort Dropdown */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <ArrowUpDown className="w-4 h-4 mr-2" />
+                            {getSortLabel(sortBy)}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setSortBy('newest')}>
+                            Neueste
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSortBy('random')}>
+                            Zufällig
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSortBy('salary')}>
+                            Gehaltshöhe
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSortBy('distance')}>
+                            Nächste zur Work Location
+                          </DropdownMenuItem>
+                          {filters.enablePartialMatch && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setSortBy('match')}>
+                                Match %
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
 
                   {candidates.length === 0 ? (
@@ -463,7 +606,7 @@ const CandidateSearch: React.FC = () => {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-6">
-                      {candidates.map((candidate) => (
+                      {sortedCandidates.map((candidate) => (
                         <CandidateCard
                           key={candidate.id}
                           candidate={candidate}

@@ -4,6 +4,22 @@
 
 import { meetsLanguageRequirement } from './language-levels';
 
+/**
+ * Calculates the Haversine distance between two points in kilometers.
+ */
+export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c;
+    return d;
+};
+
 export interface MatchScoreResult {
     score: number; // 0 to 100
     matchedCriteria: string[];
@@ -51,8 +67,33 @@ export const calculateJobMatchScore = (job: any, filters: any, flexibleMode: boo
         }
     }
 
-    // Location
-    if (filters.city && filters.city !== '' && filters.city !== 'all') {
+    // Location Scoring (Distance-based when coordinates available)
+    // Check if we have coordinates to do distance-based scoring
+    const hasJobCoords = job.latitude != null && job.longitude != null;
+    const hasFilterCoords = filters.latitude != null && filters.longitude != null;
+
+    if (hasJobCoords && hasFilterCoords) {
+        // Distance-based scoring (similar to candidate scoring)
+        total += 2;
+        const distance = calculateDistance(
+            filters.latitude,
+            filters.longitude,
+            job.latitude,
+            job.longitude
+        );
+
+        const radius = filters.workRadius || 50;
+
+        if (distance <= radius) {
+            matched += 2; // Within radius -> Full points
+        } else if (distance <= radius * 2) {
+            matched += 1; // Within double radius -> 1 point
+        } else if (distance <= radius * 4) {
+            matched += 0.5; // Within quadruple radius -> 0.5 points
+        }
+        // Beyond that, 0 points
+    } else if (filters.city && filters.city !== '' && filters.city !== 'all') {
+        // Fallback: String-based city matching if no coordinates
         total += 1;
         if (job.city === filters.city) {
             matched += 1;
@@ -60,6 +101,7 @@ export const calculateJobMatchScore = (job: any, filters: any, flexibleMode: boo
             matched += 0.5;
         }
     } else if (filters.country && filters.country !== '' && filters.country !== 'all') {
+        // Fallback: Country matching
         total += 1;
         if (job.country === filters.country) {
             matched += 1;
@@ -521,19 +563,8 @@ export const calculateCandidateMatchScore = (candidate: any, filters: any): numb
         });
     }
 
-    // Preferred Work Locations
-    if (filters.preferredWorkLocations && filters.preferredWorkLocations.length > 0) {
-        total += 1;
-        const candidateLocations = candidate.preferred_work_locations || candidate.preferredLocations || [];
-        // Match if ANY filter location overlaps with ANY candidate location
-        const hasMatch = filters.preferredWorkLocations.some((filterLoc: any) =>
-            candidateLocations.some((candLoc: any) => {
-                // Simple city match for now (radius calculation would require geocoding)
-                return candLoc.city?.toLowerCase() === filterLoc.city?.toLowerCase();
-            })
-        );
-        if (hasMatch) matched += 1;
-    }
+    // Location matching is handled by radius search in the database query
+    // We don't need to match preferred work locations in the score calculation
 
     // Custom Tags - Each tag must match individually
     if (filters.customTags && filters.customTags.length > 0) {
@@ -558,6 +589,45 @@ export const calculateCandidateMatchScore = (candidate: any, filters: any): numb
         total += 1;
         const candidateOrigin = candidate.origin_country || candidate.originCountry || '';
         if (candidateOrigin.toLowerCase() === filters.originCountry.toLowerCase()) {
+            matched += 1;
+        }
+    }
+
+    // Location Scoring (Distance-based)
+    // If a city is selected, we calculate a score based on distance.
+    // This is NOT an exclusion criterion anymore, but adds to the score.
+    if (filters.location && filters.location.latitude && filters.location.longitude) {
+        total += 2; // Weight location match with 2 points
+        const candLat = candidate.latitude;
+        const candLon = candidate.longitude;
+
+        if (candLat && candLon) {
+            const distance = calculateDistance(
+                filters.location.latitude,
+                filters.location.longitude,
+                candLat,
+                candLon
+            );
+
+            const radius = filters.workRadius || 50;
+
+            if (distance <= radius) {
+                // Within radius -> Full points
+                matched += 2;
+            } else if (distance <= radius * 2) {
+                // Within double radius -> 1 point (partial match)
+                matched += 1;
+            } else if (distance <= radius * 4) {
+                // Within quadruple radius -> 0.5 points
+                matched += 0.5;
+            }
+            // Beyond that, 0 points
+        }
+    } else if (filters.city && filters.city !== '') {
+        // Fallback for city text match if no coordinates available
+        total += 1;
+        const candCity = candidate.city || '';
+        if (candCity.toLowerCase().includes(filters.city.toLowerCase())) {
             matched += 1;
         }
     }

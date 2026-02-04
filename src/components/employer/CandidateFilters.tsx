@@ -211,7 +211,6 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
       homeOfficePreference: [],
       vacationDays: [0, 50],
       noticePeriod: [],
-      preferredWorkLocations: [],
       customTags: [],
       gender: [],
       allowOverqualification: false,
@@ -371,34 +370,6 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
                   )}
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Desired Work Location */}
-          <div>
-            <Label className="text-body-sm font-medium text-foreground mb-3 block">
-              Desired Work Location
-            </Label>
-            <div className="space-y-3">
-              <AutocompleteInput
-                category="cities"
-                placeholder="Search for cities..."
-                value={filters.preferredWorkLocations && filters.preferredWorkLocations.length > 0 ? filters.preferredWorkLocations[0].city : ''}
-                onChange={(val) => {
-                  // For simplicity in the sidebar, we just handle the first preferred location
-                  onFiltersChange({
-                    ...filters,
-                    preferredWorkLocations: val ? [{
-                      city: val,
-                      country: '', // We could enhance this to also select country
-                      continent: '',
-                      radius: 50
-                    }] : []
-                  });
-                }}
-                className="bg-background text-foreground border-border"
-                icon={<MapPin className="w-4 h-4 text-primary" />}
-              />
             </div>
           </div>
         </div>
@@ -570,7 +541,7 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
                     <SelectValue placeholder="Lvl" />
                   </SelectTrigger>
                   <SelectContent>
-                    {getLanguageLevelOptions(true).map(opt => (
+                    {getLanguageLevelOptions().map(opt => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                     ))}
                   </SelectContent>

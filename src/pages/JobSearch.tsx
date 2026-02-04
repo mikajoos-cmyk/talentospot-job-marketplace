@@ -190,12 +190,15 @@ const JobSearch: React.FC = () => {
       // Only apply exact filters if neither flexible nor partial matching is enabled
       const useClientSideFiltering = currentFilters.enableFlexibleMatch || currentFilters.enablePartialMatch;
 
+      // Location filters - ALWAYS apply (needed for radius search to work)
+      if (currentFilters.continent && currentFilters.continent !== 'all') searchParams.continent = currentFilters.continent;
+      if (currentFilters.country && currentFilters.country !== 'all') searchParams.country = currentFilters.country;
+      if (currentFilters.city && currentFilters.city !== 'all') searchParams.city = currentFilters.city;
+
+      // Apply all OTHER filters only when NOT using client-side filtering
       if (!useClientSideFiltering) {
         if (currentFilters.title) searchParams.title = currentFilters.title;
         if (currentFilters.sector && currentFilters.sector !== 'all') searchParams.sector = currentFilters.sector;
-        if (currentFilters.continent && currentFilters.continent !== 'all') searchParams.continent = currentFilters.continent;
-        if (currentFilters.country && currentFilters.country !== 'all') searchParams.country = currentFilters.country;
-        if (currentFilters.city && currentFilters.city !== 'all') searchParams.city = currentFilters.city;
         if (currentFilters.employmentTypes.length > 0) searchParams.employment_type = currentFilters.employmentTypes;
         if (currentFilters.salaryRange[0] > 0) searchParams.min_salary = currentFilters.salaryRange[0];
         if (currentFilters.salaryRange[1] < 250000) searchParams.max_salary = currentFilters.salaryRange[1];
@@ -220,9 +223,22 @@ const JobSearch: React.FC = () => {
       if (useClientSideFiltering) {
         const flexibleMode = currentFilters.enableFlexibleMatch;
 
+        // Get coordinates for distance-based scoring if city is selected
+        let filtersWithCoords = { ...currentFilters };
+        if (currentFilters.city && currentFilters.city !== 'all') {
+          const coords = await getCoordinates(currentFilters.city, currentFilters.country);
+          if (coords) {
+            filtersWithCoords = {
+              ...currentFilters,
+              latitude: coords.latitude,
+              longitude: coords.longitude
+            };
+          }
+        }
+
         results = results.map(job => ({
           ...job,
-          matchScore: calculateJobMatchScore(job, currentFilters, flexibleMode)
+          matchScore: calculateJobMatchScore(job, filtersWithCoords, flexibleMode)
         }));
 
         // Filter by threshold only if partial matching is enabled
