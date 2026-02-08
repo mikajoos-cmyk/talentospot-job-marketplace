@@ -177,7 +177,11 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                     {filteredSuggestions.map((s, index) => (
                         <button
                             key={s.id || s.name}
-                            onClick={() => handleSelect(s)}
+                            onMouseDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleSelect(s);
+                            }}
                             onMouseEnter={() => setActiveIndex(index)}
                             className={`w-full text-left px-4 py-2 text-body-sm transition-colors ${index === activeIndex ? 'bg-muted' : 'hover:bg-muted'
                                 }`}

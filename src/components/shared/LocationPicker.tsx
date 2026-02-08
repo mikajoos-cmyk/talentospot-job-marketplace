@@ -162,6 +162,11 @@ export function LocationPicker({ value, onChange, className, mode = 'address' }:
                                             key={`${item.lat}-${item.lon}-${index}`}
                                             value={`${index}`} // MUST use simple index string for cmdk
                                             onSelect={() => handleSelect(item)}
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleSelect(item);
+                                            }}
                                             className="p-3 cursor-pointer aria-selected:bg-primary aria-selected:text-primary-foreground group"
                                         >
                                             <div className="flex items-start gap-3 w-full">

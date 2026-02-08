@@ -411,6 +411,7 @@ const EditProfile: React.FC = () => {
       institution: newEducation.institution,
       startDate: newEducation.startDate,
       endDate: newEducation.isCurrent ? null : newEducation.endDate,
+      description: newEducation.description || '',
       period: `${newEducation.startDate} - ${newEducation.isCurrent ? 'Present' : (newEducation.endDate || 'Present')}`,
     };
 
@@ -1722,7 +1723,10 @@ const EditProfile: React.FC = () => {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
-                        <p className="text-body-sm text-muted-foreground">{edu.institution} • {edu.period}</p>
+                        <p className="text-body-sm text-muted-foreground mb-2">{edu.institution} • {edu.period}</p>
+                        {edu.description && (
+                          <p className="text-body-sm text-foreground">{edu.description}</p>
+                        )}
                       </div>
                       <div className="flex space-x-2">
                         <Button

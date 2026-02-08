@@ -9,6 +9,7 @@ import { useUser } from '@/contexts/UserContext';
 import { jobsService } from '@/services/jobs.service';
 import { invitationsService } from '@/services/invitations.service';
 import { candidateService } from '@/services/candidate.service';
+import { shortlistsService } from '@/services/shortlists.service';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   const [requestPending, setRequestPending] = useState(accessStatus === 'pending');
   const [jobs, setJobs] = useState<any[]>([]);
   const [hasActivePackage, setHasActivePackage] = useState(false);
+  const [isShortlisted, setIsShortlisted] = useState(false);
 
   // Sync state with prop
   useEffect(() => {
@@ -55,6 +57,20 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
     }
     checkPackage();
   }, [user.id, user.role]);
+
+  useEffect(() => {
+    const checkShortlist = async () => {
+      if (user.role === 'employer' && user.profile?.id && candidate.id) {
+        try {
+          const shortlisted = await shortlistsService.isInShortlist(user.profile.id, candidate.id);
+          setIsShortlisted(shortlisted);
+        } catch (e) {
+          console.error("Error checking shortlist", e);
+        }
+      }
+    };
+    checkShortlist();
+  }, [user.id, user.role, user.profile?.id, candidate.id]);
 
   // Strict privacy: Blurred unless request accepted or guest.
   // ALSO: If I don't have a package, I shouldn't see details even if it's shortlisted (maybe?)
@@ -141,6 +157,47 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
       showToast({
         title: `Request ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}`,
         description: `Your request is ${statusText}.`,
+      });
+    }
+  };
+
+  const handleShortlist = async () => {
+    if (user.role === 'guest') {
+      navigate('/login');
+      return;
+    }
+
+    if (!user.profile?.id) {
+      showToast({
+        title: 'Error',
+        description: 'Employer profile not found',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      if (isShortlisted) {
+        await shortlistsService.removeFromShortlist(user.profile.id, candidate.id);
+        setIsShortlisted(false);
+        showToast({
+          title: 'Removed from Shortlist',
+          description: 'Candidate has been removed from your shortlist.',
+        });
+      } else {
+        await shortlistsService.addToShortlist(user.profile.id, candidate.id);
+        setIsShortlisted(true);
+        showToast({
+          title: 'Added to Shortlist',
+          description: 'Candidate has been added to your shortlist.',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating shortlist:', error);
+      showToast({
+        title: 'Error',
+        description: 'Failed to update shortlist. Please try again.',
+        variant: 'destructive',
       });
     }
   };
@@ -367,12 +424,33 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
           {/* Right Section: Action */}
           <div className={`p-6 ${user.role !== 'guest' ? 'layout-xl:w-48 layout-xl:border-t-0 layout-xl:border-l' : 'layout-md:w-48 layout-md:border-t-0 layout-md:border-l'} flex flex-col justify-center items-center gap-3 bg-muted/5 border-t border-border`}>
             <Button
+              onClick={() => {
+                const path = user.role === 'guest' ? `/candidates/${candidate.id}` : `/employer/candidates/${candidate.id}`;
+                navigate(path);
+              }}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 shadow-lg shadow-blue-200"
+            >
+              View Profile
+            </Button>
+            
+            <Button
+              onClick={handleShortlist}
+              variant={isShortlisted ? "default" : "outline"}
+              className={`w-full font-bold h-11 ${isShortlisted ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'border-amber-500/20 text-amber-600 hover:bg-amber-50'}`}
+            >
+              {isShortlisted ? 'Shortlisted' : 'Shortlist'}
+            </Button>
+
+            <div className="w-full h-px bg-border/50 my-1" />
+
+            <Button
               onClick={handleAction}
               disabled={requestPending && !canContact}
               className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-11 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {canContact ? 'Message' : accessStatus === 'rejected' ? 'Rejected' : requestPending ? 'Pending' : 'Request Data'}
             </Button>
+            
             <Button
               onClick={() => {
                 if (user.role === 'guest') {
@@ -386,17 +464,6 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
             >
               <UserPlus className="w-4 h-4 mr-2" />
               Invite
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const path = user.role === 'guest' ? `/candidates/${candidate.id}` : `/employer/candidates/${candidate.id}`;
-                navigate(path);
-              }}
-              className="text-[11px] text-muted-foreground hover:text-primary font-bold uppercase tracking-wider"
-            >
-              View Full Profile
             </Button>
           </div>
         </div>

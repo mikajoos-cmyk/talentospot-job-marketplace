@@ -1,532 +1,1900 @@
-diff --git a/src/components/candidate/JobFilters.tsx b/src/components/candidate/JobFilters.tsx
-index 9315d3f..8e2854c 100644
---- a/src/components/candidate/JobFilters.tsx
-+++ b/src/components/candidate/JobFilters.tsx
-@@ -491,7 +491,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
-                                         <SelectValue placeholder="Lvl" />
-                                     </SelectTrigger>
-                                     <SelectContent>
--                                        {getLanguageLevelOptions(true).map(opt => (
-+                                        {getLanguageLevelOptions().map(opt => (
-                                             <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                         ))}
-                                     </SelectContent>
+diff --git a/.output.txt b/.output.txt
+index 739fc3e..420e79d 100644
+--- a/.output.txt
++++ b/.output.txt
+@@ -1,532 +1,581 @@
+-diff --git a/src/components/candidate/JobFilters.tsx b/src/components/candidate/JobFilters.tsx
+-index 9315d3f..8e2854c 100644
+---- a/src/components/candidate/JobFilters.tsx
+-+++ b/src/components/candidate/JobFilters.tsx
+-@@ -491,7 +491,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
+-                                         <SelectValue placeholder="Lvl" />
+-                                     </SelectTrigger>
+-                                     <SelectContent>
+--                                        {getLanguageLevelOptions(true).map(opt => (
+-+                                        {getLanguageLevelOptions().map(opt => (
+-                                             <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+-                                         ))}
+-                                     </SelectContent>
+ diff --git a/src/components/employer/CandidateCard.tsx b/src/components/employer/CandidateCard.tsx
+-index e789804..e2ed20e 100644
++index e2ed20e..9f48650 100644
+ --- a/src/components/employer/CandidateCard.tsx
+ +++ b/src/components/employer/CandidateCard.tsx
+-@@ -200,9 +200,8 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
+-   const sector = candidate.sector || candidate.industry || 'General';
+-   const careerLevel = candidate.career_level || candidate.careerLevel || 'Not specified';
+-
+--  // Robust availability parsing
+--  const rawAvailability = candidate.available_from || candidate.availableFrom || candidate.conditions?.startDate;
+--  const availability = rawAvailability ? new Date(rawAvailability).toLocaleDateString() : 'Immediate';
+-+  // Notice period parsing
+-+  const noticePeriod = candidate.notice_period || candidate.noticePeriod || 'Immediate';
+-
+-   const skills = candidate.candidate_skills || candidate.skills || [];
+-   const languages = candidate.candidate_languages || candidate.languages || [];
+-@@ -307,13 +306,13 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
+-                   <p className="text-sm font-semibold">
+-                     {candidate.currency || 'EUR'} {minSalary.toLocaleString()} - {maxSalary.toLocaleString()}
+-                   </p>
+--                  {entryBonus && <p className="text-xs font-bold text-[#FFB800]">Entry Bonus: €{entryBonus.toLocaleString()}</p>}
+-+                  {entryBonus && <p className="text-sm font-bold text-[#FFB800]">Entry Bonus: €{entryBonus.toLocaleString()}</p>}
+-                 </div>
+-               </div>
+-
+-               <div className="flex items-center gap-2 text-muted-foreground pt-2">
+-                 <Calendar className="w-3.5 h-3.5" />
+--                <span className="text-[11px] font-bold uppercase tracking-wide">Available: {availability}</span>
+-+                <span className="text-[11px] font-bold uppercase tracking-wide">Notice Period: {noticePeriod}</span>
+-               </div>
+-             </div>
+-
+-diff --git a/src/components/employer/CandidateFilters.tsx b/src/components/employer/CandidateFilters.tsx
+-index 954c6be..5bf1847 100644
+---- a/src/components/employer/CandidateFilters.tsx
+-+++ b/src/components/employer/CandidateFilters.tsx
+-@@ -570,7 +570,7 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
+-                     <SelectValue placeholder="Lvl" />
+-                   </SelectTrigger>
+-                   <SelectContent>
+--                    {getLanguageLevelOptions(true).map(opt => (
+-+                    {getLanguageLevelOptions().map(opt => (
+-                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+-                     ))}
+-                   </SelectContent>
+-diff --git a/src/components/landing/MainHeroFilter.tsx b/src/components/landing/MainHeroFilter.tsx
+-index 4738a00..30d212d 100644
+---- a/src/components/landing/MainHeroFilter.tsx
+-+++ b/src/components/landing/MainHeroFilter.tsx
+-@@ -716,7 +716,7 @@ const MainHeroFilter = () => {
+-                                                     <Select value={languageLevel} onValueChange={setLanguageLevel}>
+-                                                         <SelectTrigger className="h-10 w-24"><SelectValue /></SelectTrigger>
+-                                                         <SelectContent>
+--                                                            {getLanguageLevelOptions(true).map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+-+                                                            {getLanguageLevelOptions().map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+-                                                         </SelectContent>
+-                                                     </Select>
+-                                                     <Button size="icon" variant="secondary" onClick={handleAddLanguage} className="h-10 w-10 shrink-0"><Plus className="w-4 h-4" /></Button>
+-diff --git a/src/pages/CandidateSearch.tsx b/src/pages/CandidateSearch.tsx
+-index 46b081f..b7f76fa 100644
+---- a/src/pages/CandidateSearch.tsx
+-+++ b/src/pages/CandidateSearch.tsx
+-@@ -8,7 +8,7 @@ import { useUser } from '@/contexts/UserContext';
+- import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
++@@ -9,6 +9,7 @@ import { useUser } from '@/contexts/UserContext';
++ import { jobsService } from '@/services/jobs.service';
++ import { invitationsService } from '@/services/invitations.service';
+  import { candidateService } from '@/services/candidate.service';
+- import { jobsService, Job } from '@/services/jobs.service';
+--import { Loader2, Briefcase } from 'lucide-react';
+-+import { Loader2, Briefcase, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+- import { calculateCandidateMatchScore } from '@/utils/match-utils';
+- import { Button } from '@/components/ui/button';
+- import { getCoordinates } from '@/utils/geocoding';
+-@@ -17,8 +17,11 @@ import {
+-   DropdownMenuContent,
+-   DropdownMenuItem,
+-   DropdownMenuTrigger,
+-+  DropdownMenuSeparator,
+- } from '@/components/ui/dropdown-menu';
+-
+-+type SortOption = 'newest' | 'random' | 'salary' | 'distance' | 'match';
+-+
+- const CandidateSearch: React.FC = () => {
+-   const { user } = useUser();
+-   const [loading, setLoading] = useState(true);
+-@@ -29,6 +32,8 @@ const CandidateSearch: React.FC = () => {
+-   const [loadingJobs, setLoadingJobs] = useState(false);
+-   const [searchParams] = useSearchParams();
+-   const [mapCenter, setMapCenter] = useState<[number, number]>([51.1657, 10.4515]);
+-+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+-+  const [sortAscending, setSortAscending] = useState<boolean>(false);
+-   const [filters, setFilters] = useState<CandidateFiltersType>(() => {
+-     // 1. First, check if there are URL parameters (these should override everything)
+++import { shortlistsService } from '@/services/shortlists.service';
++ import {
++   Dialog,
++   DialogContent,
++@@ -33,6 +34,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
++   const [requestPending, setRequestPending] = useState(accessStatus === 'pending');
++   const [jobs, setJobs] = useState<any[]>([]);
++   const [hasActivePackage, setHasActivePackage] = useState(false);
+++  const [isShortlisted, setIsShortlisted] = useState(false);
+
+-@@ -224,15 +229,25 @@ const CandidateSearch: React.FC = () => {
+-         setLoading(true);
+-         const searchFilters: any = {};
++   // Sync state with prop
++   useEffect(() => {
++@@ -56,6 +58,20 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
++     checkPackage();
++   }, [user.id, user.role]);
+
+-+        // Apply filters ONLY when NOT in partial match mode
+-         if (!filters.enablePartialMatch) {
+-+          // Location filters
+-+          if (filters.location.continent) {
+-+            searchFilters.continent = filters.location.continent;
+-+          }
+-+
+-+          if (filters.location.country) {
+-+            searchFilters.country = filters.location.country;
+-+          }
+-+
+-+          if (filters.location.cities && filters.location.cities.length > 0) {
+-+            searchFilters.city = filters.location.cities[0];
+-+          }
+++  useEffect(() => {
+++    const checkShortlist = async () => {
+++      if (user.role === 'employer' && user.profile?.id && candidate.id) {
+++        try {
+++          const shortlisted = await shortlistsService.isInShortlist(user.profile.id, candidate.id);
+++          setIsShortlisted(shortlisted);
+++        } catch (e) {
+++          console.error("Error checking shortlist", e);
+++        }
+++      }
+++    };
+++    checkShortlist();
+++  }, [user.id, user.role, user.profile?.id, candidate.id]);
+ +
+-           if (filters.salary[0] > 20000) searchFilters.min_salary = filters.salary[0];
+-           if (filters.salary[1] < 200000) searchFilters.max_salary = filters.salary[1];
+-           if (filters.bonus[0] > 0) searchFilters.min_bonus = filters.bonus[0];
+-           if (filters.bonus[1] < 100000) searchFilters.max_bonus = filters.bonus[1];
+--          if (filters.bonus[0] > 0) searchFilters.min_bonus = filters.bonus[0];
+--          if (filters.bonus[1] < 100000) searchFilters.max_bonus = filters.bonus[1];
+--
+--          // Radius logic refactored: Passed separately below.
+-
+-           if (filters.jobTitle) {
+-             searchFilters.job_title = filters.jobTitle;
+-@@ -309,18 +324,6 @@ const CandidateSearch: React.FC = () => {
+-             searchFilters.qualifications = filters.qualifications;
+-           }
+-
+--          if (filters.location.continent) {
+--            searchFilters.continent = filters.location.continent;
+--          }
+--
+--          if (filters.location.country) {
+--            searchFilters.country = filters.location.country;
+--          }
+--
+--          if (filters.location.cities && filters.location.cities.length > 0) {
+--            searchFilters.city = filters.location.cities[0];
+--          }
+--
+-           if (filters.gender && filters.gender.length > 0) {
+-             searchFilters.gender = filters.gender;
+-           }
+-@@ -330,8 +333,9 @@ const CandidateSearch: React.FC = () => {
+-           }
+-         }
+-
+--        // Pass radius separately. Service handles deciding if radius search applies (needs city).
+--        const data = await candidateService.searchCandidates(searchFilters, radiusValue);
+-+        // Pass radius only when NOT in partial match mode
+-+        const searchRadiusValue = filters.enablePartialMatch ? undefined : radiusValue;
+-+        const data = await candidateService.searchCandidates(searchFilters, searchRadiusValue);
+-         let results = data || [];
+-
+-         if (filters.enablePartialMatch) {
+-@@ -364,6 +368,96 @@ const CandidateSearch: React.FC = () => {
+-     loadCandidates();
+-   }, [filters, radiusValue]);
++   // Strict privacy: Blurred unless request accepted or guest.
++   // ALSO: If I don't have a package, I shouldn't see details even if it's shortlisted (maybe?)
++   // Prompt: "blurring shortlisted candidates for employers without a purchased package"
++@@ -145,6 +161,47 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
++     }
++   };
+
+-+  // Sort candidates based on selected option
+-+  const sortedCandidates = React.useMemo(() => {
+-+    let sorted = [...candidates];
+-+    const direction = sortAscending ? 1 : -1;
+-+
+-+    switch (sortBy) {
+-+      case 'newest':
+-+        // Sort by created_at or id
+-+        sorted.sort((a, b) => {
+-+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+-+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+-+          return direction * (dateB - dateA || b.id - a.id);
+-+        });
+-+        break;
+++  const handleShortlist = async () => {
+++    if (user.role === 'guest') {
+++      navigate('/login');
+++      return;
+++    }
+ +
+-+      case 'random':
+-+        // Shuffle array (ignore direction for random)
+-+        for (let i = sorted.length - 1; i > 0; i--) {
+-+          const j = Math.floor(Math.random() * (i + 1));
+-+          [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
+-+        }
+-+        break;
+++    if (!user.profile?.id) {
+++      showToast({
+++        title: 'Error',
+++        description: 'Employer profile not found',
+++        variant: 'destructive',
+++      });
+++      return;
+++    }
+ +
+-+      case 'salary':
+-+        // Sort by salary expectation
+-+        sorted.sort((a, b) => {
+-+          const salaryA = a.salary_expectation_max || a.salary?.max || 0;
+-+          const salaryB = b.salary_expectation_max || b.salary?.max || 0;
+-+          return direction * (salaryB - salaryA);
+++    try {
+++      if (isShortlisted) {
+++        await shortlistsService.removeFromShortlist(user.profile.id, candidate.id);
+++        setIsShortlisted(false);
+++        showToast({
+++          title: 'Removed from Shortlist',
+++          description: 'Candidate has been removed from your shortlist.',
+ +        });
+-+        break;
+-+
+-+      case 'distance':
+-+        // Sort by distance to work location
+-+        sorted.sort((a, b) => {
+-+          // Calculate distance from latitude/longitude if available
+-+          const distA = a.distance || (a.latitude && a.longitude && filters.location.cities?.[0] ?
+-+            calculateDistance(mapCenter[0], mapCenter[1], a.latitude, a.longitude) : Infinity);
+-+          const distB = b.distance || (b.latitude && b.longitude && filters.location.cities?.[0] ?
+-+            calculateDistance(mapCenter[0], mapCenter[1], b.latitude, b.longitude) : Infinity);
+-+          return direction * (distA - distB);
+++      } else {
+++        await shortlistsService.addToShortlist(user.profile.id, candidate.id);
+++        setIsShortlisted(true);
+++        showToast({
+++          title: 'Added to Shortlist',
+++          description: 'Candidate has been added to your shortlist.',
+ +        });
+-+        break;
+++      }
+++    } catch (error) {
+++      console.error('Error updating shortlist:', error);
+++      showToast({
+++        title: 'Error',
+++        description: 'Failed to update shortlist. Please try again.',
+++        variant: 'destructive',
+++      });
+++    }
+++  };
+ +
+-+      case 'match':
+-+        // Sort by match score (only when partial match is enabled)
+-+        sorted.sort((a, b) => {
+-+          const scoreA = a.matchScore || 0;
+-+          const scoreB = b.matchScore || 0;
+-+          return direction * (scoreB - scoreA);
+-+        });
+-+        break;
++   const handleInvite = async (jobId: string, jobTitle: string) => {
++     if (user.role === 'guest') {
++       navigate('/login');
++@@ -366,6 +423,26 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
++
++           {/* Right Section: Action */}
++           <div className={`p-6 ${user.role !== 'guest' ? 'layout-xl:w-48 layout-xl:border-t-0 layout-xl:border-l' : 'layout-md:w-48 layout-md:border-t-0 layout-md:border-l'} flex flex-col justify-center items-center gap-3 bg-muted/5 border-t border-border`}>
+++            <Button
+++              onClick={() => {
+++                const path = user.role === 'guest' ? `/candidates/${candidate.id}` : `/employer/candidates/${candidate.id}`;
+++                navigate(path);
+++              }}
+++              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 shadow-lg shadow-blue-200"
+++            >
+++              View Profile
+++            </Button>
+ +
+-+      default:
+-+        break;
+-+    }
+++            <Button
+++              onClick={handleShortlist}
+++              variant={isShortlisted ? "default" : "outline"}
+++              className={`w-full font-bold h-11 ${isShortlisted ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'border-amber-500/20 text-amber-600 hover:bg-amber-50'}`}
+++            >
+++              {isShortlisted ? 'Shortlisted' : 'Shortlist'}
+++            </Button>
+ +
+-+    return sorted;
+-+  }, [candidates, sortBy, sortAscending, mapCenter, filters.location.cities]);
+++            <div className="w-full h-px bg-border/50 my-1" />
+ +
+-+  // Helper function to calculate distance between two coordinates (Haversine formula)
+-+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+-+    const R = 6371; // Radius of the Earth in km
+-+    const dLat = (lat2 - lat1) * Math.PI / 180;
+-+    const dLon = (lon2 - lon1) * Math.PI / 180;
+-+    const a =
+-+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+-+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+-+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+-+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+-+    return R * c;
+-+  };
++             <Button
++               onClick={handleAction}
++               disabled={requestPending && !canContact}
++@@ -373,6 +450,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
++             >
++               {canContact ? 'Message' : accessStatus === 'rejected' ? 'Rejected' : requestPending ? 'Pending' : 'Request Data'}
++             </Button>
+ +
+-+  const getSortLabel = (option: SortOption): string => {
+-+    switch (option) {
+-+      case 'newest': return 'Neueste';
+-+      case 'random': return 'Zufällig';
+-+      case 'salary': return 'Gehaltshöhe';
+-+      case 'distance': return 'Nächste zur Work Location';
+-+      case 'match': return 'Match %';
+-+      default: return 'Sortieren';
+-+    }
+-+  };
++             <Button
++               onClick={() => {
++                 if (user.role === 'guest') {
++@@ -387,17 +465,6 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
++               <UserPlus className="w-4 h-4 mr-2" />
++               Invite
++             </Button>
++-            <Button
++-              variant="ghost"
++-              size="sm"
++-              onClick={() => {
++-                const path = user.role === 'guest' ? `/candidates/${candidate.id}` : `/employer/candidates/${candidate.id}`;
++-                navigate(path);
++-              }}
++-              className="text-[11px] text-muted-foreground hover:text-primary font-bold uppercase tracking-wider"
++-            >
++-              View Full Profile
++-            </Button>
++           </div>
++         </div>
++       </Card>
++diff --git a/src/components/landing/MainHeroFilter.tsx b/src/components/landing/MainHeroFilter.tsx
++index c3484e8..f6368a9 100644
++--- a/src/components/landing/MainHeroFilter.tsx
+++++ b/src/components/landing/MainHeroFilter.tsx
++@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator';
++ import { refugeeOriginCountries } from '@/data/locationData';
++ import { getLanguageLevelOptions } from '@/utils/language-levels';
++ import { LocationPicker, LocationValue } from '@/components/shared/LocationPicker';
+++import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
++ import { findContinent } from '@/utils/locationUtils';
++
++ const MainHeroFilter = () => {
++@@ -34,6 +35,9 @@ const MainHeroFilter = () => {
++         country: 'any',
++         city: 'any',
++
+++        lat: null as number | null,
+++        lon: null as number | null,
+ +
+-+  const toggleSortDirection = () => {
+-+    if (sortBy !== 'random') {
+-+      setSortAscending(!sortAscending);
+-+    }
+-+  };
++         // Candidate specific
++         talentStatus: [] as string[],
++         isRefugee: false,
++@@ -52,20 +56,19 @@ const MainHeroFilter = () => {
++         vacationDays: [0, 50] as [number, number],
++         travelWillingness: [0, 100] as [number, number],
++         customTags: [] as string[],
+++        gender: [] as string[],
+++        allowOverqualification: false,
++
++         // Job Search specific
++         benefits: [] as string[],
++         contractDuration: '',
++         minVacationDays: 0,
++         experienceYears: null as number | null,
+++        employmentTypes: [] as string[],
+++        minEntryBonus: 0,
++
++         // Driving Licenses
++-        hasPkw: null as boolean | null,
++-        hasLkw: null as boolean | null,
++-        pkwClasses: [] as string[],
++-        lkwClasses: [] as string[],
++-        customPkw: '',
++-        customLkw: '',
+++        drivingLicenses: [] as string[],
++
++         // Matching preferences
++         enablePartialMatch: false,
++@@ -95,14 +98,35 @@ const MainHeroFilter = () => {
++         if (filters.country !== 'any') searchParams.set('country', filters.country);
++         if (filters.city !== 'any') searchParams.set('city', filters.city);
++
+++        if (filters.lat && filters.lon) {
+++            searchParams.set('lat', filters.lat.toString());
+++            searchParams.set('lon', filters.lon.toString());
+++        }
+ +
+-   return (
+-     <>
+-       <AppLayout isPublic={user.role === 'guest'}>
+-@@ -449,10 +543,57 @@ const CandidateSearch: React.FC = () => {
+-                 </div>
+-               ) : (
+-                 <>
+--                  <div className="mb-4">
+-+                  <div className="mb-4 flex items-center justify-between">
+-                     <p className="text-body text-foreground">
+-                       <span className="font-medium">{candidates.length}</span> candidates found
+-                     </p>
+++        // Common for both but often distinct in state
+++        if (filters.skills.length > 0) searchParams.set('skills', filters.skills.join(','));
+++        if (filters.qualifications.length > 0) searchParams.set('qualifications', filters.qualifications.join(','));
+++        if (filters.languages.length > 0) searchParams.set('languages', JSON.stringify(filters.languages));
+++        if (filters.drivingLicenses.length > 0) {
+++            const pkw = filters.drivingLicenses.filter(l => ['B', 'BE', 'B96', 'AM', 'L', 'T'].includes(l));
+++            const lkw = filters.drivingLicenses.filter(l => ['C', 'CE', 'C1', 'C1E', 'D', 'DE'].includes(l));
+++            if (pkw.length > 0) searchParams.set('pkwClasses', pkw.join(','));
+++            if (lkw.length > 0) searchParams.set('lkwClasses', lkw.join(','));
+++            const other = filters.drivingLicenses.filter(l => !['B', 'BE', 'B96', 'AM', 'L', 'T', 'C', 'CE', 'C1', 'C1E', 'D', 'DE'].includes(l));
+++            if (other.length > 0) searchParams.set('otherLicenses', other.join(','));
+++        }
+ +
+-+                    {/* Sort Controls */}
+-+                    <div className="flex items-center gap-2">
+-+                      {/* Sort Direction Toggle (only show if not random) */}
+-+                      {sortBy !== 'random' && (
+-+                        <Button
+-+                          variant="outline"
+-+                          size="sm"
+-+                          onClick={toggleSortDirection}
+-+                          className="px-2"
+-+                        >
+-+                          {sortAscending ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+-+                        </Button>
+-+                      )}
+++        if (filters.enablePartialMatch) {
+++            searchParams.set('partialMatch', 'true');
+++            searchParams.set('threshold', filters.minMatchThreshold.toString());
+++        }
+++        if (filters.enableFlexibleMatch) searchParams.set('flexibleMatch', 'true');
+ +
+-+                      {/* Sort Dropdown */}
+-+                      <DropdownMenu>
+-+                        <DropdownMenuTrigger asChild>
+-+                          <Button variant="outline" size="sm">
+-+                            <ArrowUpDown className="w-4 h-4 mr-2" />
+-+                            {getSortLabel(sortBy)}
+-+                          </Button>
+-+                        </DropdownMenuTrigger>
+-+                        <DropdownMenuContent align="end">
+-+                          <DropdownMenuItem onClick={() => setSortBy('newest')}>
+-+                            Neueste
+-+                          </DropdownMenuItem>
+-+                          <DropdownMenuItem onClick={() => setSortBy('random')}>
+-+                            Zufällig
+-+                          </DropdownMenuItem>
+-+                          <DropdownMenuItem onClick={() => setSortBy('salary')}>
+-+                            Gehaltshöhe
+-+                          </DropdownMenuItem>
+-+                          <DropdownMenuItem onClick={() => setSortBy('distance')}>
+-+                            Nächste zur Work Location
+-+                          </DropdownMenuItem>
+-+                          {filters.enablePartialMatch && (
+-+                            <>
+-+                              <DropdownMenuSeparator />
+-+                              <DropdownMenuItem onClick={() => setSortBy('match')}>
+-+                                Match %
+-+                              </DropdownMenuItem>
+-+                            </>
+-+                          )}
+-+                        </DropdownMenuContent>
+-+                      </DropdownMenu>
+-+                    </div>
+-                   </div>
++         if (searchMode === 'candidates') {
++             // Mapping landing page filters to candidate search params
++             if (filters.talentStatus.length > 0) searchParams.set('status', filters.talentStatus.join(','));
++             if (filters.isRefugee) searchParams.set('isRefugee', 'true');
++             if (filters.originCountry) searchParams.set('originCountry', filters.originCountry);
++-            if (filters.skills.length > 0) searchParams.set('skills', filters.skills.join(','));
++-            if (filters.qualifications.length > 0) searchParams.set('qualifications', filters.qualifications.join(','));
++-            if (filters.languages.length > 0) searchParams.set('languages', JSON.stringify(filters.languages));
++             if (filters.careerLevel.length > 0) searchParams.set('careerLevel', filters.careerLevel.join(','));
+
+-                   {candidates.length === 0 ? (
+-@@ -463,7 +604,7 @@ const CandidateSearch: React.FC = () => {
+-                     </div>
+-                   ) : (
+-                     <div className="grid grid-cols-1 gap-6">
+--                      {candidates.map((candidate) => (
+-+                      {sortedCandidates.map((candidate) => (
+-                         <CandidateCard
+-                           key={candidate.id}
+-                           candidate={candidate}
+-diff --git a/src/services/candidate.service.ts b/src/services/candidate.service.ts
+-index 335f323..9b068fb 100644
+---- a/src/services/candidate.service.ts
+-+++ b/src/services/candidate.service.ts
+-@@ -783,25 +783,10 @@ export const candidateService = {
+-   async searchCandidates(filters: any = {}, searchRadius?: number) {
+-     console.log('Searching candidates with filters:', filters);
++             searchParams.set('salaryMin', filters.salaryRange[0].toString());
++@@ -124,48 +148,29 @@ const MainHeroFilter = () => {
++             if (filters.vacationDays[1] < 50) searchParams.set('vacationMax', filters.vacationDays[1].toString());
++             if (filters.customTags.length > 0) searchParams.set('tags', filters.customTags.join(','));
+
+--    // 1. IDs für Preferred Locations sammeln (falls Stadt gefiltert wird)
+--    let preferredLocationCandidateIds: string[] = [];
++-            // Driving Licenses
++-            if (filters.hasPkw !== null) searchParams.set('hasPkw', filters.hasPkw.toString());
++-            const allPkw = [...filters.pkwClasses, ...(filters.customPkw ? [filters.customPkw] : [])];
++-            if (allPkw.length > 0) searchParams.set('pkwClasses', allPkw.join(','));
+ -
+-     // Explicitly use the passed arg as the geographic radius
+-     const radius = searchRadius;
+-
+--    if (filters.city) {
+--      // Suche in den verknüpften Tabellen nach der Stadt
+--      const { data: prefData } = await supabase
+--        .from('candidate_preferred_locations')
+--        .select('candidate_id, cities!inner(name)')
+--        .ilike('cities.name', `%${filters.city.trim()}%`);
++-            if (filters.hasLkw !== null) searchParams.set('hasLkw', filters.hasLkw.toString());
++-            const allLkw = [...filters.lkwClasses, ...(filters.customLkw ? [filters.customLkw] : [])];
++-            if (allLkw.length > 0) searchParams.set('lkwClasses', allLkw.join(','));
+ -
+--      if (prefData) {
+--        preferredLocationCandidateIds = prefData.map((d: any) => d.candidate_id);
+--      }
+--    }
++-            if (filters.gender.length > 0) searchParams.set('gender', filters.gender.join(','));
+++            if (filters.gender.length > 0) searchParams.set('gender', filters.gender.join(',').toLowerCase());
++             if (filters.allowOverqualification) searchParams.set('allowOverqualification', 'true');
++
++-            if (filters.enablePartialMatch) {
++-                searchParams.set('partialMatch', 'true');
++-                searchParams.set('threshold', filters.minMatchThreshold.toString());
++-            }
+ -
+--    // 2. RADIUS SEARCH (Refactored)
+-+    // RADIUS SEARCH - Only based on candidate residence location
+-     let radiusCandidateIds: string[] | null = null;
+-     if (filters.city && radius) {
+-       console.log(`Performing Radius Search for ${filters.city} within ${radius}km`);
+-@@ -811,7 +796,7 @@ export const candidateService = {
+-       const searchLat = cityData?.latitude;
+-       const searchLon = cityData?.longitude;
++             navigate(`/candidates?${searchParams.toString()}`);
++         } else {
++             // Mapping landing page filters to job search params
++-            if (filters.jobTypes.length > 0) searchParams.set('jobTypes', filters.jobTypes.join(','));
+++            if (filters.employmentTypes.length > 0) searchParams.set('jobTypes', filters.employmentTypes.join(','));
++             if (filters.contractTerms.length > 0) searchParams.set('contractTerms', filters.contractTerms.join(','));
++-            if (filters.homeOffice.length > 0) searchParams.set('homeOffice', filters.homeOffice.join(','));
+++            if (filters.homeOffice.length > 0) {
+++                if (filters.homeOffice.includes('yes') || filters.homeOffice.includes('hybrid')) {
+++                    searchParams.set('homeOffice', 'true');
+++                }
+++            }
+
+--      // Step C: Execute RPC if we have coords
+-+      // Execute RPC if we have coords
+-       if (searchLat != null && searchLon != null) {
+-         const { data: radiusData, error: radiusError } = await supabase.rpc('search_candidates_radius', {
+-           search_lat: searchLat,
+-@@ -850,13 +835,11 @@ export const candidateService = {
+-       sector,
+-       career_level,
+-       employment_status,
+-+      currency,
+-+      created_at,
+-+      latitude,
+-+      longitude,
+-       profiles!inner(full_name, avatar_url, email, is_visible),
+--      candidate_preferred_locations(
+--        id,
+--        cities(name),
+--        countries(name),
+--        continents(name)
+--      ),
+-       candidate_skills${filters.skills?.length ? '!inner' : ''}(
+-         id,
+-         proficiency_percentage,
+-@@ -888,39 +871,20 @@ export const candidateService = {
++             searchParams.set('salaryMin', filters.salaryRange[0].toString());
++             searchParams.set('salaryMax', filters.salaryRange[1].toString());
++-            searchParams.set('bonusMin', filters.bonusRange[0].toString());
++-            searchParams.set('vacationMin', filters.vacationDays[0].toString());
+++            searchParams.set('bonusMin', filters.minEntryBonus.toString());
+++            searchParams.set('vacationMin', filters.minVacationDays.toString());
+
+-     if (filters.city) {
+-       if (radiusCandidateIds !== null) {
+--        // RADIUS SEARCH ACTIVE:
+--        // Filter by the IDs returned from the RPC.
+--        // NOTE: We do NOT add a strict city/country filter here because the RPC
+--        // already checked "Residence OR Preferred Location" within the radius.
+-+        // RADIUS SEARCH ACTIVE: Filter by the IDs returned from the RPC (residence location only)
+-         if (radiusCandidateIds.length > 0) {
+-           query = query.in('id', radiusCandidateIds);
+-         } else {
+-           // Radius search returned no results -> force empty result
+-           query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+-         }
+--      } else if (preferredLocationCandidateIds.length > 0) {
+--        // Fallback: No Radius or City coords not found -> Normal Text Search including preferred locations
+--        // We match if city matches residence OR if candidate is in preferredLocationCandidateIds
+--        const idsString = `(${preferredLocationCandidateIds.join(',')})`;
+--        query = query.or(`city.ilike.%${filters.city.trim()}%,id.in.${idsString}`);
+-       } else {
+--        // No preferred locations found for this city string -> Filter only by residence city
+-+        // Fallback: No Radius or City coords not found -> Normal Text Search by residence city only
+-         query = query.ilike('city', `%${filters.city.trim()}%`);
+-       }
+-     } else if (filters.country) {
+--      // If ONLY country is selected (no city), we also want to include preferred locations in that country
+--      const { data: countryPrefData } = await supabase
+--        .from('candidate_preferred_locations')
+--        .select('candidate_id, countries!inner(name)')
+--        .ilike('countries.name', filters.country.trim());
++             if (filters.experienceYears !== null) searchParams.set('expMin', filters.experienceYears.toString());
++             if (filters.benefits.length > 0) searchParams.set('benefits', filters.benefits.join(','));
++
++-            // Shared Driving Licenses for Jobs too
++-            if (filters.hasPkw !== null) searchParams.set('hasPkw', filters.hasPkw.toString());
++-            const allPkw = [...filters.pkwClasses, ...(filters.customPkw ? [filters.customPkw] : [])];
++-            if (allPkw.length > 0) searchParams.set('pkwClasses', allPkw.join(','));
+ -
+--      if (countryPrefData && countryPrefData.length > 0) {
+--        const countryPrefIds = countryPrefData.map((d: any) => d.candidate_id);
+--        const countryIdsString = `(${countryPrefIds.join(',')})`;
+--        query = query.or(`country.eq.${filters.country.trim()},id.in.${countryIdsString}`);
+--      } else {
+--        query = query.eq('country', filters.country);
+--      }
+-+      // If ONLY country is selected (no city), filter by residence country only
+-+      query = query.eq('country', filters.country);
+-     }
++-            if (filters.hasLkw !== null) searchParams.set('hasLkw', filters.hasLkw.toString());
++-            const allLkw = [...filters.lkwClasses, ...(filters.customLkw ? [filters.customLkw] : [])];
++-            if (allLkw.length > 0) searchParams.set('lkwClasses', allLkw.join(','));
++-
++-            if (filters.enableFlexibleMatch) searchParams.set('flexibleMatch', 'true');
+++            if (filters.careerLevel.length > 0) searchParams.set('careerLevel', filters.careerLevel[0]);
+
+-     if (filters.career_level) {
+-@@ -1065,7 +1029,14 @@ export const candidateService = {
+-     }
++             navigate(`/jobs?${searchParams.toString()}`);
++         }
++@@ -279,7 +284,9 @@ const MainHeroFilter = () => {
++             location: val.city,
++             city: val.city,
++             country: val.country,
++-            continent: findContinent(val.country)
+++            continent: findContinent(val.country),
+++            lat: val.lat,
+++            lon: val.lon
++         });
++     };
++
++@@ -488,13 +495,13 @@ const MainHeroFilter = () => {
++                                             <div className="space-y-3">
++                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Career Level</Label>
++                                                 <div className="flex flex-wrap gap-2">
++-                                                    {['entry', 'junior', 'mid', 'senior', 'lead', 'executive'].map(level => (
+++                                                    {['junior', 'mid', 'senior', 'lead', 'executive'].map(level => (
++                                                         <button
++                                                             key={level}
++                                                             onClick={() => toggleFilterItem('careerLevel', level)}
++                                                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.careerLevel.includes(level)
++-                                                                ? 'bg-info border-info text-white shadow-sm'
++-                                                                : 'bg-white border-border text-foreground hover:border-info/50'
+++                                                                ? 'bg-accent border-accent text-accent-foreground shadow-sm'
+++                                                                : 'bg-muted text-foreground hover:bg-muted/80'
++                                                                 }`}
++                                                         >
++                                                             {level.charAt(0).toUpperCase() + level.slice(1)}
++@@ -509,26 +516,10 @@ const MainHeroFilter = () => {
++                                                     <Car className="w-3 h-3" />
++                                                     Driving Licenses
++                                                 </Label>
++-                                                <div className="flex flex-wrap gap-2">
++-                                                    <button
++-                                                        onClick={() => setFilters({ ...filters, hasPkw: filters.hasPkw === true ? null : true })}
++-                                                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.hasPkw === true
++-                                                            ? 'bg-warning border-warning text-white shadow-sm'
++-                                                            : 'bg-white border-border text-foreground hover:border-warning/50'
++-                                                            }`}
++-                                                    >
++-                                                        PKW (Car)
++-                                                    </button>
++-                                                    <button
++-                                                        onClick={() => setFilters({ ...filters, hasLkw: filters.hasLkw === true ? null : true })}
++-                                                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.hasLkw === true
++-                                                            ? 'bg-warning border-warning text-white shadow-sm'
++-                                                            : 'bg-white border-border text-foreground hover:border-warning/50'
++-                                                            }`}
++-                                                    >
++-                                                        LKW (Truck)
++-                                                    </button>
++-                                                </div>
+++                                                <DrivingLicenseSelector
+++                                                    value={filters.drivingLicenses}
+++                                                    onChange={(val) => setFilters({ ...filters, drivingLicenses: val })}
+++                                                />
++                                             </div>
+
+-     console.log(`Search returned ${data?.length || 0} candidates`);
+--    return data?.map((item: any) => this.mapDbToProfile(item)) || [];
+-+    // Return raw data including notice_period instead of mapping through mapDbToProfile
+-+    // which might lose some fields needed for search results
+-+    return data?.map((item: any) => ({
+-+      ...item,
+-+      notice_period: item.notice_period,
+-+      currency: item.currency || 'EUR',
+-+      created_at: item.created_at
+-+    })) || [];
+-   },
++                                             {/* Experience Slider */}
++@@ -549,7 +540,7 @@ const MainHeroFilter = () => {
++                                             <div className="space-y-3">
++                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Notice Period</Label>
++                                                 <div className="flex flex-wrap gap-2">
++-                                                    {['immediately', '1-month', '2-months', '3-months', '6-months'].map(period => (
+++                                                    {['immediate', '1-week', '2-weeks', '1-month', '2-months', '3-months'].map(period => (
++                                                         <button
++                                                             key={period}
++                                                             onClick={() => toggleFilterItem('noticePeriod', period)}
++@@ -598,8 +589,15 @@ const MainHeroFilter = () => {
++                                                     {['Male', 'Female', 'Non-binary', 'Other'].map(g => (
++                                                         <button
++                                                             key={g}
++-                                                            onClick={() => toggleFilterItem('gender', g)}
++-                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.gender.includes(g)
+++                                                            onClick={() => {
+++                                                                const genderKey = (g === 'Non-binary' || g === 'Other') ? 'diverse' : g.toLowerCase();
+++                                                                const current = filters.gender;
+++                                                                const updated = current.includes(genderKey)
+++                                                                    ? current.filter(i => i !== genderKey)
+++                                                                    : [...current, genderKey];
+++                                                                setFilters({ ...filters, gender: updated });
+++                                                            }}
+++                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.gender.includes((g === 'Non-binary' || g === 'Other') ? 'diverse' : g.toLowerCase())
++                                                                 ? 'bg-primary border-primary text-white shadow-sm'
++                                                                 : 'bg-white border-border text-foreground hover:border-primary/50'
++                                                                 }`}
++@@ -626,6 +624,18 @@ const MainHeroFilter = () => {
+
+-   async getFeaturedTalent(limit: number = 6) {
+-diff --git a/src/types/candidate.ts b/src/types/candidate.ts
+-index e4a9344..d28dc3f 100644
+---- a/src/types/candidate.ts
+-+++ b/src/types/candidate.ts
+-@@ -123,6 +123,5 @@ export interface CandidateFilters {
+-   homeOfficePreference?: ('yes' | 'no' | 'hybrid')[];
+-   vacationDays?: number[];
+-   noticePeriod?: string[];
+--  preferredWorkLocations?: Array<{ continent: string; country: string; city: string; radius: number }>;
+-   customTags?: string[];
+- }
+-diff --git a/src/utils/locationUtils.ts b/src/utils/locationUtils.ts
+-index 3a6a6b7..f891c74 100644
+---- a/src/utils/locationUtils.ts
+-+++ b/src/utils/locationUtils.ts
+-@@ -2,14 +2,39 @@ import { locationData } from '../data/locationData';
+
+- /**
+-  * Finds the continent for a given country name based on the locationData structure.
+-+ * - Case-insensitive match
+-+ * - Handles common aliases for some countries
+-  * @param countryName The name of the country.
+-- * @returns The name of the continent, or 'Europe' as a fallback.
+-+ * @returns The name of the continent, or 'Europe' as a safe fallback.
+-  */
+- export const findContinent = (countryName: string): string => {
+-     if (!countryName) return 'Europe';
+
+-+    const raw = countryName.trim();
+-+    const lower = raw.toLowerCase();
+++                                            {/* Driving Licenses */}
+++                                            <div className="space-y-3">
+++                                                <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+++                                                    <Car className="w-3 h-3" />
+++                                                    Driving Licenses
+++                                                </Label>
+++                                                <DrivingLicenseSelector
+++                                                    value={filters.drivingLicenses}
+++                                                    onChange={(val) => setFilters({ ...filters, drivingLicenses: val })}
+++                                                />
+++                                            </div>
+ +
+-+    // Common alias normalization
+-+    const aliasMap: Record<string, string> = {
+-+        'usa': 'United States',
+-+        'us': 'United States',
+-+        'united states of america': 'United States',
+-+        'u.k.': 'United Kingdom',
+-+        'uk': 'United Kingdom',
+-+        'great britain': 'United Kingdom',
+-+        'uae': 'United Arab Emirates',
+-+        'u.a.e.': 'United Arab Emirates',
+-+        'republic of korea': 'South Korea',
+-+        'korea, republic of': 'South Korea',
+-+        'south korea': 'South Korea',
+-+        'czechia': 'Czech Republic'
+-+    };
++                                             {/* Custom Tags */}
++                                             <div className="space-y-3">
++                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Additional Conditions (Tags)</Label>
++@@ -752,31 +762,38 @@ const MainHeroFilter = () => {
++                                             <div className="space-y-3">
++                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Job Types</Label>
++                                                 <div className="flex flex-wrap gap-2">
++-                                                    {['full-time', 'part-time', 'contract', 'freelance', 'internship', 'traineeship'].map(t => (
+++                                                    {['full-time', 'part-time', 'contract', 'freelance', 'internship', 'remote'].map(t => (
++                                                         <button
++                                                             key={t}
++-                                                            onClick={() => toggleFilterItem('jobTypes', t)}
++-                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.jobTypes.includes(t)
+++                                                            onClick={() => {
+++                                                                const current = filters.employmentTypes;
+++                                                                const updated = current.includes(t)
+++                                                                    ? current.filter(i => i !== t)
+++                                                                    : [...current, t];
+++                                                                setFilters({ ...filters, employmentTypes: updated });
+++                                                            }}
+++                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.employmentTypes.includes(t)
++                                                                 ? 'bg-success border-success text-white shadow-sm'
++                                                                 : 'bg-white border-border text-foreground hover:border-success/50'
++                                                                 }`}
++                                                         >
++-                                                            {t.charAt(0).toUpperCase() + t.slice(1)}
+++                                                            {t.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
++                                                         </button>
++                                                     ))}
++                                                 </div>
++                                             </div>
++
+++                                            {/* Contract Term */}
++                                             <div className="space-y-3">
++                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Contract Term</Label>
++                                                 <div className="flex flex-wrap gap-2">
++-                                                    {['unlimited', 'temporary', 'permanent'].map(term => (
+++                                                    {['unlimited', 'temporary'].map(term => (
++                                                         <button
++                                                             key={term}
++                                                             onClick={() => toggleFilterItem('contractTerms', term)}
++                                                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.contractTerms.includes(term)
++-                                                                ? 'bg-warning border-warning text-white shadow-sm'
++-                                                                : 'bg-white border-border text-foreground hover:border-warning/50'
+++                                                                ? 'bg-info border-info text-info-foreground shadow-sm'
+++                                                                : 'bg-muted text-foreground hover:bg-muted/80'
++                                                                 }`}
++                                                         >
++                                                             {term.charAt(0).toUpperCase() + term.slice(1)}
++@@ -791,7 +808,13 @@ const MainHeroFilter = () => {
++                                                     {['yes', 'no', 'hybrid'].map(pref => (
++                                                         <button
++                                                             key={pref}
++-                                                            onClick={() => toggleFilterItem('homeOffice', pref)}
+++                                                            onClick={() => {
+++                                                                const current = filters.homeOffice;
+++                                                                const updated = current.includes(pref)
+++                                                                    ? current.filter(i => i !== pref)
+++                                                                    : [...current, pref];
+++                                                                setFilters({ ...filters, homeOffice: updated });
+++                                                            }}
++                                                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.homeOffice.includes(pref)
++                                                                 ? 'bg-primary border-primary text-white shadow-sm'
++                                                                 : 'bg-white border-border text-foreground hover:border-primary/50'
++@@ -829,12 +852,12 @@ const MainHeroFilter = () => {
++                                                         <Sparkles className="w-3 h-3" />
++                                                         Entry Bonus (€)
++                                                     </Label>
++-                                                    <span className="text-xs font-bold text-success">{filters.bonusRange[0].toLocaleString()} - {filters.bonusRange[1].toLocaleString()}</span>
+++                                                    <span className="text-xs font-bold text-success">{filters.minEntryBonus.toLocaleString()}</span>
++                                                 </div>
++                                                 <Slider
++-                                                    value={filters.bonusRange}
++-                                                    onValueChange={(val) => setFilters({ ...filters, bonusRange: val as [number, number] })}
++-                                                    max={100000}
+++                                                    value={[filters.minEntryBonus]}
+++                                                    onValueChange={(val) => setFilters({ ...filters, minEntryBonus: val[0] })}
+++                                                    max={50000}
++                                                     step={1000}
++                                                 />
++                                             </div>
++@@ -845,12 +868,12 @@ const MainHeroFilter = () => {
++                                                         <Umbrella className="w-3 h-3" />
++                                                         Vacation Days
++                                                     </Label>
++-                                                    <span className="text-xs font-bold text-success">{filters.vacationDays[0]} - {filters.vacationDays[1]}</span>
+++                                                    <span className="text-xs font-bold text-success">{filters.minVacationDays}</span>
++                                                 </div>
++                                                 <Slider
++-                                                    value={filters.vacationDays}
++-                                                    onValueChange={(val) => setFilters({ ...filters, vacationDays: val as [number, number] })}
++-                                                    max={50}
+++                                                    value={[filters.minVacationDays]}
+++                                                    onValueChange={(val) => setFilters({ ...filters, minVacationDays: val[0] })}
+++                                                    max={40}
++                                                     step={1}
++                                                 />
++                                             </div>
++@@ -867,6 +890,39 @@ const MainHeroFilter = () => {
++                                                 </Select>
++                                             </div>
++
+++                                            {/* Career Level */}
+++                                            <div className="space-y-3">
+++                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Career Level</Label>
+++                                                <div className="flex flex-wrap gap-2">
+++                                                    {['entry', 'junior', 'mid', 'senior', 'lead'].map(level => (
+++                                                        <button
+++                                                            key={level}
+++                                                            onClick={() => {
+++                                                                setFilters({ ...filters, careerLevel: filters.careerLevel.includes(level) && filters.careerLevel.length === 1 ? [] : [level] });
+++                                                            }}
+++                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.careerLevel.includes(level)
+++                                                                ? 'bg-success border-success text-white shadow-sm'
+++                                                                : 'bg-white border-border text-foreground hover:border-success/50'
+++                                                                }`}
+++                                                        >
+++                                                            {level.charAt(0).toUpperCase() + level.slice(1)}
+++                                                        </button>
+++                                                    ))}
+++                                                </div>
+++                                            </div>
+ +
+-+    const normalized = aliasMap[lower] || raw;
+++                                            {/* Driving Licenses */}
+++                                            <div className="space-y-3">
+++                                                <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+++                                                    <Car className="w-3 h-3" />
+++                                                    Driving Licenses
+++                                                </Label>
+++                                                <DrivingLicenseSelector
+++                                                    value={filters.drivingLicenses}
+++                                                    onChange={(val) => setFilters({ ...filters, drivingLicenses: val })}
+++                                                />
+++                                            </div>
+ +
+-     for (const [continent, countries] of Object.entries(locationData)) {
+--        if (Object.keys(countries as object).includes(countryName)) {
+-+        const countryKeys = Object.keys(countries as object);
+-+        // Try exact (case-insensitive)
+-+        if (countryKeys.some(k => k.toLowerCase() === normalized.toLowerCase())) {
+-             return continent;
+-         }
+-     }
+-diff --git a/src/utils/match-utils.ts b/src/utils/match-utils.ts
+-index aa9287c..e2171db 100644
+---- a/src/utils/match-utils.ts
+-+++ b/src/utils/match-utils.ts
+-@@ -521,19 +521,8 @@ export const calculateCandidateMatchScore = (candidate: any, filters: any): numb
+-         });
+-     }
++                                             {/* Benefits */}
++                                             <div className="space-y-3">
++                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Job Benefits</Label>
++@@ -913,6 +969,17 @@ const MainHeroFilter = () => {
++
++                             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
++                                 <div className="space-y-6">
+++                                    <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border">
+++                                        <div className="space-y-0.5">
+++                                            <Label className="text-sm font-bold block">Flexible Match</Label>
+++                                            <p className="text-[10px] text-muted-foreground">Show jobs that partially match your profile</p>
+++                                        </div>
+++                                        <Switch
+++                                            checked={filters.enableFlexibleMatch}
+++                                            onCheckedChange={(checked) => setFilters({ ...filters, enableFlexibleMatch: checked })}
+++                                        />
+++                                    </div>
+++
++                                     <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border">
++                                         <div className="space-y-0.5">
++                                             <Label className="text-sm font-bold block">Partial Match</Label>
++@@ -959,8 +1026,8 @@ const MainHeroFilter = () => {
++                             </div>
++                         </section>
+
+--    // Preferred Work Locations
+--    if (filters.preferredWorkLocations && filters.preferredWorkLocations.length > 0) {
+--        total += 1;
+--        const candidateLocations = candidate.preferred_work_locations || candidate.preferredLocations || [];
+--        // Match if ANY filter location overlaps with ANY candidate location
+--        const hasMatch = filters.preferredWorkLocations.some((filterLoc: any) =>
+--            candidateLocations.some((candLoc: any) => {
+--                // Simple city match for now (radius calculation would require geocoding)
+--                return candLoc.city?.toLowerCase() === filterLoc.city?.toLowerCase();
+--            })
+--        );
+--        if (hasMatch) matched += 1;
+--    }
+-+    // Location matching is handled by radius search in the database query
+-+    // We don't need to match preferred work locations in the score calculation
++-                        {/* Large Action Search Button at bottom of advanced */}
++-                        <div className="pt-8 text-center">
+++            {/* Large Action Search Button at bottom of advanced */}
+++                        <div className="pt-8 text-center pb-4">
++                             <Button
++                                 onClick={handleSearch}
++                                 className="px-12 h-14 bg-primary text-white font-black text-xl rounded-2xl shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:-translate-y-1 active:scale-95 group"
++diff --git a/src/pages/candidate/EditProfile.tsx b/src/pages/candidate/EditProfile.tsx
++index e84da6e..e7495ce 100644
++--- a/src/pages/candidate/EditProfile.tsx
+++++ b/src/pages/candidate/EditProfile.tsx
++@@ -411,6 +411,7 @@ const EditProfile: React.FC = () => {
++       institution: newEducation.institution,
++       startDate: newEducation.startDate,
++       endDate: newEducation.isCurrent ? null : newEducation.endDate,
+++      description: newEducation.description || '',
++       period: `${newEducation.startDate} - ${newEducation.isCurrent ? 'Present' : (newEducation.endDate || 'Present')}`,
++     };
+
+-     // Custom Tags - Each tag must match individually
+-     if (filters.customTags && filters.customTags.length > 0) {
+\ No newline at end of file
++@@ -1722,7 +1723,10 @@ const EditProfile: React.FC = () => {
++                     <div className="flex items-start justify-between">
++                       <div className="flex-1">
++                         <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
++-                        <p className="text-body-sm text-muted-foreground">{edu.institution} • {edu.period}</p>
+++                        <p className="text-body-sm text-muted-foreground mb-2">{edu.institution} • {edu.period}</p>
+++                        {edu.description && (
+++                          <p className="text-body-sm text-foreground">{edu.description}</p>
+++                        )}
++                       </div>
++                       <div className="flex space-x-2">
++                         <Button
+\ No newline at end of file
 diff --git a/src/components/employer/CandidateCard.tsx b/src/components/employer/CandidateCard.tsx
-index e789804..e2ed20e 100644
+index e2ed20e..9f48650 100644
 --- a/src/components/employer/CandidateCard.tsx
 +++ b/src/components/employer/CandidateCard.tsx
-@@ -200,9 +200,8 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
-   const sector = candidate.sector || candidate.industry || 'General';
-   const careerLevel = candidate.career_level || candidate.careerLevel || 'Not specified';
+@@ -9,6 +9,7 @@ import { useUser } from '@/contexts/UserContext';
+ import { jobsService } from '@/services/jobs.service';
+ import { invitationsService } from '@/services/invitations.service';
+ import { candidateService } from '@/services/candidate.service';
++import { shortlistsService } from '@/services/shortlists.service';
+ import {
+   Dialog,
+   DialogContent,
+@@ -33,6 +34,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
+   const [requestPending, setRequestPending] = useState(accessStatus === 'pending');
+   const [jobs, setJobs] = useState<any[]>([]);
+   const [hasActivePackage, setHasActivePackage] = useState(false);
++  const [isShortlisted, setIsShortlisted] = useState(false);
 
--  // Robust availability parsing
--  const rawAvailability = candidate.available_from || candidate.availableFrom || candidate.conditions?.startDate;
--  const availability = rawAvailability ? new Date(rawAvailability).toLocaleDateString() : 'Immediate';
-+  // Notice period parsing
-+  const noticePeriod = candidate.notice_period || candidate.noticePeriod || 'Immediate';
+   // Sync state with prop
+   useEffect(() => {
+@@ -56,6 +58,20 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
+     checkPackage();
+   }, [user.id, user.role]);
 
-   const skills = candidate.candidate_skills || candidate.skills || [];
-   const languages = candidate.candidate_languages || candidate.languages || [];
-@@ -307,13 +306,13 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
-                   <p className="text-sm font-semibold">
-                     {candidate.currency || 'EUR'} {minSalary.toLocaleString()} - {maxSalary.toLocaleString()}
-                   </p>
--                  {entryBonus && <p className="text-xs font-bold text-[#FFB800]">Entry Bonus: €{entryBonus.toLocaleString()}</p>}
-+                  {entryBonus && <p className="text-sm font-bold text-[#FFB800]">Entry Bonus: €{entryBonus.toLocaleString()}</p>}
-                 </div>
-               </div>
++  useEffect(() => {
++    const checkShortlist = async () => {
++      if (user.role === 'employer' && user.profile?.id && candidate.id) {
++        try {
++          const shortlisted = await shortlistsService.isInShortlist(user.profile.id, candidate.id);
++          setIsShortlisted(shortlisted);
++        } catch (e) {
++          console.error("Error checking shortlist", e);
++        }
++      }
++    };
++    checkShortlist();
++  }, [user.id, user.role, user.profile?.id, candidate.id]);
++
+   // Strict privacy: Blurred unless request accepted or guest.
+   // ALSO: If I don't have a package, I shouldn't see details even if it's shortlisted (maybe?)
+   // Prompt: "blurring shortlisted candidates for employers without a purchased package"
+@@ -145,6 +161,47 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
+     }
+   };
 
-               <div className="flex items-center gap-2 text-muted-foreground pt-2">
-                 <Calendar className="w-3.5 h-3.5" />
--                <span className="text-[11px] font-bold uppercase tracking-wide">Available: {availability}</span>
-+                <span className="text-[11px] font-bold uppercase tracking-wide">Notice Period: {noticePeriod}</span>
-               </div>
-             </div>
++  const handleShortlist = async () => {
++    if (user.role === 'guest') {
++      navigate('/login');
++      return;
++    }
++
++    if (!user.profile?.id) {
++      showToast({
++        title: 'Error',
++        description: 'Employer profile not found',
++        variant: 'destructive',
++      });
++      return;
++    }
++
++    try {
++      if (isShortlisted) {
++        await shortlistsService.removeFromShortlist(user.profile.id, candidate.id);
++        setIsShortlisted(false);
++        showToast({
++          title: 'Removed from Shortlist',
++          description: 'Candidate has been removed from your shortlist.',
++        });
++      } else {
++        await shortlistsService.addToShortlist(user.profile.id, candidate.id);
++        setIsShortlisted(true);
++        showToast({
++          title: 'Added to Shortlist',
++          description: 'Candidate has been added to your shortlist.',
++        });
++      }
++    } catch (error) {
++      console.error('Error updating shortlist:', error);
++      showToast({
++        title: 'Error',
++        description: 'Failed to update shortlist. Please try again.',
++        variant: 'destructive',
++      });
++    }
++  };
++
+   const handleInvite = async (jobId: string, jobTitle: string) => {
+     if (user.role === 'guest') {
+       navigate('/login');
+@@ -366,6 +423,26 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
 
-diff --git a/src/components/employer/CandidateFilters.tsx b/src/components/employer/CandidateFilters.tsx
-index 954c6be..5bf1847 100644
---- a/src/components/employer/CandidateFilters.tsx
-+++ b/src/components/employer/CandidateFilters.tsx
-@@ -570,7 +570,7 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
-                     <SelectValue placeholder="Lvl" />
-                   </SelectTrigger>
-                   <SelectContent>
--                    {getLanguageLevelOptions(true).map(opt => (
-+                    {getLanguageLevelOptions().map(opt => (
-                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                     ))}
-                   </SelectContent>
+           {/* Right Section: Action */}
+           <div className={`p-6 ${user.role !== 'guest' ? 'layout-xl:w-48 layout-xl:border-t-0 layout-xl:border-l' : 'layout-md:w-48 layout-md:border-t-0 layout-md:border-l'} flex flex-col justify-center items-center gap-3 bg-muted/5 border-t border-border`}>
++            <Button
++              onClick={() => {
++                const path = user.role === 'guest' ? `/candidates/${candidate.id}` : `/employer/candidates/${candidate.id}`;
++                navigate(path);
++              }}
++              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 shadow-lg shadow-blue-200"
++            >
++              View Profile
++            </Button>
++
++            <Button
++              onClick={handleShortlist}
++              variant={isShortlisted ? "default" : "outline"}
++              className={`w-full font-bold h-11 ${isShortlisted ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'border-amber-500/20 text-amber-600 hover:bg-amber-50'}`}
++            >
++              {isShortlisted ? 'Shortlisted' : 'Shortlist'}
++            </Button>
++
++            <div className="w-full h-px bg-border/50 my-1" />
++
+             <Button
+               onClick={handleAction}
+               disabled={requestPending && !canContact}
+@@ -373,6 +450,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
+             >
+               {canContact ? 'Message' : accessStatus === 'rejected' ? 'Rejected' : requestPending ? 'Pending' : 'Request Data'}
+             </Button>
++
+             <Button
+               onClick={() => {
+                 if (user.role === 'guest') {
+@@ -387,17 +465,6 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus,
+               <UserPlus className="w-4 h-4 mr-2" />
+               Invite
+             </Button>
+-            <Button
+-              variant="ghost"
+-              size="sm"
+-              onClick={() => {
+-                const path = user.role === 'guest' ? `/candidates/${candidate.id}` : `/employer/candidates/${candidate.id}`;
+-                navigate(path);
+-              }}
+-              className="text-[11px] text-muted-foreground hover:text-primary font-bold uppercase tracking-wider"
+-            >
+-              View Full Profile
+-            </Button>
+           </div>
+         </div>
+       </Card>
 diff --git a/src/components/landing/MainHeroFilter.tsx b/src/components/landing/MainHeroFilter.tsx
-index 4738a00..30d212d 100644
+index c3484e8..46d4e4c 100644
 --- a/src/components/landing/MainHeroFilter.tsx
 +++ b/src/components/landing/MainHeroFilter.tsx
-@@ -716,7 +716,7 @@ const MainHeroFilter = () => {
-                                                     <Select value={languageLevel} onValueChange={setLanguageLevel}>
-                                                         <SelectTrigger className="h-10 w-24"><SelectValue /></SelectTrigger>
-                                                         <SelectContent>
--                                                            {getLanguageLevelOptions(true).map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-+                                                            {getLanguageLevelOptions().map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                                                         </SelectContent>
-                                                     </Select>
-                                                     <Button size="icon" variant="secondary" onClick={handleAddLanguage} className="h-10 w-10 shrink-0"><Plus className="w-4 h-4" /></Button>
-diff --git a/src/pages/CandidateSearch.tsx b/src/pages/CandidateSearch.tsx
-index 46b081f..b7f76fa 100644
---- a/src/pages/CandidateSearch.tsx
-+++ b/src/pages/CandidateSearch.tsx
-@@ -8,7 +8,7 @@ import { useUser } from '@/contexts/UserContext';
- import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
- import { candidateService } from '@/services/candidate.service';
- import { jobsService, Job } from '@/services/jobs.service';
--import { Loader2, Briefcase } from 'lucide-react';
-+import { Loader2, Briefcase, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
- import { calculateCandidateMatchScore } from '@/utils/match-utils';
- import { Button } from '@/components/ui/button';
- import { getCoordinates } from '@/utils/geocoding';
-@@ -17,8 +17,11 @@ import {
-   DropdownMenuContent,
-   DropdownMenuItem,
-   DropdownMenuTrigger,
-+  DropdownMenuSeparator,
- } from '@/components/ui/dropdown-menu';
+@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator';
+ import { refugeeOriginCountries } from '@/data/locationData';
+ import { getLanguageLevelOptions } from '@/utils/language-levels';
+ import { LocationPicker, LocationValue } from '@/components/shared/LocationPicker';
++import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
+ import { findContinent } from '@/utils/locationUtils';
 
-+type SortOption = 'newest' | 'random' | 'salary' | 'distance' | 'match';
+ const MainHeroFilter = () => {
+@@ -34,6 +35,9 @@ const MainHeroFilter = () => {
+         country: 'any',
+         city: 'any',
+
++        lat: null as number | null,
++        lon: null as number | null,
 +
- const CandidateSearch: React.FC = () => {
-   const { user } = useUser();
-   const [loading, setLoading] = useState(true);
-@@ -29,6 +32,8 @@ const CandidateSearch: React.FC = () => {
-   const [loadingJobs, setLoadingJobs] = useState(false);
-   const [searchParams] = useSearchParams();
-   const [mapCenter, setMapCenter] = useState<[number, number]>([51.1657, 10.4515]);
-+  const [sortBy, setSortBy] = useState<SortOption>('newest');
-+  const [sortAscending, setSortAscending] = useState<boolean>(false);
-   const [filters, setFilters] = useState<CandidateFiltersType>(() => {
-     // 1. First, check if there are URL parameters (these should override everything)
+         // Candidate specific
+         talentStatus: [] as string[],
+         isRefugee: false,
+@@ -52,20 +56,19 @@ const MainHeroFilter = () => {
+         vacationDays: [0, 50] as [number, number],
+         travelWillingness: [0, 100] as [number, number],
+         customTags: [] as string[],
++        gender: [] as string[],
++        allowOverqualification: false,
 
-@@ -224,15 +229,25 @@ const CandidateSearch: React.FC = () => {
-         setLoading(true);
-         const searchFilters: any = {};
+         // Job Search specific
+         benefits: [] as string[],
+         contractDuration: '',
+         minVacationDays: 0,
+         experienceYears: null as number | null,
++        employmentTypes: [] as string[],
++        minEntryBonus: 0,
 
-+        // Apply filters ONLY when NOT in partial match mode
-         if (!filters.enablePartialMatch) {
-+          // Location filters
-+          if (filters.location.continent) {
-+            searchFilters.continent = filters.location.continent;
-+          }
-+
-+          if (filters.location.country) {
-+            searchFilters.country = filters.location.country;
-+          }
-+
-+          if (filters.location.cities && filters.location.cities.length > 0) {
-+            searchFilters.city = filters.location.cities[0];
-+          }
-+
-           if (filters.salary[0] > 20000) searchFilters.min_salary = filters.salary[0];
-           if (filters.salary[1] < 200000) searchFilters.max_salary = filters.salary[1];
-           if (filters.bonus[0] > 0) searchFilters.min_bonus = filters.bonus[0];
-           if (filters.bonus[1] < 100000) searchFilters.max_bonus = filters.bonus[1];
--          if (filters.bonus[0] > 0) searchFilters.min_bonus = filters.bonus[0];
--          if (filters.bonus[1] < 100000) searchFilters.max_bonus = filters.bonus[1];
--
--          // Radius logic refactored: Passed separately below.
+         // Driving Licenses
+-        hasPkw: null as boolean | null,
+-        hasLkw: null as boolean | null,
+-        pkwClasses: [] as string[],
+-        lkwClasses: [] as string[],
+-        customPkw: '',
+-        customLkw: '',
++        drivingLicenses: [] as string[],
 
-           if (filters.jobTitle) {
-             searchFilters.job_title = filters.jobTitle;
-@@ -309,18 +324,6 @@ const CandidateSearch: React.FC = () => {
-             searchFilters.qualifications = filters.qualifications;
-           }
+         // Matching preferences
+         enablePartialMatch: false,
+@@ -95,14 +98,35 @@ const MainHeroFilter = () => {
+         if (filters.country !== 'any') searchParams.set('country', filters.country);
+         if (filters.city !== 'any') searchParams.set('city', filters.city);
 
--          if (filters.location.continent) {
--            searchFilters.continent = filters.location.continent;
--          }
--
--          if (filters.location.country) {
--            searchFilters.country = filters.location.country;
--          }
--
--          if (filters.location.cities && filters.location.cities.length > 0) {
--            searchFilters.city = filters.location.cities[0];
--          }
--
-           if (filters.gender && filters.gender.length > 0) {
-             searchFilters.gender = filters.gender;
-           }
-@@ -330,8 +333,9 @@ const CandidateSearch: React.FC = () => {
-           }
-         }
-
--        // Pass radius separately. Service handles deciding if radius search applies (needs city).
--        const data = await candidateService.searchCandidates(searchFilters, radiusValue);
-+        // Pass radius only when NOT in partial match mode
-+        const searchRadiusValue = filters.enablePartialMatch ? undefined : radiusValue;
-+        const data = await candidateService.searchCandidates(searchFilters, searchRadiusValue);
-         let results = data || [];
-
-         if (filters.enablePartialMatch) {
-@@ -364,6 +368,96 @@ const CandidateSearch: React.FC = () => {
-     loadCandidates();
-   }, [filters, radiusValue]);
-
-+  // Sort candidates based on selected option
-+  const sortedCandidates = React.useMemo(() => {
-+    let sorted = [...candidates];
-+    const direction = sortAscending ? 1 : -1;
-+
-+    switch (sortBy) {
-+      case 'newest':
-+        // Sort by created_at or id
-+        sorted.sort((a, b) => {
-+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-+          return direction * (dateB - dateA || b.id - a.id);
-+        });
-+        break;
-+
-+      case 'random':
-+        // Shuffle array (ignore direction for random)
-+        for (let i = sorted.length - 1; i > 0; i--) {
-+          const j = Math.floor(Math.random() * (i + 1));
-+          [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
++        if (filters.lat && filters.lon) {
++            searchParams.set('lat', filters.lat.toString());
++            searchParams.set('lon', filters.lon.toString());
 +        }
-+        break;
 +
-+      case 'salary':
-+        // Sort by salary expectation
-+        sorted.sort((a, b) => {
-+          const salaryA = a.salary_expectation_max || a.salary?.max || 0;
-+          const salaryB = b.salary_expectation_max || b.salary?.max || 0;
-+          return direction * (salaryB - salaryA);
-+        });
-+        break;
++        // Common for both but often distinct in state
++        if (filters.skills.length > 0) searchParams.set('skills', filters.skills.join(','));
++        if (filters.qualifications.length > 0) searchParams.set('qualifications', filters.qualifications.join(','));
++        if (filters.languages.length > 0) searchParams.set('languages', JSON.stringify(filters.languages));
++        if (filters.drivingLicenses.length > 0) {
++            const pkw = filters.drivingLicenses.filter(l => ['B', 'BE', 'B96', 'AM', 'L', 'T'].includes(l));
++            const lkw = filters.drivingLicenses.filter(l => ['C', 'CE', 'C1', 'C1E', 'D', 'DE'].includes(l));
++            if (pkw.length > 0) searchParams.set('pkwClasses', pkw.join(','));
++            if (lkw.length > 0) searchParams.set('lkwClasses', lkw.join(','));
++            const other = filters.drivingLicenses.filter(l => !['B', 'BE', 'B96', 'AM', 'L', 'T', 'C', 'CE', 'C1', 'C1E', 'D', 'DE'].includes(l));
++            if (other.length > 0) searchParams.set('otherLicenses', other.join(','));
++        }
 +
-+      case 'distance':
-+        // Sort by distance to work location
-+        sorted.sort((a, b) => {
-+          // Calculate distance from latitude/longitude if available
-+          const distA = a.distance || (a.latitude && a.longitude && filters.location.cities?.[0] ?
-+            calculateDistance(mapCenter[0], mapCenter[1], a.latitude, a.longitude) : Infinity);
-+          const distB = b.distance || (b.latitude && b.longitude && filters.location.cities?.[0] ?
-+            calculateDistance(mapCenter[0], mapCenter[1], b.latitude, b.longitude) : Infinity);
-+          return direction * (distA - distB);
-+        });
-+        break;
++        if (filters.enablePartialMatch) {
++            searchParams.set('partialMatch', 'true');
++            searchParams.set('threshold', filters.minMatchThreshold.toString());
++        }
++        if (filters.enableFlexibleMatch) searchParams.set('flexibleMatch', 'true');
 +
-+      case 'match':
-+        // Sort by match score (only when partial match is enabled)
-+        sorted.sort((a, b) => {
-+          const scoreA = a.matchScore || 0;
-+          const scoreB = b.matchScore || 0;
-+          return direction * (scoreB - scoreA);
-+        });
-+        break;
-+
-+      default:
-+        break;
-+    }
-+
-+    return sorted;
-+  }, [candidates, sortBy, sortAscending, mapCenter, filters.location.cities]);
-+
-+  // Helper function to calculate distance between two coordinates (Haversine formula)
-+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-+    const R = 6371; // Radius of the Earth in km
-+    const dLat = (lat2 - lat1) * Math.PI / 180;
-+    const dLon = (lon2 - lon1) * Math.PI / 180;
-+    const a =
-+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-+    return R * c;
-+  };
-+
-+  const getSortLabel = (option: SortOption): string => {
-+    switch (option) {
-+      case 'newest': return 'Neueste';
-+      case 'random': return 'Zufällig';
-+      case 'salary': return 'Gehaltshöhe';
-+      case 'distance': return 'Nächste zur Work Location';
-+      case 'match': return 'Match %';
-+      default: return 'Sortieren';
-+    }
-+  };
-+
-+  const toggleSortDirection = () => {
-+    if (sortBy !== 'random') {
-+      setSortAscending(!sortAscending);
-+    }
-+  };
-+
-   return (
-     <>
-       <AppLayout isPublic={user.role === 'guest'}>
-@@ -449,10 +543,57 @@ const CandidateSearch: React.FC = () => {
-                 </div>
-               ) : (
-                 <>
--                  <div className="mb-4">
-+                  <div className="mb-4 flex items-center justify-between">
-                     <p className="text-body text-foreground">
-                       <span className="font-medium">{candidates.length}</span> candidates found
-                     </p>
-+
-+                    {/* Sort Controls */}
-+                    <div className="flex items-center gap-2">
-+                      {/* Sort Direction Toggle (only show if not random) */}
-+                      {sortBy !== 'random' && (
-+                        <Button
-+                          variant="outline"
-+                          size="sm"
-+                          onClick={toggleSortDirection}
-+                          className="px-2"
-+                        >
-+                          {sortAscending ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
-+                        </Button>
-+                      )}
-+
-+                      {/* Sort Dropdown */}
-+                      <DropdownMenu>
-+                        <DropdownMenuTrigger asChild>
-+                          <Button variant="outline" size="sm">
-+                            <ArrowUpDown className="w-4 h-4 mr-2" />
-+                            {getSortLabel(sortBy)}
-+                          </Button>
-+                        </DropdownMenuTrigger>
-+                        <DropdownMenuContent align="end">
-+                          <DropdownMenuItem onClick={() => setSortBy('newest')}>
-+                            Neueste
-+                          </DropdownMenuItem>
-+                          <DropdownMenuItem onClick={() => setSortBy('random')}>
-+                            Zufällig
-+                          </DropdownMenuItem>
-+                          <DropdownMenuItem onClick={() => setSortBy('salary')}>
-+                            Gehaltshöhe
-+                          </DropdownMenuItem>
-+                          <DropdownMenuItem onClick={() => setSortBy('distance')}>
-+                            Nächste zur Work Location
-+                          </DropdownMenuItem>
-+                          {filters.enablePartialMatch && (
-+                            <>
-+                              <DropdownMenuSeparator />
-+                              <DropdownMenuItem onClick={() => setSortBy('match')}>
-+                                Match %
-+                              </DropdownMenuItem>
-+                            </>
-+                          )}
-+                        </DropdownMenuContent>
-+                      </DropdownMenu>
-+                    </div>
-                   </div>
+         if (searchMode === 'candidates') {
+             // Mapping landing page filters to candidate search params
+             if (filters.talentStatus.length > 0) searchParams.set('status', filters.talentStatus.join(','));
+             if (filters.isRefugee) searchParams.set('isRefugee', 'true');
+             if (filters.originCountry) searchParams.set('originCountry', filters.originCountry);
+-            if (filters.skills.length > 0) searchParams.set('skills', filters.skills.join(','));
+-            if (filters.qualifications.length > 0) searchParams.set('qualifications', filters.qualifications.join(','));
+-            if (filters.languages.length > 0) searchParams.set('languages', JSON.stringify(filters.languages));
+             if (filters.careerLevel.length > 0) searchParams.set('careerLevel', filters.careerLevel.join(','));
 
-                   {candidates.length === 0 ? (
-@@ -463,7 +604,7 @@ const CandidateSearch: React.FC = () => {
-                     </div>
-                   ) : (
-                     <div className="grid grid-cols-1 gap-6">
--                      {candidates.map((candidate) => (
-+                      {sortedCandidates.map((candidate) => (
-                         <CandidateCard
-                           key={candidate.id}
-                           candidate={candidate}
-diff --git a/src/services/candidate.service.ts b/src/services/candidate.service.ts
-index 335f323..9b068fb 100644
---- a/src/services/candidate.service.ts
-+++ b/src/services/candidate.service.ts
-@@ -783,25 +783,10 @@ export const candidateService = {
-   async searchCandidates(filters: any = {}, searchRadius?: number) {
-     console.log('Searching candidates with filters:', filters);
+             searchParams.set('salaryMin', filters.salaryRange[0].toString());
+@@ -124,48 +148,31 @@ const MainHeroFilter = () => {
+             if (filters.vacationDays[1] < 50) searchParams.set('vacationMax', filters.vacationDays[1].toString());
+             if (filters.customTags.length > 0) searchParams.set('tags', filters.customTags.join(','));
 
--    // 1. IDs für Preferred Locations sammeln (falls Stadt gefiltert wird)
--    let preferredLocationCandidateIds: string[] = [];
+-            // Driving Licenses
+-            if (filters.hasPkw !== null) searchParams.set('hasPkw', filters.hasPkw.toString());
+-            const allPkw = [...filters.pkwClasses, ...(filters.customPkw ? [filters.customPkw] : [])];
+-            if (allPkw.length > 0) searchParams.set('pkwClasses', allPkw.join(','));
 -
-     // Explicitly use the passed arg as the geographic radius
-     const radius = searchRadius;
-
--    if (filters.city) {
--      // Suche in den verknüpften Tabellen nach der Stadt
--      const { data: prefData } = await supabase
--        .from('candidate_preferred_locations')
--        .select('candidate_id, cities!inner(name)')
--        .ilike('cities.name', `%${filters.city.trim()}%`);
+-            if (filters.hasLkw !== null) searchParams.set('hasLkw', filters.hasLkw.toString());
+-            const allLkw = [...filters.lkwClasses, ...(filters.customLkw ? [filters.customLkw] : [])];
+-            if (allLkw.length > 0) searchParams.set('lkwClasses', allLkw.join(','));
 -
--      if (prefData) {
--        preferredLocationCandidateIds = prefData.map((d: any) => d.candidate_id);
--      }
--    }
+-            if (filters.gender.length > 0) searchParams.set('gender', filters.gender.join(','));
++            if (filters.gender.length > 0) searchParams.set('gender', filters.gender.join(',').toLowerCase());
+             if (filters.allowOverqualification) searchParams.set('allowOverqualification', 'true');
+
+-            if (filters.enablePartialMatch) {
+-                searchParams.set('partialMatch', 'true');
+-                searchParams.set('threshold', filters.minMatchThreshold.toString());
+-            }
 -
--    // 2. RADIUS SEARCH (Refactored)
-+    // RADIUS SEARCH - Only based on candidate residence location
-     let radiusCandidateIds: string[] | null = null;
-     if (filters.city && radius) {
-       console.log(`Performing Radius Search for ${filters.city} within ${radius}km`);
-@@ -811,7 +796,7 @@ export const candidateService = {
-       const searchLat = cityData?.latitude;
-       const searchLon = cityData?.longitude;
-
--      // Step C: Execute RPC if we have coords
-+      // Execute RPC if we have coords
-       if (searchLat != null && searchLon != null) {
-         const { data: radiusData, error: radiusError } = await supabase.rpc('search_candidates_radius', {
-           search_lat: searchLat,
-@@ -850,13 +835,11 @@ export const candidateService = {
-       sector,
-       career_level,
-       employment_status,
-+      currency,
-+      created_at,
-+      latitude,
-+      longitude,
-       profiles!inner(full_name, avatar_url, email, is_visible),
--      candidate_preferred_locations(
--        id,
--        cities(name),
--        countries(name),
--        continents(name)
--      ),
-       candidate_skills${filters.skills?.length ? '!inner' : ''}(
-         id,
-         proficiency_percentage,
-@@ -888,39 +871,20 @@ export const candidateService = {
-
-     if (filters.city) {
-       if (radiusCandidateIds !== null) {
--        // RADIUS SEARCH ACTIVE:
--        // Filter by the IDs returned from the RPC.
--        // NOTE: We do NOT add a strict city/country filter here because the RPC
--        // already checked "Residence OR Preferred Location" within the radius.
-+        // RADIUS SEARCH ACTIVE: Filter by the IDs returned from the RPC (residence location only)
-         if (radiusCandidateIds.length > 0) {
-           query = query.in('id', radiusCandidateIds);
+             navigate(`/candidates?${searchParams.toString()}`);
          } else {
-           // Radius search returned no results -> force empty result
-           query = query.eq('id', '00000000-0000-0000-0000-000000000000');
-         }
--      } else if (preferredLocationCandidateIds.length > 0) {
--        // Fallback: No Radius or City coords not found -> Normal Text Search including preferred locations
--        // We match if city matches residence OR if candidate is in preferredLocationCandidateIds
--        const idsString = `(${preferredLocationCandidateIds.join(',')})`;
--        query = query.or(`city.ilike.%${filters.city.trim()}%,id.in.${idsString}`);
-       } else {
--        // No preferred locations found for this city string -> Filter only by residence city
-+        // Fallback: No Radius or City coords not found -> Normal Text Search by residence city only
-         query = query.ilike('city', `%${filters.city.trim()}%`);
-       }
-     } else if (filters.country) {
--      // If ONLY country is selected (no city), we also want to include preferred locations in that country
--      const { data: countryPrefData } = await supabase
--        .from('candidate_preferred_locations')
--        .select('candidate_id, countries!inner(name)')
--        .ilike('countries.name', filters.country.trim());
+             // Mapping landing page filters to job search params
+-            if (filters.jobTypes.length > 0) searchParams.set('jobTypes', filters.jobTypes.join(','));
++            if (filters.employmentTypes.length > 0) searchParams.set('jobTypes', filters.employmentTypes.join(','));
+             if (filters.contractTerms.length > 0) searchParams.set('contractTerms', filters.contractTerms.join(','));
+-            if (filters.homeOffice.length > 0) searchParams.set('homeOffice', filters.homeOffice.join(','));
++            if (filters.homeOffice.length > 0) {
++                if (filters.homeOffice.includes('yes') || filters.homeOffice.includes('hybrid')) {
++                    searchParams.set('homeOffice', 'true');
++                }
++            }
+
+             searchParams.set('salaryMin', filters.salaryRange[0].toString());
+             searchParams.set('salaryMax', filters.salaryRange[1].toString());
+-            searchParams.set('bonusMin', filters.bonusRange[0].toString());
+-            searchParams.set('vacationMin', filters.vacationDays[0].toString());
++            searchParams.set('bonusMin', (filters.bonusRange ? filters.bonusRange[0] : filters.minEntryBonus || 0).toString());
++            searchParams.set('bonusMax', (filters.bonusRange ? filters.bonusRange[1] : 100000).toString());
++            searchParams.set('vacationMin', (filters.vacationDays ? filters.vacationDays[0] : filters.minVacationDays || 0).toString());
++            searchParams.set('vacationMax', (filters.vacationDays ? filters.vacationDays[1] : 50).toString());
+
+             if (filters.experienceYears !== null) searchParams.set('expMin', filters.experienceYears.toString());
+             if (filters.benefits.length > 0) searchParams.set('benefits', filters.benefits.join(','));
+
+-            // Shared Driving Licenses for Jobs too
+-            if (filters.hasPkw !== null) searchParams.set('hasPkw', filters.hasPkw.toString());
+-            const allPkw = [...filters.pkwClasses, ...(filters.customPkw ? [filters.customPkw] : [])];
+-            if (allPkw.length > 0) searchParams.set('pkwClasses', allPkw.join(','));
 -
--      if (countryPrefData && countryPrefData.length > 0) {
--        const countryPrefIds = countryPrefData.map((d: any) => d.candidate_id);
--        const countryIdsString = `(${countryPrefIds.join(',')})`;
--        query = query.or(`country.eq.${filters.country.trim()},id.in.${countryIdsString}`);
--      } else {
--        query = query.eq('country', filters.country);
--      }
-+      // If ONLY country is selected (no city), filter by residence country only
-+      query = query.eq('country', filters.country);
-     }
+-            if (filters.hasLkw !== null) searchParams.set('hasLkw', filters.hasLkw.toString());
+-            const allLkw = [...filters.lkwClasses, ...(filters.customLkw ? [filters.customLkw] : [])];
+-            if (allLkw.length > 0) searchParams.set('lkwClasses', allLkw.join(','));
+-
+-            if (filters.enableFlexibleMatch) searchParams.set('flexibleMatch', 'true');
++            if (filters.careerLevel.length > 0) searchParams.set('careerLevel', filters.careerLevel.join(','));
 
-     if (filters.career_level) {
-@@ -1065,7 +1029,14 @@ export const candidateService = {
-     }
-
-     console.log(`Search returned ${data?.length || 0} candidates`);
--    return data?.map((item: any) => this.mapDbToProfile(item)) || [];
-+    // Return raw data including notice_period instead of mapping through mapDbToProfile
-+    // which might lose some fields needed for search results
-+    return data?.map((item: any) => ({
-+      ...item,
-+      notice_period: item.notice_period,
-+      currency: item.currency || 'EUR',
-+      created_at: item.created_at
-+    })) || [];
-   },
-
-   async getFeaturedTalent(limit: number = 6) {
-diff --git a/src/types/candidate.ts b/src/types/candidate.ts
-index e4a9344..d28dc3f 100644
---- a/src/types/candidate.ts
-+++ b/src/types/candidate.ts
-@@ -123,6 +123,5 @@ export interface CandidateFilters {
-   homeOfficePreference?: ('yes' | 'no' | 'hybrid')[];
-   vacationDays?: number[];
-   noticePeriod?: string[];
--  preferredWorkLocations?: Array<{ continent: string; country: string; city: string; radius: number }>;
-   customTags?: string[];
- }
-diff --git a/src/utils/locationUtils.ts b/src/utils/locationUtils.ts
-index 3a6a6b7..f891c74 100644
---- a/src/utils/locationUtils.ts
-+++ b/src/utils/locationUtils.ts
-@@ -2,14 +2,39 @@ import { locationData } from '../data/locationData';
-
- /**
-  * Finds the continent for a given country name based on the locationData structure.
-+ * - Case-insensitive match
-+ * - Handles common aliases for some countries
-  * @param countryName The name of the country.
-- * @returns The name of the continent, or 'Europe' as a fallback.
-+ * @returns The name of the continent, or 'Europe' as a safe fallback.
-  */
- export const findContinent = (countryName: string): string => {
-     if (!countryName) return 'Europe';
-
-+    const raw = countryName.trim();
-+    const lower = raw.toLowerCase();
-+
-+    // Common alias normalization
-+    const aliasMap: Record<string, string> = {
-+        'usa': 'United States',
-+        'us': 'United States',
-+        'united states of america': 'United States',
-+        'u.k.': 'United Kingdom',
-+        'uk': 'United Kingdom',
-+        'great britain': 'United Kingdom',
-+        'uae': 'United Arab Emirates',
-+        'u.a.e.': 'United Arab Emirates',
-+        'republic of korea': 'South Korea',
-+        'korea, republic of': 'South Korea',
-+        'south korea': 'South Korea',
-+        'czechia': 'Czech Republic'
-+    };
-+
-+    const normalized = aliasMap[lower] || raw;
-+
-     for (const [continent, countries] of Object.entries(locationData)) {
--        if (Object.keys(countries as object).includes(countryName)) {
-+        const countryKeys = Object.keys(countries as object);
-+        // Try exact (case-insensitive)
-+        if (countryKeys.some(k => k.toLowerCase() === normalized.toLowerCase())) {
-             return continent;
+             navigate(`/jobs?${searchParams.toString()}`);
          }
-     }
-diff --git a/src/utils/match-utils.ts b/src/utils/match-utils.ts
-index aa9287c..e2171db 100644
---- a/src/utils/match-utils.ts
-+++ b/src/utils/match-utils.ts
-@@ -521,19 +521,8 @@ export const calculateCandidateMatchScore = (candidate: any, filters: any): numb
+@@ -279,7 +286,9 @@ const MainHeroFilter = () => {
+             location: val.city,
+             city: val.city,
+             country: val.country,
+-            continent: findContinent(val.country)
++            continent: findContinent(val.country),
++            lat: val.lat,
++            lon: val.lon
          });
-     }
+     };
 
--    // Preferred Work Locations
--    if (filters.preferredWorkLocations && filters.preferredWorkLocations.length > 0) {
--        total += 1;
--        const candidateLocations = candidate.preferred_work_locations || candidate.preferredLocations || [];
--        // Match if ANY filter location overlaps with ANY candidate location
--        const hasMatch = filters.preferredWorkLocations.some((filterLoc: any) =>
--            candidateLocations.some((candLoc: any) => {
--                // Simple city match for now (radius calculation would require geocoding)
--                return candLoc.city?.toLowerCase() === filterLoc.city?.toLowerCase();
--            })
--        );
--        if (hasMatch) matched += 1;
--    }
-+    // Location matching is handled by radius search in the database query
-+    // We don't need to match preferred work locations in the score calculation
+@@ -469,7 +478,7 @@ const MainHeroFilter = () => {
+                                             <div className="space-y-3">
+                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Talent Status</Label>
+                                                 <div className="flex flex-wrap gap-2">
+-                                                    {['Unemployed', 'Employed', 'Trainee', 'Apprentice', 'Pupil', 'Student', 'Freelancer', 'Retired'].map(status => (
++                                                    {['Unemployed', 'Employed', 'Trainee', 'Apprentice', 'Pupil', 'Student', 'Civil Servant', 'Freelancer', 'Entrepreneur', 'Retired', 'Other'].map(status => (
+                                                         <button
+                                                             key={status}
+                                                             onClick={() => toggleFilterItem('talentStatus', status)}
+@@ -493,8 +502,8 @@ const MainHeroFilter = () => {
+                                                             key={level}
+                                                             onClick={() => toggleFilterItem('careerLevel', level)}
+                                                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.careerLevel.includes(level)
+-                                                                ? 'bg-info border-info text-white shadow-sm'
+-                                                                : 'bg-white border-border text-foreground hover:border-info/50'
++                                                                ? 'bg-accent border-accent text-accent-foreground shadow-sm'
++                                                                : 'bg-muted text-foreground hover:bg-muted/80'
+                                                                 }`}
+                                                         >
+                                                             {level.charAt(0).toUpperCase() + level.slice(1)}
+@@ -509,26 +518,10 @@ const MainHeroFilter = () => {
+                                                     <Car className="w-3 h-3" />
+                                                     Driving Licenses
+                                                 </Label>
+-                                                <div className="flex flex-wrap gap-2">
+-                                                    <button
+-                                                        onClick={() => setFilters({ ...filters, hasPkw: filters.hasPkw === true ? null : true })}
+-                                                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.hasPkw === true
+-                                                            ? 'bg-warning border-warning text-white shadow-sm'
+-                                                            : 'bg-white border-border text-foreground hover:border-warning/50'
+-                                                            }`}
+-                                                    >
+-                                                        PKW (Car)
+-                                                    </button>
+-                                                    <button
+-                                                        onClick={() => setFilters({ ...filters, hasLkw: filters.hasLkw === true ? null : true })}
+-                                                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.hasLkw === true
+-                                                            ? 'bg-warning border-warning text-white shadow-sm'
+-                                                            : 'bg-white border-border text-foreground hover:border-warning/50'
+-                                                            }`}
+-                                                    >
+-                                                        LKW (Truck)
+-                                                    </button>
+-                                                </div>
++                                                <DrivingLicenseSelector
++                                                    value={filters.drivingLicenses}
++                                                    onChange={(val) => setFilters({ ...filters, drivingLicenses: val })}
++                                                />
+                                             </div>
 
-     // Custom Tags - Each tag must match individually
-     if (filters.customTags && filters.customTags.length > 0) {
+                                             {/* Experience Slider */}
+@@ -549,7 +542,7 @@ const MainHeroFilter = () => {
+                                             <div className="space-y-3">
+                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Notice Period</Label>
+                                                 <div className="flex flex-wrap gap-2">
+-                                                    {['immediately', '1-month', '2-months', '3-months', '6-months'].map(period => (
++                                                    {['immediate', '1-week', '2-weeks', '1-month', '2-months', '3-months'].map(period => (
+                                                         <button
+                                                             key={period}
+                                                             onClick={() => toggleFilterItem('noticePeriod', period)}
+@@ -564,6 +557,20 @@ const MainHeroFilter = () => {
+                                                 </div>
+                                             </div>
+
++                                            {/* Travel Willingness */}
++                                            <div className="space-y-4">
++                                                <div className="flex justify-between items-center">
++                                                    <Label className="text-xs font-bold text-muted-foreground uppercase">Travel Willingness</Label>
++                                                    <span className="text-xs font-bold text-info">{filters.travelWillingness[0]}% - {filters.travelWillingness[1]}%</span>
++                                                </div>
++                                                <Slider
++                                                    value={filters.travelWillingness}
++                                                    onValueChange={(val) => setFilters({ ...filters, travelWillingness: val as [number, number] })}
++                                                    max={100}
++                                                    step={5}
++                                                />
++                                            </div>
++
+                                             {/* Refugee Status */}
+                                             <div className="p-4 bg-accent/5 rounded-xl border border-accent/10 flex items-center justify-between">
+                                                 <div className="space-y-1">
+@@ -598,8 +605,15 @@ const MainHeroFilter = () => {
+                                                     {['Male', 'Female', 'Non-binary', 'Other'].map(g => (
+                                                         <button
+                                                             key={g}
+-                                                            onClick={() => toggleFilterItem('gender', g)}
+-                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.gender.includes(g)
++                                                            onClick={() => {
++                                                                const genderKey = (g === 'Non-binary' || g === 'Other') ? 'diverse' : g.toLowerCase();
++                                                                const current = filters.gender;
++                                                                const updated = current.includes(genderKey)
++                                                                    ? current.filter(i => i !== genderKey)
++                                                                    : [...current, genderKey];
++                                                                setFilters({ ...filters, gender: updated });
++                                                            }}
++                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.gender.includes((g === 'Non-binary' || g === 'Other') ? 'diverse' : g.toLowerCase())
+                                                                 ? 'bg-primary border-primary text-white shadow-sm'
+                                                                 : 'bg-white border-border text-foreground hover:border-primary/50'
+                                                                 }`}
+@@ -609,48 +623,9 @@ const MainHeroFilter = () => {
+                                                     ))}
+                                                 </div>
+                                             </div>
+-
+-                                            {/* Travel Willingness */}
+-                                            <div className="space-y-4">
+-                                                <div className="flex justify-between items-center">
+-                                                    <Label className="text-xs font-bold text-muted-foreground uppercase">Travel Willingness</Label>
+-                                                    <span className="text-xs font-bold text-info">{filters.travelWillingness[0]}% - {filters.travelWillingness[1]}%</span>
+-                                                </div>
+-                                                <Slider
+-                                                    value={filters.travelWillingness}
+-                                                    onValueChange={(val) => setFilters({ ...filters, travelWillingness: val as [number, number] })}
+-                                                    max={100}
+-                                                    step={5}
+-                                                />
+-                                            </div>
+-
+-
+-
+-                                            {/* Custom Tags */}
+-                                            <div className="space-y-3">
+-                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Additional Conditions (Tags)</Label>
+-                                                <div className="flex gap-2">
+-                                                    <AutocompleteInput
+-                                                        category="tags"
+-                                                        placeholder="e.g. Barrier-free, Pets..."
+-                                                        value={tagInput}
+-                                                        onChange={setTagInput}
+-                                                        onKeyPress={(e: any) => e.key === 'Enter' && handleAddTag()}
+-                                                        className="h-10 flex-1"
+-                                                    />
+-                                                    <Button size="icon" variant="outline" onClick={handleAddTag} className="h-10 w-10 shrink-0"><Plus className="w-4 h-4" /></Button>
+-                                                </div>
+-                                                <div className="flex flex-wrap gap-2">
+-                                                    {filters.customTags.map(t => (
+-                                                        <span key={t} className="px-2.5 py-1 bg-secondary/10 text-secondary text-xs font-bold rounded-md flex items-center gap-1.5 border border-secondary/20">
+-                                                            {t} <X className="w-3 h-3 cursor-pointer hover:text-secondary/70" onClick={() => handleRemoveTag(t)} />
+-                                                        </span>
+-                                                    ))}
+-                                                </div>
+-                                            </div>
+                                         </div>
+
+-                                        {/* Right Column: Skills, Qualifications, Languages */}
++                                        {/* Right Column: Skills, Qualifications, Languages, Conditions */}
+                                         <div className="space-y-6">
+                                             {/* Skills Tags */}
+                                             <div className="space-y-3">
+@@ -728,16 +703,36 @@ const MainHeroFilter = () => {
+                                                     ))}
+                                                 </div>
+                                             </div>
++
++                                            {/* Custom Tags */}
++                                            <div className="space-y-3">
++                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Additional Conditions (Tags)</Label>
++                                                <div className="flex gap-2">
++                                                    <AutocompleteInput
++                                                        category="tags"
++                                                        placeholder="e.g. Barrier-free, Pets..."
++                                                        value={tagInput}
++                                                        onChange={setTagInput}
++                                                        onKeyPress={(e: any) => e.key === 'Enter' && handleAddTag()}
++                                                        className="h-10 flex-1"
++                                                    />
++                                                    <Button size="icon" variant="outline" onClick={handleAddTag} className="h-10 w-10 shrink-0"><Plus className="w-4 h-4" /></Button>
++                                                </div>
++                                                <div className="flex flex-wrap gap-2">
++                                                    {filters.customTags.map(t => (
++                                                        <span key={t} className="px-2.5 py-1 bg-secondary/10 text-secondary text-xs font-bold rounded-md flex items-center gap-1.5 border border-secondary/20">
++                                                            {t} <X className="w-3 h-3 cursor-pointer hover:text-secondary/70" onClick={() => handleRemoveTag(t)} />
++                                                        </span>
++                                                    ))}
++                                                </div>
++                                            </div>
+                                         </div>
+                                     </div>
+                                 </section>
++
+                                 <Separator className="opacity-50" />
+-                            </>
+-                        )}
+
+-                        {/* 3. Job Search Specific Filter Areas */}
+-                        {searchMode === 'jobs' && (
+-                            <>
++                                {/* 2.5 Candidate Conditions & Expectations */}
+                                 <section className="space-y-8 animate-in fade-in duration-500">
+                                     <div className="flex items-center gap-3">
+                                         <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+@@ -752,7 +747,7 @@ const MainHeroFilter = () => {
+                                             <div className="space-y-3">
+                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Job Types</Label>
+                                                 <div className="flex flex-wrap gap-2">
+-                                                    {['full-time', 'part-time', 'contract', 'freelance', 'internship', 'traineeship'].map(t => (
++                                                    {['full-time', 'part-time', 'apprenticeship', 'internship', 'traineeship', 'freelance', 'contract'].map(t => (
+                                                         <button
+                                                             key={t}
+                                                             onClick={() => toggleFilterItem('jobTypes', t)}
+@@ -761,22 +756,23 @@ const MainHeroFilter = () => {
+                                                                 : 'bg-white border-border text-foreground hover:border-success/50'
+                                                                 }`}
+                                                         >
+-                                                            {t.charAt(0).toUpperCase() + t.slice(1)}
++                                                            {t.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                                                         </button>
+                                                     ))}
+                                                 </div>
+                                             </div>
+
++                                            {/* Contract Term */}
+                                             <div className="space-y-3">
+                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Contract Term</Label>
+                                                 <div className="flex flex-wrap gap-2">
+-                                                    {['unlimited', 'temporary', 'permanent'].map(term => (
++                                                    {['unlimited', 'temporary'].map(term => (
+                                                         <button
+                                                             key={term}
+                                                             onClick={() => toggleFilterItem('contractTerms', term)}
+                                                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.contractTerms.includes(term)
+-                                                                ? 'bg-warning border-warning text-white shadow-sm'
+-                                                                : 'bg-white border-border text-foreground hover:border-warning/50'
++                                                                ? 'bg-info border-info text-info-foreground shadow-sm'
++                                                                : 'bg-muted text-foreground hover:bg-muted/80'
+                                                                 }`}
+                                                         >
+                                                             {term.charAt(0).toUpperCase() + term.slice(1)}
+@@ -810,7 +806,7 @@ const MainHeroFilter = () => {
+                                                 <div className="flex justify-between items-center">
+                                                     <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                                                         <Coins className="w-3 h-3" />
+-                                                        Salary Range (€ / Year)
++                                                        Desired Salary (€ / Year)
+                                                     </Label>
+                                                     <span className="text-xs font-bold text-success">{filters.salaryRange[0].toLocaleString()} - {filters.salaryRange[1].toLocaleString()}</span>
+                                                 </div>
+@@ -818,7 +814,7 @@ const MainHeroFilter = () => {
+                                                     value={filters.salaryRange}
+                                                     onValueChange={(val) => setFilters({ ...filters, salaryRange: val as [number, number] })}
+                                                     min={20000}
+-                                                    max={250000}
++                                                    max={200000}
+                                                     step={5000}
+                                                 />
+                                             </div>
+@@ -827,13 +823,14 @@ const MainHeroFilter = () => {
+                                                 <div className="flex justify-between items-center">
+                                                     <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                                                         <Sparkles className="w-3 h-3" />
+-                                                        Entry Bonus (€)
++                                                        Desired Entry Bonus (€)
+                                                     </Label>
+                                                     <span className="text-xs font-bold text-success">{filters.bonusRange[0].toLocaleString()} - {filters.bonusRange[1].toLocaleString()}</span>
+                                                 </div>
+                                                 <Slider
+                                                     value={filters.bonusRange}
+                                                     onValueChange={(val) => setFilters({ ...filters, bonusRange: val as [number, number] })}
++                                                    min={0}
+                                                     max={100000}
+                                                     step={1000}
+                                                 />
+@@ -850,26 +847,199 @@ const MainHeroFilter = () => {
+                                                 <Slider
+                                                     value={filters.vacationDays}
+                                                     onValueChange={(val) => setFilters({ ...filters, vacationDays: val as [number, number] })}
++                                                    min={0}
+                                                     max={50}
+                                                     step={1}
+                                                 />
+                                             </div>
++                                        </div>
++                                    </div>
++                                </section>
++                                <Separator className="opacity-50" />
++                            </>
++                        )}
++
++                        {/* 3. Job Search Specific Filter Areas */}
++                        {searchMode === 'jobs' && (
++                            <>
++                                <section className="space-y-8 animate-in fade-in duration-500">
++                                    <div className="flex items-center gap-3">
++                                        <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
++                                            <Clock className="w-4 h-4 text-success" />
++                                        </div>
++                                        <h3 className="font-bold text-lg">Conditions & Expectations</h3>
++                                    </div>
++
++                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
++                                        {/* Left: Job Types & Terms */}
++                                        <div className="space-y-6">
++                                            <div className="space-y-3">
++                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Job Types</Label>
++                                                <div className="flex flex-wrap gap-2">
++                                                    {['full-time', 'part-time', 'contract', 'freelance', 'internship', 'remote'].map(t => (
++                                                        <button
++                                                            key={t}
++                                                            onClick={() => {
++                                                                const current = filters.employmentTypes;
++                                                                const updated = current.includes(t)
++                                                                    ? current.filter(i => i !== t)
++                                                                    : [...current, t];
++                                                                setFilters({ ...filters, employmentTypes: updated });
++                                                            }}
++                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.employmentTypes.includes(t)
++                                                                ? 'bg-success border-success text-white shadow-sm'
++                                                                : 'bg-white border-border text-foreground hover:border-success/50'
++                                                                }`}
++                                                        >
++                                                            {t.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
++                                                        </button>
++                                                    ))}
++                                                </div>
++                                            </div>
++
++                                            {/* Contract Term */}
++                                            <div className="space-y-3">
++                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Contract Term</Label>
++                                                <div className="flex flex-wrap gap-2">
++                                                    {['unlimited', 'temporary', 'contract', 'freelance', 'internship'].map(term => (
++                                                        <button
++                                                            key={term}
++                                                            onClick={() => toggleFilterItem('contractTerms', term)}
++                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.contractTerms.includes(term)
++                                                                ? 'bg-info border-info text-info-foreground shadow-sm'
++                                                                : 'bg-muted text-foreground hover:bg-muted/80'
++                                                                }`}
++                                                        >
++                                                            {term.charAt(0).toUpperCase() + term.slice(1)}
++                                                        </button>
++                                                    ))}
++                                                </div>
++                                            </div>
++
++                                            <div className="space-y-3">
++                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Home Office Option</Label>
++                                                <div className="flex flex-wrap gap-2">
++                                                    {['yes', 'no', 'hybrid'].map(pref => (
++                                                        <button
++                                                            key={pref}
++                                                            onClick={() => {
++                                                                const current = filters.homeOffice;
++                                                                const updated = current.includes(pref)
++                                                                    ? current.filter(i => i !== pref)
++                                                                    : [...current, pref];
++                                                                setFilters({ ...filters, homeOffice: updated });
++                                                            }}
++                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.homeOffice.includes(pref)
++                                                                ? 'bg-primary border-primary text-white shadow-sm'
++                                                                : 'bg-white border-border text-foreground hover:border-primary/50'
++                                                                }`}
++                                                        >
++                                                            {pref.charAt(0).toUpperCase() + pref.slice(1)}
++                                                        </button>
++                                                    ))}
++                                                </div>
++                                            </div>
++                                        </div>
++
++                                        {/* Right: Salary & Vacation */}
++                                        <div className="space-y-8">
++                                            <div className="space-y-4">
++                                                <div className="flex justify-between items-center">
++                                                    <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
++                                                        <Coins className="w-3 h-3" />
++                                                        Salary Range (€ / Year)
++                                                    </Label>
++                                                    <span className="text-xs font-bold text-success">{filters.salaryRange[0].toLocaleString()} - {filters.salaryRange[1].toLocaleString()}</span>
++                                                </div>
++                                                <Slider
++                                                    value={filters.salaryRange}
++                                                    onValueChange={(val) => setFilters({ ...filters, salaryRange: val as [number, number] })}
++                                                    min={0}
++                                                    max={250000}
++                                                    step={5000}
++                                                />
++                                            </div>
++
++                                            <div className="space-y-4">
++                                                <div className="flex justify-between items-center">
++                                                    <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
++                                                        <Sparkles className="w-3 h-3" />
++                                                        Min Entry Bonus (€)
++                                                    </Label>
++                                                    <span className="text-xs font-bold text-success">{filters.minEntryBonus.toLocaleString()}</span>
++                                                </div>
++                                                <Slider
++                                                    value={[filters.minEntryBonus]}
++                                                    onValueChange={(val) => setFilters({ ...filters, minEntryBonus: val[0] })}
++                                                    max={50000}
++                                                    step={1000}
++                                                />
++                                            </div>
++
++                                            <div className="space-y-4">
++                                                <div className="flex justify-between items-center">
++                                                    <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
++                                                        <Umbrella className="w-3 h-3" />
++                                                        Min Vacation Days
++                                                    </Label>
++                                                    <span className="text-xs font-bold text-success">{filters.minVacationDays}</span>
++                                                </div>
++                                                <Slider
++                                                    value={[filters.minVacationDays]}
++                                                    onValueChange={(val) => setFilters({ ...filters, minVacationDays: val[0] })}
++                                                    max={40}
++                                                    step={1}
++                                                />
++                                            </div>
+
+                                             {/* Experience Requirement */}
+                                             <div className="space-y-3">
+-                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Minimum Experience (Years)</Label>
++                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Max Required Experience (Years)</Label>
+                                                 <Select value={filters.experienceYears?.toString() || 'any'} onValueChange={(val) => setFilters({ ...filters, experienceYears: val === 'any' ? null : parseInt(val) })}>
+                                                     <SelectTrigger className="h-10 bg-white border-border rounded-lg"><SelectValue placeholder="Any" /></SelectTrigger>
+                                                     <SelectContent>
+                                                         <SelectItem value="any">Any Experience</SelectItem>
+-                                                        {[0, 1, 2, 3, 5, 10].map(y => <SelectItem key={y} value={y.toString()}>{y}+ Years</SelectItem>)}
++                                                        {[0, 1, 2, 3, 5, 10, 15, 20, 25, 30].map(y => <SelectItem key={y} value={y.toString()}>{y} Years</SelectItem>)}
+                                                     </SelectContent>
+                                                 </Select>
+                                             </div>
+
++                                            {/* Career Level */}
++                                            <div className="space-y-3">
++                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Career Level</Label>
++                                                <div className="flex flex-wrap gap-2">
++                                                    {['entry', 'junior', 'mid', 'senior', 'lead', 'executive'].map(level => (
++                                                        <button
++                                                            key={level}
++                                                            onClick={() => {
++                                                                setFilters({ ...filters, careerLevel: filters.careerLevel.includes(level) ? filters.careerLevel.filter(l => l !== level) : [...filters.careerLevel, level] });
++                                                            }}
++                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.careerLevel.includes(level)
++                                                                ? 'bg-success border-success text-white shadow-sm'
++                                                                : 'bg-white border-border text-foreground hover:border-success/50'
++                                                                }`}
++                                                        >
++                                                            {level.charAt(0).toUpperCase() + level.slice(1)}
++                                                        </button>
++                                                    ))}
++                                                </div>
++                                            </div>
++
++                                            {/* Driving Licenses */}
++                                            <div className="space-y-3">
++                                                <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
++                                                    <Car className="w-3 h-3" />
++                                                    Required Driving Licenses
++                                                </Label>
++                                                <DrivingLicenseSelector
++                                                    value={filters.drivingLicenses}
++                                                    onChange={(val) => setFilters({ ...filters, drivingLicenses: val })}
++                                                />
++                                            </div>
++
+                                             {/* Benefits */}
+                                             <div className="space-y-3">
+-                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Job Benefits</Label>
++                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Job Benefits (Tags)</Label>
+                                                 <div className="flex gap-2">
+                                                     <AutocompleteInput
+                                                         category="tags"
+@@ -913,6 +1083,17 @@ const MainHeroFilter = () => {
+
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                 <div className="space-y-6">
++                                    <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border">
++                                        <div className="space-y-0.5">
++                                            <Label className="text-sm font-bold block">Flexible Match</Label>
++                                            <p className="text-[10px] text-muted-foreground">Show jobs that partially match your profile</p>
++                                        </div>
++                                        <Switch
++                                            checked={filters.enableFlexibleMatch}
++                                            onCheckedChange={(checked) => setFilters({ ...filters, enableFlexibleMatch: checked })}
++                                        />
++                                    </div>
++
+                                     <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border">
+                                         <div className="space-y-0.5">
+                                             <Label className="text-sm font-bold block">Partial Match</Label>
+@@ -959,8 +1140,8 @@ const MainHeroFilter = () => {
+                             </div>
+                         </section>
+
+-                        {/* Large Action Search Button at bottom of advanced */}
+-                        <div className="pt-8 text-center">
++            {/* Large Action Search Button at bottom of advanced */}
++                        <div className="pt-8 text-center pb-4">
+                             <Button
+                                 onClick={handleSearch}
+                                 className="px-12 h-14 bg-primary text-white font-black text-xl rounded-2xl shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:-translate-y-1 active:scale-95 group"
+diff --git a/src/pages/candidate/EditProfile.tsx b/src/pages/candidate/EditProfile.tsx
+index e84da6e..e7495ce 100644
+--- a/src/pages/candidate/EditProfile.tsx
++++ b/src/pages/candidate/EditProfile.tsx
+@@ -411,6 +411,7 @@ const EditProfile: React.FC = () => {
+       institution: newEducation.institution,
+       startDate: newEducation.startDate,
+       endDate: newEducation.isCurrent ? null : newEducation.endDate,
++      description: newEducation.description || '',
+       period: `${newEducation.startDate} - ${newEducation.isCurrent ? 'Present' : (newEducation.endDate || 'Present')}`,
+     };
+
+@@ -1722,7 +1723,10 @@ const EditProfile: React.FC = () => {
+                     <div className="flex items-start justify-between">
+                       <div className="flex-1">
+                         <h4 className="text-h4 font-heading text-foreground mb-1">{edu.degree}</h4>
+-                        <p className="text-body-sm text-muted-foreground">{edu.institution} • {edu.period}</p>
++                        <p className="text-body-sm text-muted-foreground mb-2">{edu.institution} • {edu.period}</p>
++                        {edu.description && (
++                          <p className="text-body-sm text-foreground">{edu.description}</p>
++                        )}
+                       </div>
+                       <div className="flex space-x-2">
+                         <Button

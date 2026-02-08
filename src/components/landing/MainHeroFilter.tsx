@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import { refugeeOriginCountries } from '@/data/locationData';
 import { getLanguageLevelOptions } from '@/utils/language-levels';
 import { LocationPicker, LocationValue } from '@/components/shared/LocationPicker';
+import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
 import { findContinent } from '@/utils/locationUtils';
 
 const MainHeroFilter = () => {
@@ -33,6 +34,9 @@ const MainHeroFilter = () => {
         continent: 'any',
         country: 'any',
         city: 'any',
+
+        lat: null as number | null,
+        lon: null as number | null,
 
         // Candidate specific
         talentStatus: [] as string[],
@@ -52,27 +56,25 @@ const MainHeroFilter = () => {
         vacationDays: [0, 50] as [number, number],
         travelWillingness: [0, 100] as [number, number],
         customTags: [] as string[],
+        gender: [] as string[],
+        allowOverqualification: false,
 
         // Job Search specific
         benefits: [] as string[],
         contractDuration: '',
         minVacationDays: 0,
         experienceYears: null as number | null,
+        employmentTypes: [] as string[],
+        minEntryBonus: 0,
 
         // Driving Licenses
-        hasPkw: null as boolean | null,
-        hasLkw: null as boolean | null,
-        pkwClasses: [] as string[],
-        lkwClasses: [] as string[],
-        customPkw: '',
-        customLkw: '',
+        drivingLicenses: [] as string[],
 
         // Matching preferences
         enablePartialMatch: false,
         minMatchThreshold: 50,
         enableFlexibleMatch: false,
-        allowOverqualification: false,
-        gender: [] as string[],
+
     });
 
     const [skillInput, setSkillInput] = useState('');
@@ -95,14 +97,35 @@ const MainHeroFilter = () => {
         if (filters.country !== 'any') searchParams.set('country', filters.country);
         if (filters.city !== 'any') searchParams.set('city', filters.city);
 
+        if (filters.lat && filters.lon) {
+            searchParams.set('lat', filters.lat.toString());
+            searchParams.set('lon', filters.lon.toString());
+        }
+
+        // Common for both but often distinct in state
+        if (filters.skills.length > 0) searchParams.set('skills', filters.skills.join(','));
+        if (filters.qualifications.length > 0) searchParams.set('qualifications', filters.qualifications.join(','));
+        if (filters.languages.length > 0) searchParams.set('languages', JSON.stringify(filters.languages));
+        if (filters.drivingLicenses.length > 0) {
+            const pkw = filters.drivingLicenses.filter(l => ['B', 'BE', 'B96', 'AM', 'L', 'T'].includes(l));
+            const lkw = filters.drivingLicenses.filter(l => ['C', 'CE', 'C1', 'C1E', 'D', 'DE'].includes(l));
+            if (pkw.length > 0) searchParams.set('pkwClasses', pkw.join(','));
+            if (lkw.length > 0) searchParams.set('lkwClasses', lkw.join(','));
+            const other = filters.drivingLicenses.filter(l => !['B', 'BE', 'B96', 'AM', 'L', 'T', 'C', 'CE', 'C1', 'C1E', 'D', 'DE'].includes(l));
+            if (other.length > 0) searchParams.set('otherLicenses', other.join(','));
+        }
+
+        if (filters.enablePartialMatch) {
+            searchParams.set('partialMatch', 'true');
+            searchParams.set('threshold', filters.minMatchThreshold.toString());
+        }
+        if (filters.enableFlexibleMatch) searchParams.set('flexibleMatch', 'true');
+
         if (searchMode === 'candidates') {
             // Mapping landing page filters to candidate search params
             if (filters.talentStatus.length > 0) searchParams.set('status', filters.talentStatus.join(','));
             if (filters.isRefugee) searchParams.set('isRefugee', 'true');
             if (filters.originCountry) searchParams.set('originCountry', filters.originCountry);
-            if (filters.skills.length > 0) searchParams.set('skills', filters.skills.join(','));
-            if (filters.qualifications.length > 0) searchParams.set('qualifications', filters.qualifications.join(','));
-            if (filters.languages.length > 0) searchParams.set('languages', JSON.stringify(filters.languages));
             if (filters.careerLevel.length > 0) searchParams.set('careerLevel', filters.careerLevel.join(','));
 
             searchParams.set('salaryMin', filters.salaryRange[0].toString());
@@ -124,48 +147,31 @@ const MainHeroFilter = () => {
             if (filters.vacationDays[1] < 50) searchParams.set('vacationMax', filters.vacationDays[1].toString());
             if (filters.customTags.length > 0) searchParams.set('tags', filters.customTags.join(','));
 
-            // Driving Licenses
-            if (filters.hasPkw !== null) searchParams.set('hasPkw', filters.hasPkw.toString());
-            const allPkw = [...filters.pkwClasses, ...(filters.customPkw ? [filters.customPkw] : [])];
-            if (allPkw.length > 0) searchParams.set('pkwClasses', allPkw.join(','));
-
-            if (filters.hasLkw !== null) searchParams.set('hasLkw', filters.hasLkw.toString());
-            const allLkw = [...filters.lkwClasses, ...(filters.customLkw ? [filters.customLkw] : [])];
-            if (allLkw.length > 0) searchParams.set('lkwClasses', allLkw.join(','));
-
-            if (filters.gender.length > 0) searchParams.set('gender', filters.gender.join(','));
+            if (filters.gender.length > 0) searchParams.set('gender', filters.gender.join(',').toLowerCase());
             if (filters.allowOverqualification) searchParams.set('allowOverqualification', 'true');
-
-            if (filters.enablePartialMatch) {
-                searchParams.set('partialMatch', 'true');
-                searchParams.set('threshold', filters.minMatchThreshold.toString());
-            }
 
             navigate(`/candidates?${searchParams.toString()}`);
         } else {
             // Mapping landing page filters to job search params
-            if (filters.jobTypes.length > 0) searchParams.set('jobTypes', filters.jobTypes.join(','));
+            if (filters.employmentTypes.length > 0) searchParams.set('jobTypes', filters.employmentTypes.join(','));
             if (filters.contractTerms.length > 0) searchParams.set('contractTerms', filters.contractTerms.join(','));
-            if (filters.homeOffice.length > 0) searchParams.set('homeOffice', filters.homeOffice.join(','));
+            if (filters.homeOffice.length > 0) {
+                if (filters.homeOffice.includes('yes') || filters.homeOffice.includes('hybrid')) {
+                    searchParams.set('homeOffice', 'true');
+                }
+            }
 
             searchParams.set('salaryMin', filters.salaryRange[0].toString());
             searchParams.set('salaryMax', filters.salaryRange[1].toString());
-            searchParams.set('bonusMin', filters.bonusRange[0].toString());
-            searchParams.set('vacationMin', filters.vacationDays[0].toString());
+            searchParams.set('bonusMin', (filters.bonusRange ? filters.bonusRange[0] : filters.minEntryBonus || 0).toString());
+            searchParams.set('bonusMax', (filters.bonusRange ? filters.bonusRange[1] : 100000).toString());
+            searchParams.set('vacationMin', (filters.vacationDays ? filters.vacationDays[0] : filters.minVacationDays || 0).toString());
+            searchParams.set('vacationMax', (filters.vacationDays ? filters.vacationDays[1] : 50).toString());
 
             if (filters.experienceYears !== null) searchParams.set('expMin', filters.experienceYears.toString());
             if (filters.benefits.length > 0) searchParams.set('benefits', filters.benefits.join(','));
 
-            // Shared Driving Licenses for Jobs too
-            if (filters.hasPkw !== null) searchParams.set('hasPkw', filters.hasPkw.toString());
-            const allPkw = [...filters.pkwClasses, ...(filters.customPkw ? [filters.customPkw] : [])];
-            if (allPkw.length > 0) searchParams.set('pkwClasses', allPkw.join(','));
-
-            if (filters.hasLkw !== null) searchParams.set('hasLkw', filters.hasLkw.toString());
-            const allLkw = [...filters.lkwClasses, ...(filters.customLkw ? [filters.customLkw] : [])];
-            if (allLkw.length > 0) searchParams.set('lkwClasses', allLkw.join(','));
-
-            if (filters.enableFlexibleMatch) searchParams.set('flexibleMatch', 'true');
+            if (filters.careerLevel.length > 0) searchParams.set('careerLevel', filters.careerLevel.join(','));
 
             navigate(`/jobs?${searchParams.toString()}`);
         }
@@ -279,7 +285,9 @@ const MainHeroFilter = () => {
             location: val.city,
             city: val.city,
             country: val.country,
-            continent: findContinent(val.country)
+            continent: findContinent(val.country),
+            lat: val.lat,
+            lon: val.lon
         });
     };
 
@@ -469,7 +477,7 @@ const MainHeroFilter = () => {
                                             <div className="space-y-3">
                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Talent Status</Label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['Unemployed', 'Employed', 'Trainee', 'Apprentice', 'Pupil', 'Student', 'Freelancer', 'Retired'].map(status => (
+                                                    {['Unemployed', 'Employed', 'Trainee', 'Apprentice', 'Pupil', 'Student', 'Civil Servant', 'Freelancer', 'Entrepreneur', 'Retired', 'Other'].map(status => (
                                                         <button
                                                             key={status}
                                                             onClick={() => toggleFilterItem('talentStatus', status)}
@@ -493,8 +501,8 @@ const MainHeroFilter = () => {
                                                             key={level}
                                                             onClick={() => toggleFilterItem('careerLevel', level)}
                                                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.careerLevel.includes(level)
-                                                                ? 'bg-info border-info text-white shadow-sm'
-                                                                : 'bg-white border-border text-foreground hover:border-info/50'
+                                                                ? 'bg-accent border-accent text-accent-foreground shadow-sm'
+                                                                : 'bg-muted text-foreground hover:bg-muted/80'
                                                                 }`}
                                                         >
                                                             {level.charAt(0).toUpperCase() + level.slice(1)}
@@ -509,26 +517,10 @@ const MainHeroFilter = () => {
                                                     <Car className="w-3 h-3" />
                                                     Driving Licenses
                                                 </Label>
-                                                <div className="flex flex-wrap gap-2">
-                                                    <button
-                                                        onClick={() => setFilters({ ...filters, hasPkw: filters.hasPkw === true ? null : true })}
-                                                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.hasPkw === true
-                                                            ? 'bg-warning border-warning text-white shadow-sm'
-                                                            : 'bg-white border-border text-foreground hover:border-warning/50'
-                                                            }`}
-                                                    >
-                                                        PKW (Car)
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setFilters({ ...filters, hasLkw: filters.hasLkw === true ? null : true })}
-                                                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.hasLkw === true
-                                                            ? 'bg-warning border-warning text-white shadow-sm'
-                                                            : 'bg-white border-border text-foreground hover:border-warning/50'
-                                                            }`}
-                                                    >
-                                                        LKW (Truck)
-                                                    </button>
-                                                </div>
+                                                <DrivingLicenseSelector
+                                                    value={filters.drivingLicenses}
+                                                    onChange={(val) => setFilters({ ...filters, drivingLicenses: val })}
+                                                />
                                             </div>
 
                                             {/* Experience Slider */}
@@ -549,7 +541,7 @@ const MainHeroFilter = () => {
                                             <div className="space-y-3">
                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Notice Period</Label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['immediately', '1-month', '2-months', '3-months', '6-months'].map(period => (
+                                                    {['immediate', '1-week', '2-weeks', '1-month', '2-months', '3-months'].map(period => (
                                                         <button
                                                             key={period}
                                                             onClick={() => toggleFilterItem('noticePeriod', period)}
@@ -562,6 +554,20 @@ const MainHeroFilter = () => {
                                                         </button>
                                                     ))}
                                                 </div>
+                                            </div>
+
+                                            {/* Travel Willingness */}
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <Label className="text-xs font-bold text-muted-foreground uppercase">Travel Willingness</Label>
+                                                    <span className="text-xs font-bold text-info">{filters.travelWillingness[0]}% - {filters.travelWillingness[1]}%</span>
+                                                </div>
+                                                <Slider
+                                                    value={filters.travelWillingness}
+                                                    onValueChange={(val) => setFilters({ ...filters, travelWillingness: val as [number, number] })}
+                                                    max={100}
+                                                    step={5}
+                                                />
                                             </div>
 
                                             {/* Refugee Status */}
@@ -598,8 +604,15 @@ const MainHeroFilter = () => {
                                                     {['Male', 'Female', 'Non-binary', 'Other'].map(g => (
                                                         <button
                                                             key={g}
-                                                            onClick={() => toggleFilterItem('gender', g)}
-                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.gender.includes(g)
+                                                            onClick={() => {
+                                                                const genderKey = (g === 'Non-binary' || g === 'Other') ? 'diverse' : g.toLowerCase();
+                                                                const current = filters.gender;
+                                                                const updated = current.includes(genderKey)
+                                                                    ? current.filter(i => i !== genderKey)
+                                                                    : [...current, genderKey];
+                                                                setFilters({ ...filters, gender: updated });
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.gender.includes((g === 'Non-binary' || g === 'Other') ? 'diverse' : g.toLowerCase())
                                                                 ? 'bg-primary border-primary text-white shadow-sm'
                                                                 : 'bg-white border-border text-foreground hover:border-primary/50'
                                                                 }`}
@@ -609,48 +622,9 @@ const MainHeroFilter = () => {
                                                     ))}
                                                 </div>
                                             </div>
-
-                                            {/* Travel Willingness */}
-                                            <div className="space-y-4">
-                                                <div className="flex justify-between items-center">
-                                                    <Label className="text-xs font-bold text-muted-foreground uppercase">Travel Willingness</Label>
-                                                    <span className="text-xs font-bold text-info">{filters.travelWillingness[0]}% - {filters.travelWillingness[1]}%</span>
-                                                </div>
-                                                <Slider
-                                                    value={filters.travelWillingness}
-                                                    onValueChange={(val) => setFilters({ ...filters, travelWillingness: val as [number, number] })}
-                                                    max={100}
-                                                    step={5}
-                                                />
-                                            </div>
-
-
-
-                                            {/* Custom Tags */}
-                                            <div className="space-y-3">
-                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Additional Conditions (Tags)</Label>
-                                                <div className="flex gap-2">
-                                                    <AutocompleteInput
-                                                        category="tags"
-                                                        placeholder="e.g. Barrier-free, Pets..."
-                                                        value={tagInput}
-                                                        onChange={setTagInput}
-                                                        onKeyPress={(e: any) => e.key === 'Enter' && handleAddTag()}
-                                                        className="h-10 flex-1"
-                                                    />
-                                                    <Button size="icon" variant="outline" onClick={handleAddTag} className="h-10 w-10 shrink-0"><Plus className="w-4 h-4" /></Button>
-                                                </div>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {filters.customTags.map(t => (
-                                                        <span key={t} className="px-2.5 py-1 bg-secondary/10 text-secondary text-xs font-bold rounded-md flex items-center gap-1.5 border border-secondary/20">
-                                                            {t} <X className="w-3 h-3 cursor-pointer hover:text-secondary/70" onClick={() => handleRemoveTag(t)} />
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
                                         </div>
 
-                                        {/* Right Column: Skills, Qualifications, Languages */}
+                                        {/* Right Column: Skills, Qualifications, Languages, Conditions */}
                                         <div className="space-y-6">
                                             {/* Skills Tags */}
                                             <div className="space-y-3">
@@ -728,16 +702,36 @@ const MainHeroFilter = () => {
                                                     ))}
                                                 </div>
                                             </div>
+
+                                            {/* Custom Tags */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Additional Conditions (Tags)</Label>
+                                                <div className="flex gap-2">
+                                                    <AutocompleteInput
+                                                        category="tags"
+                                                        placeholder="e.g. Barrier-free, Pets..."
+                                                        value={tagInput}
+                                                        onChange={setTagInput}
+                                                        onKeyPress={(e: any) => e.key === 'Enter' && handleAddTag()}
+                                                        className="h-10 flex-1"
+                                                    />
+                                                    <Button size="icon" variant="outline" onClick={handleAddTag} className="h-10 w-10 shrink-0"><Plus className="w-4 h-4" /></Button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {filters.customTags.map(t => (
+                                                        <span key={t} className="px-2.5 py-1 bg-secondary/10 text-secondary text-xs font-bold rounded-md flex items-center gap-1.5 border border-secondary/20">
+                                                            {t} <X className="w-3 h-3 cursor-pointer hover:text-secondary/70" onClick={() => handleRemoveTag(t)} />
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </section>
-                                <Separator className="opacity-50" />
-                            </>
-                        )}
 
-                        {/* 3. Job Search Specific Filter Areas */}
-                        {searchMode === 'jobs' && (
-                            <>
+                                <Separator className="opacity-50" />
+
+                                {/* 2.5 Candidate Conditions & Expectations */}
                                 <section className="space-y-8 animate-in fade-in duration-500">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
@@ -752,7 +746,7 @@ const MainHeroFilter = () => {
                                             <div className="space-y-3">
                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Job Types</Label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['full-time', 'part-time', 'contract', 'freelance', 'internship', 'traineeship'].map(t => (
+                                                    {['full-time', 'part-time', 'apprenticeship', 'internship', 'traineeship', 'freelance', 'contract'].map(t => (
                                                         <button
                                                             key={t}
                                                             onClick={() => toggleFilterItem('jobTypes', t)}
@@ -761,22 +755,23 @@ const MainHeroFilter = () => {
                                                                 : 'bg-white border-border text-foreground hover:border-success/50'
                                                                 }`}
                                                         >
-                                                            {t.charAt(0).toUpperCase() + t.slice(1)}
+                                                            {t.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                                                         </button>
                                                     ))}
                                                 </div>
                                             </div>
 
+                                            {/* Contract Term */}
                                             <div className="space-y-3">
                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Contract Term</Label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['unlimited', 'temporary', 'permanent'].map(term => (
+                                                    {['unlimited', 'temporary'].map(term => (
                                                         <button
                                                             key={term}
                                                             onClick={() => toggleFilterItem('contractTerms', term)}
                                                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.contractTerms.includes(term)
-                                                                ? 'bg-warning border-warning text-white shadow-sm'
-                                                                : 'bg-white border-border text-foreground hover:border-warning/50'
+                                                                ? 'bg-info border-info text-info-foreground shadow-sm'
+                                                                : 'bg-muted text-foreground hover:bg-muted/80'
                                                                 }`}
                                                         >
                                                             {term.charAt(0).toUpperCase() + term.slice(1)}
@@ -810,7 +805,7 @@ const MainHeroFilter = () => {
                                                 <div className="flex justify-between items-center">
                                                     <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
                                                         <Coins className="w-3 h-3" />
-                                                        Salary Range (€ / Year)
+                                                        Desired Salary (€ / Year)
                                                     </Label>
                                                     <span className="text-xs font-bold text-success">{filters.salaryRange[0].toLocaleString()} - {filters.salaryRange[1].toLocaleString()}</span>
                                                 </div>
@@ -818,7 +813,7 @@ const MainHeroFilter = () => {
                                                     value={filters.salaryRange}
                                                     onValueChange={(val) => setFilters({ ...filters, salaryRange: val as [number, number] })}
                                                     min={20000}
-                                                    max={250000}
+                                                    max={200000}
                                                     step={5000}
                                                 />
                                             </div>
@@ -827,13 +822,14 @@ const MainHeroFilter = () => {
                                                 <div className="flex justify-between items-center">
                                                     <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
                                                         <Sparkles className="w-3 h-3" />
-                                                        Entry Bonus (€)
+                                                        Desired Entry Bonus (€)
                                                     </Label>
                                                     <span className="text-xs font-bold text-success">{filters.bonusRange[0].toLocaleString()} - {filters.bonusRange[1].toLocaleString()}</span>
                                                 </div>
                                                 <Slider
                                                     value={filters.bonusRange}
                                                     onValueChange={(val) => setFilters({ ...filters, bonusRange: val as [number, number] })}
+                                                    min={0}
                                                     max={100000}
                                                     step={1000}
                                                 />
@@ -850,26 +846,199 @@ const MainHeroFilter = () => {
                                                 <Slider
                                                     value={filters.vacationDays}
                                                     onValueChange={(val) => setFilters({ ...filters, vacationDays: val as [number, number] })}
+                                                    min={0}
                                                     max={50}
+                                                    step={1}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                                <Separator className="opacity-50" />
+                            </>
+                        )}
+
+                        {/* 3. Job Search Specific Filter Areas */}
+                        {searchMode === 'jobs' && (
+                            <>
+                                <section className="space-y-8 animate-in fade-in duration-500">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+                                            <Clock className="w-4 h-4 text-success" />
+                                        </div>
+                                        <h3 className="font-bold text-lg">Conditions & Expectations</h3>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                        {/* Left: Job Types & Terms */}
+                                        <div className="space-y-6">
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Job Types</Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {['full-time', 'part-time', 'contract', 'freelance', 'internship', 'remote'].map(t => (
+                                                        <button
+                                                            key={t}
+                                                            onClick={() => {
+                                                                const current = filters.employmentTypes;
+                                                                const updated = current.includes(t)
+                                                                    ? current.filter(i => i !== t)
+                                                                    : [...current, t];
+                                                                setFilters({ ...filters, employmentTypes: updated });
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.employmentTypes.includes(t)
+                                                                ? 'bg-success border-success text-white shadow-sm'
+                                                                : 'bg-white border-border text-foreground hover:border-success/50'
+                                                                }`}
+                                                        >
+                                                            {t.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Contract Term */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Contract Term</Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {['unlimited', 'temporary', 'contract', 'freelance', 'internship'].map(term => (
+                                                        <button
+                                                            key={term}
+                                                            onClick={() => toggleFilterItem('contractTerms', term)}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.contractTerms.includes(term)
+                                                                ? 'bg-info border-info text-info-foreground shadow-sm'
+                                                                : 'bg-muted text-foreground hover:bg-muted/80'
+                                                                }`}
+                                                        >
+                                                            {term.charAt(0).toUpperCase() + term.slice(1)}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Home Office Option</Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {['yes', 'no', 'hybrid'].map(pref => (
+                                                        <button
+                                                            key={pref}
+                                                            onClick={() => {
+                                                                const current = filters.homeOffice;
+                                                                const updated = current.includes(pref)
+                                                                    ? current.filter(i => i !== pref)
+                                                                    : [...current, pref];
+                                                                setFilters({ ...filters, homeOffice: updated });
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.homeOffice.includes(pref)
+                                                                ? 'bg-primary border-primary text-white shadow-sm'
+                                                                : 'bg-white border-border text-foreground hover:border-primary/50'
+                                                                }`}
+                                                        >
+                                                            {pref.charAt(0).toUpperCase() + pref.slice(1)}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Right: Salary & Vacation */}
+                                        <div className="space-y-8">
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                                                        <Coins className="w-3 h-3" />
+                                                        Salary Range (€ / Year)
+                                                    </Label>
+                                                    <span className="text-xs font-bold text-success">{filters.salaryRange[0].toLocaleString()} - {filters.salaryRange[1].toLocaleString()}</span>
+                                                </div>
+                                                <Slider
+                                                    value={filters.salaryRange}
+                                                    onValueChange={(val) => setFilters({ ...filters, salaryRange: val as [number, number] })}
+                                                    min={0}
+                                                    max={250000}
+                                                    step={5000}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                                                        <Sparkles className="w-3 h-3" />
+                                                        Min Entry Bonus (€)
+                                                    </Label>
+                                                    <span className="text-xs font-bold text-success">{filters.minEntryBonus.toLocaleString()}</span>
+                                                </div>
+                                                <Slider
+                                                    value={[filters.minEntryBonus]}
+                                                    onValueChange={(val) => setFilters({ ...filters, minEntryBonus: val[0] })}
+                                                    max={50000}
+                                                    step={1000}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                                                        <Umbrella className="w-3 h-3" />
+                                                        Min Vacation Days
+                                                    </Label>
+                                                    <span className="text-xs font-bold text-success">{filters.minVacationDays}</span>
+                                                </div>
+                                                <Slider
+                                                    value={[filters.minVacationDays]}
+                                                    onValueChange={(val) => setFilters({ ...filters, minVacationDays: val[0] })}
+                                                    max={40}
                                                     step={1}
                                                 />
                                             </div>
 
                                             {/* Experience Requirement */}
                                             <div className="space-y-3">
-                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Minimum Experience (Years)</Label>
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Max Required Experience (Years)</Label>
                                                 <Select value={filters.experienceYears?.toString() || 'any'} onValueChange={(val) => setFilters({ ...filters, experienceYears: val === 'any' ? null : parseInt(val) })}>
                                                     <SelectTrigger className="h-10 bg-white border-border rounded-lg"><SelectValue placeholder="Any" /></SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="any">Any Experience</SelectItem>
-                                                        {[0, 1, 2, 3, 5, 10].map(y => <SelectItem key={y} value={y.toString()}>{y}+ Years</SelectItem>)}
+                                                        {[0, 1, 2, 3, 5, 10, 15, 20, 25, 30].map(y => <SelectItem key={y} value={y.toString()}>{y} Years</SelectItem>)}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
 
+                                            {/* Career Level */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Career Level</Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {['entry', 'junior', 'mid', 'senior', 'lead', 'executive'].map(level => (
+                                                        <button
+                                                            key={level}
+                                                            onClick={() => {
+                                                                setFilters({ ...filters, careerLevel: filters.careerLevel.includes(level) ? filters.careerLevel.filter(l => l !== level) : [...filters.careerLevel, level] });
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.careerLevel.includes(level)
+                                                                ? 'bg-success border-success text-white shadow-sm'
+                                                                : 'bg-white border-border text-foreground hover:border-success/50'
+                                                                }`}
+                                                        >
+                                                            {level.charAt(0).toUpperCase() + level.slice(1)}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Driving Licenses */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                                                    <Car className="w-3 h-3" />
+                                                    Required Driving Licenses
+                                                </Label>
+                                                <DrivingLicenseSelector
+                                                    value={filters.drivingLicenses}
+                                                    onChange={(val) => setFilters({ ...filters, drivingLicenses: val })}
+                                                />
+                                            </div>
+
                                             {/* Benefits */}
                                             <div className="space-y-3">
-                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Job Benefits</Label>
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Job Benefits (Tags)</Label>
                                                 <div className="flex gap-2">
                                                     <AutocompleteInput
                                                         category="tags"
@@ -913,6 +1082,17 @@ const MainHeroFilter = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                                 <div className="space-y-6">
+                                    <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-bold block">Flexible Match</Label>
+                                            <p className="text-[10px] text-muted-foreground">Show jobs that partially match your profile</p>
+                                        </div>
+                                        <Switch
+                                            checked={filters.enableFlexibleMatch}
+                                            onCheckedChange={(checked) => setFilters({ ...filters, enableFlexibleMatch: checked })}
+                                        />
+                                    </div>
+
                                     <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border">
                                         <div className="space-y-0.5">
                                             <Label className="text-sm font-bold block">Partial Match</Label>
@@ -959,8 +1139,8 @@ const MainHeroFilter = () => {
                             </div>
                         </section>
 
-                        {/* Large Action Search Button at bottom of advanced */}
-                        <div className="pt-8 text-center">
+            {/* Large Action Search Button at bottom of advanced */}
+                        <div className="pt-8 text-center pb-4">
                             <Button
                                 onClick={handleSearch}
                                 className="px-12 h-14 bg-primary text-white font-black text-xl rounded-2xl shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:-translate-y-1 active:scale-95 group"
