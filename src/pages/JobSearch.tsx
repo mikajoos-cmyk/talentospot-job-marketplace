@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import RichTextEditor from '@/components/ui/rich-text-editor';
-import { Briefcase, Loader2 } from 'lucide-react';
+import { Briefcase, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
 import { jobsService } from '@/services/jobs.service';
@@ -23,9 +23,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import JobFilters, { JobFiltersState } from '@/components/candidate/JobFilters';
 import { calculateJobMatchScore } from '@/utils/match-utils';
 import JobListCard from '@/components/landing/JobListCard';
+
+type SortOption = 'newest' | 'random' | 'salary' | 'distance' | 'match';
+
+// Helper function to calculate distance between two coordinates (Haversine formula)
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371; // Radius of the Earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 const JobSearch: React.FC = () => {
   const navigate = useNavigate();
@@ -41,6 +63,8 @@ const JobSearch: React.FC = () => {
   const [appliedJobIds, setAppliedJobIds] = useState<string[]>([]);
   const [applying, setApplying] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [sortAscending, setSortAscending] = useState<boolean>(false);
 
   const [searchParams] = useSearchParams();
   const [mapCenter, setMapCenter] = useState<[number, number]>([51.1657, 10.4515]);
@@ -224,21 +248,22 @@ const JobSearch: React.FC = () => {
       let results = data || [];
 
       // Apply client-side filtering/scoring if needed
+      // Get coordinates for distance-based scoring if city is selected
+      let filtersWithCoords = { ...currentFilters };
+      if (currentFilters.city && currentFilters.city !== 'all') {
+        const coords = await getCoordinates(currentFilters.city, currentFilters.country);
+        if (coords) {
+          filtersWithCoords = {
+            ...currentFilters,
+            latitude: coords.latitude,
+            longitude: coords.longitude
+          };
+          setMapCenter([coords.latitude, coords.longitude]);
+        }
+      }
+
       if (useClientSideFiltering) {
         const flexibleMode = currentFilters.enableFlexibleMatch;
-
-        // Get coordinates for distance-based scoring if city is selected
-        let filtersWithCoords = { ...currentFilters };
-        if (currentFilters.city && currentFilters.city !== 'all') {
-          const coords = await getCoordinates(currentFilters.city, currentFilters.country);
-          if (coords) {
-            filtersWithCoords = {
-              ...currentFilters,
-              latitude: coords.latitude,
-              longitude: coords.longitude
-            };
-          }
-        }
 
         results = results.map(job => ({
           ...job,
@@ -249,9 +274,6 @@ const JobSearch: React.FC = () => {
         if (currentFilters.enablePartialMatch) {
           results = results.filter(job => job.matchScore >= currentFilters.minMatchThreshold);
         }
-
-        // Sort by match score
-        results.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
       }
 
       setJobs(results);
@@ -506,6 +528,82 @@ const JobSearch: React.FC = () => {
     job.employer_profiles?.company_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Sort jobs based on selected option
+  const sortedJobs = React.useMemo(() => {
+    let sorted = [...filteredJobs];
+    const direction = sortAscending ? 1 : -1;
+
+    switch (sortBy) {
+      case 'newest':
+        // Sort by created_at or id
+        sorted.sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return direction * (dateB - dateA || b.id - a.id);
+        });
+        break;
+
+      case 'random':
+        // Shuffle array (ignore direction for random)
+        for (let i = sorted.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
+        }
+        break;
+
+      case 'salary':
+        // Sort by salary (using max salary for comparison)
+        sorted.sort((a, b) => {
+          const salaryA = a.salary_max || 0;
+          const salaryB = b.salary_max || 0;
+          return direction * (salaryB - salaryA);
+        });
+        break;
+
+      case 'distance':
+        // Sort by distance to search location
+        sorted.sort((a, b) => {
+          const distA = a.distance || (a.latitude && a.longitude && filters.city ?
+            calculateDistance(mapCenter[0], mapCenter[1], a.latitude, a.longitude) : Infinity);
+          const distB = b.distance || (b.latitude && b.longitude && filters.city ?
+            calculateDistance(mapCenter[0], mapCenter[1], b.latitude, b.longitude) : Infinity);
+          return direction * (distA - distB);
+        });
+        break;
+
+      case 'match':
+        // Sort by match score
+        sorted.sort((a, b) => {
+          const scoreA = a.matchScore || 0;
+          const scoreB = b.matchScore || 0;
+          return direction * (scoreB - scoreA);
+        });
+        break;
+
+      default:
+        break;
+    }
+
+    return sorted;
+  }, [filteredJobs, sortBy, sortAscending, mapCenter, filters.city]);
+
+  const getSortLabel = (option: SortOption): string => {
+    switch (option) {
+      case 'newest': return 'Neueste';
+      case 'random': return 'Zufällig';
+      case 'salary': return 'Gehaltshöhe';
+      case 'distance': return 'Nächste zum Standort';
+      case 'match': return 'Match %';
+      default: return 'Sortieren';
+    }
+  };
+
+  const toggleSortDirection = () => {
+    if (sortBy !== 'random') {
+      setSortAscending(!sortAscending);
+    }
+  };
+
   return (
     <>
       <AppLayout isPublic={user.role === 'guest'}>
@@ -564,9 +662,58 @@ const JobSearch: React.FC = () => {
                     </div>
                   ) : (
                     <>
-                      <p className="text-body text-foreground mb-6">
-                        <span className="font-medium">{filteredJobs.length}</span> jobs found
-                      </p>
+                      <div className="mb-6 flex items-center justify-between">
+                        <p className="text-body text-foreground">
+                          <span className="font-medium">{filteredJobs.length}</span> jobs found
+                        </p>
+
+                        {/* Sort Controls */}
+                        <div className="flex items-center gap-2">
+                          {/* Sort Direction Toggle (only show if not random) */}
+                          {sortBy !== 'random' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={toggleSortDirection}
+                              className="px-2"
+                            >
+                              {sortAscending ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                            </Button>
+                          )}
+
+                          {/* Sort Dropdown */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <ArrowUpDown className="w-4 h-4 mr-2" />
+                                {getSortLabel(sortBy)}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setSortBy('newest')}>
+                                Neueste
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setSortBy('random')}>
+                                Zufällig
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setSortBy('salary')}>
+                                Gehaltshöhe
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setSortBy('distance')}>
+                                Nächste zum Standort
+                              </DropdownMenuItem>
+                              {(filters.enablePartialMatch || filters.enableFlexibleMatch) && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => setSortBy('match')}>
+                                    Match %
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
 
                       {filteredJobs.length === 0 ? (
                         <Card className="p-12 border border-border bg-card text-center">
@@ -578,7 +725,7 @@ const JobSearch: React.FC = () => {
                         </Card>
                       ) : (
                         <div className="grid grid-cols-1 gap-6">
-                          {filteredJobs.map((job) => (
+                          {sortedJobs.map((job) => (
                             <JobListCard
                               key={job.id}
                               job={job}

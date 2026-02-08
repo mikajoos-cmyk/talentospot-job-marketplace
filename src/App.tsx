@@ -32,6 +32,12 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import Settings from './pages/Settings';
 import AboutUs from './pages/AboutUs';
 import HowItWorks from './pages/HowItWorks';
+import Pricing from './pages/Pricing';
+import ContactUs from './pages/ContactUs';
+import Imprint from './pages/Imprint';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import FAQ from './pages/FAQ';
+import Terms from './pages/Terms';
 
 function App() {
   return (
@@ -264,6 +270,12 @@ function App() {
 
               <Route path="/about" element={<AboutUs />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/imprint" element={<Imprint />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/terms" element={<Terms />} />
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
