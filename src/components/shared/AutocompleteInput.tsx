@@ -177,7 +177,10 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                     {filteredSuggestions.map((s, index) => (
                         <button
                             key={s.id || s.name}
-                            onMouseDown={(e) => {
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onPointerDown={(e) => e.preventDefault()}
+                            onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 handleSelect(s);

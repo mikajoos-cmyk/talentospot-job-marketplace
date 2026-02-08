@@ -162,7 +162,9 @@ export function LocationPicker({ value, onChange, className, mode = 'address' }:
                                             key={`${item.lat}-${item.lon}-${index}`}
                                             value={`${index}`} // MUST use simple index string for cmdk
                                             onSelect={() => handleSelect(item)}
-                                            onMouseDown={(e) => {
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onPointerDown={(e) => e.preventDefault()}
+                                            onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
                                                 handleSelect(item);

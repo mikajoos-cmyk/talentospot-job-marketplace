@@ -57,7 +57,6 @@ const MainHeroFilter = () => {
         travelWillingness: [0, 100] as [number, number],
         customTags: [] as string[],
         gender: [] as string[],
-        allowOverqualification: false,
 
         // Job Search specific
         benefits: [] as string[],
@@ -119,7 +118,6 @@ const MainHeroFilter = () => {
             searchParams.set('partialMatch', 'true');
             searchParams.set('threshold', filters.minMatchThreshold.toString());
         }
-        if (filters.enableFlexibleMatch) searchParams.set('flexibleMatch', 'true');
 
         if (searchMode === 'candidates') {
             // Mapping landing page filters to candidate search params
@@ -148,7 +146,9 @@ const MainHeroFilter = () => {
             if (filters.customTags.length > 0) searchParams.set('tags', filters.customTags.join(','));
 
             if (filters.gender.length > 0) searchParams.set('gender', filters.gender.join(',').toLowerCase());
-            if (filters.allowOverqualification) searchParams.set('allowOverqualification', 'true');
+            
+            // Allow Overqualification mapping for candidates
+            if (filters.enableFlexibleMatch) searchParams.set('allowOverqualification', 'true');
 
             navigate(`/candidates?${searchParams.toString()}`);
         } else {
@@ -163,15 +163,17 @@ const MainHeroFilter = () => {
 
             searchParams.set('salaryMin', filters.salaryRange[0].toString());
             searchParams.set('salaryMax', filters.salaryRange[1].toString());
-            searchParams.set('bonusMin', (filters.bonusRange ? filters.bonusRange[0] : filters.minEntryBonus || 0).toString());
-            searchParams.set('bonusMax', (filters.bonusRange ? filters.bonusRange[1] : 100000).toString());
-            searchParams.set('vacationMin', (filters.vacationDays ? filters.vacationDays[0] : filters.minVacationDays || 0).toString());
-            searchParams.set('vacationMax', (filters.vacationDays ? filters.vacationDays[1] : 50).toString());
+            
+            // For jobs, we use the specific min bonus/vacation fields
+            searchParams.set('bonusMin', filters.minEntryBonus.toString());
+            searchParams.set('vacationMin', filters.minVacationDays.toString());
 
             if (filters.experienceYears !== null) searchParams.set('expMin', filters.experienceYears.toString());
             if (filters.benefits.length > 0) searchParams.set('benefits', filters.benefits.join(','));
 
             if (filters.careerLevel.length > 0) searchParams.set('careerLevel', filters.careerLevel.join(','));
+
+            if (filters.enableFlexibleMatch) searchParams.set('flexibleMatch', 'true');
 
             navigate(`/jobs?${searchParams.toString()}`);
         }
@@ -861,12 +863,156 @@ const MainHeroFilter = () => {
                         {/* 3. Job Search Specific Filter Areas */}
                         {searchMode === 'jobs' && (
                             <>
+                                {/* Candidate Requirements for Jobs */}
+                                <section className="space-y-8 animate-in fade-in duration-500">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-info/10 flex items-center justify-center">
+                                            <GraduationCap className="w-4 h-4 text-info" />
+                                        </div>
+                                        <h3 className="font-bold text-lg">Candidate Requirements</h3>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                        <div className="space-y-6">
+                                            {/* Experience Requirement */}
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <Label className="text-xs font-bold text-muted-foreground uppercase">Max Required Experience (Years)</Label>
+                                                    <span className="text-xs font-bold text-info">{filters.experienceYears === null ? 'Any' : `${filters.experienceYears} Years`}</span>
+                                                </div>
+                                                <Slider
+                                                    value={[filters.experienceYears === null ? 30 : filters.experienceYears]}
+                                                    onValueChange={(val) => setFilters({ ...filters, experienceYears: val[0] === 30 ? null : val[0] })}
+                                                    max={30}
+                                                    step={1}
+                                                />
+                                                <p className="text-[10px] text-muted-foreground italic text-right">Slide to 30 for "Any"</p>
+                                            </div>
+
+                                            {/* Career Level */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Career Level</Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {['entry', 'junior', 'mid', 'senior', 'lead', 'executive'].map(level => (
+                                                        <button
+                                                            key={level}
+                                                            onClick={() => {
+                                                                setFilters({ ...filters, careerLevel: filters.careerLevel.includes(level) ? filters.careerLevel.filter(l => l !== level) : [...filters.careerLevel, level] });
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.careerLevel.includes(level)
+                                                                ? 'bg-info border-info text-white shadow-sm'
+                                                                : 'bg-white border-border text-foreground hover:border-info/50'
+                                                                }`}
+                                                        >
+                                                            {level.charAt(0).toUpperCase() + level.slice(1)}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Driving Licenses */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                                                    <Car className="w-3 h-3" />
+                                                    Required Driving Licenses
+                                                </Label>
+                                                <DrivingLicenseSelector
+                                                    value={filters.drivingLicenses}
+                                                    onChange={(val) => setFilters({ ...filters, drivingLicenses: val })}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            {/* Skills Tags */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Required Skills</Label>
+                                                <div className="flex gap-2">
+                                                    <AutocompleteInput
+                                                        category="skills"
+                                                        placeholder="Add skill..."
+                                                        value={skillInput}
+                                                        onChange={setSkillInput}
+                                                        onKeyPress={(e: any) => e.key === 'Enter' && handleAddSkill()}
+                                                        className="h-10 flex-1"
+                                                    />
+                                                    <Button size="icon" variant="secondary" onClick={handleAddSkill} className="h-10 w-10 shrink-0"><Plus className="w-4 h-4" /></Button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {filters.skills.map(s => (
+                                                        <span key={s} className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-bold rounded-md flex items-center gap-1.5 border border-primary/20">
+                                                            {s} <X className="w-3 h-3 cursor-pointer hover:text-primary/70" onClick={() => handleRemoveSkill(s)} />
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Qualifications */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Required Qualifications</Label>
+                                                <div className="flex gap-2">
+                                                    <AutocompleteInput
+                                                        category="qualifications"
+                                                        placeholder="Add qualification..."
+                                                        value={qualificationInput}
+                                                        onChange={setQualificationInput}
+                                                        onKeyPress={(e: any) => e.key === 'Enter' && handleAddQualification()}
+                                                        className="h-10 flex-1"
+                                                    />
+                                                    <Button size="icon" variant="secondary" onClick={handleAddQualification} className="h-10 w-10 shrink-0"><Plus className="w-4 h-4" /></Button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {filters.qualifications.map(q => (
+                                                        <span key={q} className="px-2.5 py-1 bg-accent/10 text-accent text-xs font-bold rounded-md flex items-center gap-1.5 border border-accent/20">
+                                                            {q} <X className="w-3 h-3 cursor-pointer hover:text-accent/70" onClick={() => handleRemoveQualification(q)} />
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Languages */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                                                    <Languages className="w-3 h-3" />
+                                                    Required Languages
+                                                </Label>
+                                                <div className="flex gap-2 flex-wrap">
+                                                    <AutocompleteInput
+                                                        category="languages"
+                                                        placeholder="Language..."
+                                                        value={languageInput}
+                                                        onChange={setLanguageInput}
+                                                        className="h-10 w-full sm:flex-1"
+                                                    />
+                                                    <Select value={languageLevel} onValueChange={setLanguageLevel}>
+                                                        <SelectTrigger className="h-10 w-24"><SelectValue /></SelectTrigger>
+                                                        <SelectContent>
+                                                            {getLanguageLevelOptions().map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <Button size="icon" variant="secondary" onClick={handleAddLanguage} className="h-10 w-10 shrink-0"><Plus className="w-4 h-4" /></Button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {filters.languages.map(l => (
+                                                        <span key={l.name} className="px-2.5 py-1 bg-info/10 text-info text-xs font-bold rounded-md flex items-center gap-1.5 border border-info/20">
+                                                            {l.name} ({l.level}) <X className="w-3 h-3 cursor-pointer hover:text-info/70" onClick={() => handleRemoveLanguage(l.name)} />
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <Separator className="opacity-50" />
+
+                                {/* Job Conditions */}
                                 <section className="space-y-8 animate-in fade-in duration-500">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
                                             <Clock className="w-4 h-4 text-success" />
                                         </div>
-                                        <h3 className="font-bold text-lg">Conditions & Expectations</h3>
+                                        <h3 className="font-bold text-lg">Job Conditions</h3>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -900,7 +1046,7 @@ const MainHeroFilter = () => {
                                             <div className="space-y-3">
                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Contract Term</Label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['unlimited', 'temporary', 'contract', 'freelance', 'internship'].map(term => (
+                                                    {['permanent', 'temporary', 'contract', 'freelance', 'internship'].map(term => (
                                                         <button
                                                             key={term}
                                                             onClick={() => toggleFilterItem('contractTerms', term)}
@@ -991,51 +1137,6 @@ const MainHeroFilter = () => {
                                                 />
                                             </div>
 
-                                            {/* Experience Requirement */}
-                                            <div className="space-y-3">
-                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Max Required Experience (Years)</Label>
-                                                <Select value={filters.experienceYears?.toString() || 'any'} onValueChange={(val) => setFilters({ ...filters, experienceYears: val === 'any' ? null : parseInt(val) })}>
-                                                    <SelectTrigger className="h-10 bg-white border-border rounded-lg"><SelectValue placeholder="Any" /></SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="any">Any Experience</SelectItem>
-                                                        {[0, 1, 2, 3, 5, 10, 15, 20, 25, 30].map(y => <SelectItem key={y} value={y.toString()}>{y} Years</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-
-                                            {/* Career Level */}
-                                            <div className="space-y-3">
-                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Career Level</Label>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {['entry', 'junior', 'mid', 'senior', 'lead', 'executive'].map(level => (
-                                                        <button
-                                                            key={level}
-                                                            onClick={() => {
-                                                                setFilters({ ...filters, careerLevel: filters.careerLevel.includes(level) ? filters.careerLevel.filter(l => l !== level) : [...filters.careerLevel, level] });
-                                                            }}
-                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filters.careerLevel.includes(level)
-                                                                ? 'bg-success border-success text-white shadow-sm'
-                                                                : 'bg-white border-border text-foreground hover:border-success/50'
-                                                                }`}
-                                                        >
-                                                            {level.charAt(0).toUpperCase() + level.slice(1)}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            {/* Driving Licenses */}
-                                            <div className="space-y-3">
-                                                <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                                                    <Car className="w-3 h-3" />
-                                                    Required Driving Licenses
-                                                </Label>
-                                                <DrivingLicenseSelector
-                                                    value={filters.drivingLicenses}
-                                                    onChange={(val) => setFilters({ ...filters, drivingLicenses: val })}
-                                                />
-                                            </div>
-
                                             {/* Benefits */}
                                             <div className="space-y-3">
                                                 <Label className="text-xs font-bold text-muted-foreground uppercase">Job Benefits (Tags)</Label>
@@ -1067,10 +1168,6 @@ const MainHeroFilter = () => {
 
                         <Separator className="opacity-50" />
 
-
-
-                        <Separator className="opacity-50" />
-
                         {/* 5. Matching Preferences */}
                         <section className="space-y-6">
                             <div className="flex items-center gap-3">
@@ -1082,21 +1179,27 @@ const MainHeroFilter = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                                 <div className="space-y-6">
-                                    <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border">
-                                        <div className="space-y-0.5">
-                                            <Label className="text-sm font-bold block">Flexible Match</Label>
-                                            <p className="text-[10px] text-muted-foreground">Show jobs that partially match your profile</p>
+                                    {searchMode === 'jobs' && (
+                                        <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border">
+                                            <div className="space-y-0.5">
+                                                <Label className="text-sm font-bold block">Allow Overqualification</Label>
+                                                <p className="text-[10px] text-muted-foreground">Show jobs where you exceed requirements</p>
+                                            </div>
+                                            <Switch
+                                                checked={filters.enableFlexibleMatch}
+                                                onCheckedChange={(checked) => setFilters({ ...filters, enableFlexibleMatch: checked })}
+                                            />
                                         </div>
-                                        <Switch
-                                            checked={filters.enableFlexibleMatch}
-                                            onCheckedChange={(checked) => setFilters({ ...filters, enableFlexibleMatch: checked })}
-                                        />
-                                    </div>
+                                    )}
 
                                     <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border">
                                         <div className="space-y-0.5">
                                             <Label className="text-sm font-bold block">Partial Match</Label>
-                                            <p className="text-[10px] text-muted-foreground">Show results with less than 100% score</p>
+                                            <p className="text-[10px] text-muted-foreground">
+                                                {searchMode === 'candidates' 
+                                                    ? 'Show candidates that partially match your criteria' 
+                                                    : 'Show jobs that partially match your profile'}
+                                            </p>
                                         </div>
                                         <Switch
                                             checked={filters.enablePartialMatch}
@@ -1122,16 +1225,6 @@ const MainHeroFilter = () => {
                                 </div>
 
                                 <div className="space-y-6">
-                                    <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border">
-                                        <div className="space-y-0.5">
-                                            <Label className="text-sm font-bold block">Allow Overqualification</Label>
-                                            <p className="text-[10px] text-muted-foreground">Show jobs where candidate exceeds requirements</p>
-                                        </div>
-                                        <Switch
-                                            checked={filters.allowOverqualification}
-                                            onCheckedChange={(checked) => setFilters({ ...filters, allowOverqualification: checked })}
-                                        />
-                                    </div>
                                     <p className="text-xs text-muted-foreground italic px-2">
                                         * These preferences help you find more diverse matches by slightly loosening strict requirements.
                                     </p>
