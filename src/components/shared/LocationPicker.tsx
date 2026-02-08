@@ -160,26 +160,24 @@ export function LocationPicker({ value, onChange, className, mode = 'address' }:
                                     {suggestions.map((item, index) => (
                                         <CommandItem
                                             key={`${item.lat}-${item.lon}-${index}`}
-                                            value={`${index}`} // MUST use simple index string for cmdk
+                                            value={`${index}`}
                                             onSelect={() => handleSelect(item)}
-                                            onMouseDown={(e) => e.preventDefault()}
-                                            onPointerDown={(e) => e.preventDefault()}
-                                            onClick={(e) => {
+                                            // WICHTIG: Überschreibt das "deaktivierte" Verhalten, das das Blass-Sein und Nicht-Klicken verursacht
+                                            className="p-3 cursor-pointer aria-selected:bg-primary aria-selected:text-primary-foreground group data-[disabled]:pointer-events-auto data-[disabled]:opacity-100"
+                                            onMouseDown={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
-                                                handleSelect(item);
                                             }}
-                                            className="p-3 cursor-pointer aria-selected:bg-primary aria-selected:text-primary-foreground group"
                                         >
                                             <div className="flex items-start gap-3 w-full">
                                                 <div className="mt-1 h-2 w-2 rounded-full bg-primary group-aria-selected:bg-primary-foreground" />
                                                 <div className="flex flex-col flex-1 overflow-hidden">
-                                                    <span className="font-medium truncate">
-                                                        {item.street ? `${item.street} ${item.houseNumber || ''}, ` : ''}{item.city}
-                                                    </span>
+            <span className="font-medium truncate">
+                {item.street ? `${item.street} ${item.houseNumber || ''}, ` : ''}{item.city}
+            </span>
                                                     <span className="text-xs opacity-70 truncate">
-                                                        {item.displayName}
-                                                    </span>
+                {item.displayName}
+            </span>
                                                 </div>
                                                 <Check className="h-4 w-4 opacity-0 group-aria-selected:opacity-100 shrink-0" />
                                             </div>
