@@ -87,7 +87,7 @@ const Pricing: React.FC = () => {
         transition={{ duration: 0.5 }}
       >
         <Card
-          className={`p-8 border ${
+          className={`p-6 border ${
             isHighlight
               ? 'border-primary shadow-xl scale-105'
               : 'border-border shadow-sm'
@@ -189,7 +189,7 @@ const Pricing: React.FC = () => {
             </div>
 
             <TabsContent value="employer">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 items-stretch">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
                 {employerPackages.map((pkg) => (
                   <PackageCard key={pkg.id} pkg={pkg} />
                 ))}
@@ -204,7 +204,7 @@ const Pricing: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="candidate">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 items-stretch justify-center max-w-5xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch justify-center mx-auto">
                 {candidatePackages.map((pkg) => (
                   <PackageCard key={pkg.id} pkg={pkg} />
                 ))}
