@@ -1,7 +1,7 @@
 import React from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { motion } from "framer-motion";
-import Testimonials from "@/components/ReviewCard"; // Angenommen, Testimonials ist hier
+// import Testimonials from "@/components/ReviewCard"; // Angenommen, Testimonials ist hier
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 
