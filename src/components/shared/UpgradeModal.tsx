@@ -28,7 +28,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
 
   const handleUpgrade = () => {
     onOpenChange(false);
-    navigate('/pricing');
+    navigate('/employer/packages');
   };
 
   return (
