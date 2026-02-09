@@ -158,7 +158,6 @@ export const candidateService = {
       if (error.code === '23505' || (error as any).status === 409) return { status: 'exists' };
       throw error;
     }
-    return data;
 
     // 2. Usage Increment (nur wenn erfolgreich neu angelegt)
     if (data) {

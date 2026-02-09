@@ -7,7 +7,9 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import RichTextEditor from '../../components/ui/rich-text-editor';
+import { ToastAction } from '../../components/ui/toast';
 import { useToast } from '../../contexts/ToastContext';
+import { toast } from '../../hooks/use-toast';
 import { useUser } from '../../contexts/UserContext';
 import { jobsService } from '../../services/jobs.service';
 import { masterDataService } from '../../services/master-data.service';
@@ -17,6 +19,7 @@ import { Slider } from '../../components/ui/slider';
 import { getLanguageLevelOptions } from '../../utils/language-levels';
 import { AutocompleteInput } from '../../components/shared/AutocompleteInput';
 import DrivingLicenseSelector from '../../components/shared/DrivingLicenseSelector';
+import UpgradeModal from '../../components/shared/UpgradeModal';
 import { LocationPicker } from '../../components/shared/LocationPicker';
 import { findContinent } from '../../utils/locationUtils';
 
@@ -25,6 +28,8 @@ const PostJob: React.FC = () => {
   const { showToast } = useToast();
   const { user } = useUser();
   const [isSaving, setIsSaving] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeModalContent, setUpgradeModalContent] = useState({ title: '', description: '' });
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -168,24 +173,27 @@ const PostJob: React.FC = () => {
       navigate('/employer/jobs');
     } catch (error: any) {
       console.error('Error saving job:', error);
+      const errorMessage = error.message || 'Failed to save job';
+      const isLimitError = 
+        errorMessage.toLowerCase().includes('limit erreicht') || 
+        errorMessage.toLowerCase().includes('limit reached') ||
+        errorMessage.toLowerCase().includes('upgrade') ||
+        errorMessage.toLowerCase().includes('abonnement') ||
+        errorMessage.toLowerCase().includes('paket');
 
-      const isLimitError = error.message?.includes('Limit erreicht') || error.message?.includes('Upgrade');
-
-      showToast({
-        title: isLimitError ? 'Limit Reached' : 'Error',
-        description: error.message || 'Failed to save job',
-        variant: 'destructive',
-        action: isLimitError ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white text-black border-none hover:bg-gray-100"
-            onClick={() => navigate('/packages')}
-          >
-            Upgrade
-          </Button>
-        ) : undefined
-      });
+      if (isLimitError) {
+        setUpgradeModalContent({
+          title: 'Upgrade erforderlich',
+          description: errorMessage
+        });
+        setUpgradeModalOpen(true);
+      } else {
+        showToast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive'
+        });
+      }
     } finally {
       setIsSaving(false);
     }
@@ -665,6 +673,12 @@ const PostJob: React.FC = () => {
           </Button>
         </div>
       </div>
+      <UpgradeModal
+        open={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        title={upgradeModalContent.title}
+        description={upgradeModalContent.description}
+      />
     </AppLayout>
   );
 };

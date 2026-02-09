@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Check, Star, Loader2, CheckCircle2 } from 'lucide-react';
+import { Check, Star, Loader2, CheckCircle2, BarChart3 } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import { packagesService } from '../../services/packages.service';
 import { useToast } from '../../contexts/ToastContext';
@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 type UserType = 'employer' | 'candidate';
 
 const Packages: React.FC = () => {
-  const { user } = useUser();
+  const { user, refreshUser } = useUser();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [userType, setUserType] = useState<UserType>(user.role === 'candidate' ? 'candidate' : 'employer');
@@ -65,6 +65,11 @@ const Packages: React.FC = () => {
     try {
       setProcessingId(pkg.id);
       await packagesService.assignPackage(user.id, pkg.id);
+      
+      // Wait a bit for DB to catch up if needed
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await refreshUser();
+
       showToast({
         title: 'Success',
         description: `You have successfully subscribed to ${pkg.name}`,
@@ -118,9 +123,20 @@ const Packages: React.FC = () => {
           <h1 className="text-h1 font-heading text-foreground mb-2">
             {userType === 'candidate' ? 'Candidate Packages' : 'Employer Packages'}
           </h1>
-          <p className="text-body text-muted-foreground mb-8">
+          <p className="text-body text-muted-foreground mb-4">
             Select the perfect package for your needs
           </p>
+          <div className="flex justify-center mb-8">
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex items-center space-x-2 border-primary text-primary hover:bg-primary/5"
+              onClick={() => navigate(`/${user.role}/usage`)}
+            >
+              <BarChart3 className="w-5 h-5" />
+              <span>View Your Current Usage & Limits</span>
+            </Button>
+          </div>
         </div>
 
         {loading ? (

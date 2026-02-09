@@ -25,6 +25,7 @@ import Network from './pages/shared/Network';
 import EditProfile from './pages/candidate/EditProfile';
 import JobAlerts from './pages/candidate/JobAlerts';
 import Packages from './pages/shared/Packages';
+import Usage from './pages/shared/Usage';
 import Messages from './pages/shared/Messages';
 import JobDetailView from './pages/shared/JobDetailView';
 import CompanyDetail from './pages/shared/CompanyDetail';
@@ -140,6 +141,14 @@ function App() {
                 }
               />
               <Route
+                path="/candidate/usage"
+                element={
+                  <ProtectedRoute requiredRole="candidate">
+                    <Usage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/candidate/settings"
                 element={
                   <ProtectedRoute requiredRole="candidate">
@@ -233,6 +242,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="employer">
                     <Packages />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/employer/usage"
+                element={
+                  <ProtectedRoute requiredRole="employer">
+                    <Usage />
                   </ProtectedRoute>
                 }
               />

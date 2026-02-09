@@ -12,7 +12,9 @@ import { applicationsService } from '@/services/applications.service';
 import { employerService } from '@/services/employer.service';
 import { followsService } from '@/services/follows.service';
 import { analyticsService } from '@/services/analytics.service';
+import { packagesService } from '@/services/packages.service';
 import ProfileViewsChart from '@/components/candidate/ProfileViewsChart';
+import BlurredContent from '@/components/shared/BlurredContent';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +43,7 @@ const EmployerDashboard: React.FC = () => {
   const [followers, setFollowers] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [viewStats, setViewStats] = useState<any[]>([]);
+  const [hasActivePackage, setHasActivePackage] = useState(false);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -49,7 +52,13 @@ const EmployerDashboard: React.FC = () => {
       try {
         setLoading(true);
 
-        const employerProfile = user.profile || await employerService.getEmployerProfile(user.id);
+        const [hasPackage, employerProfile] = await Promise.all([
+          packagesService.hasActivePackage(user.id),
+          user.profile || employerService.getEmployerProfile(user.id)
+        ]);
+
+        console.log(`[EmployerDashboard] hasActivePackage: ${hasPackage}`);
+        setHasActivePackage(hasPackage);
         setProfile(employerProfile);
 
         const [jobsData, applicationsData, followersData, statsData, totalViewsCount] = await Promise.all([
@@ -172,7 +181,7 @@ const EmployerDashboard: React.FC = () => {
           <DashboardStatsCard
             icon={Users}
             label="Followers"
-            value={stats.followersCount}
+            value={hasActivePackage ? stats.followersCount : '?'}
             color="primary"
             onClick={() => handleOpenModal('followers')}
           />
@@ -444,6 +453,74 @@ const EmployerDashboard: React.FC = () => {
                       </div>
                     </Card>
                   ))
+                )}
+              </div>
+            )}
+            {modalType === 'followers' && (
+              <div className="space-y-4">
+                {followers.length === 0 ? (
+                  <p className="text-body-sm text-muted-foreground text-center py-8">
+                    No followers yet
+                  </p>
+                ) : (
+                  followers.map((follower) => {
+                    const candidate = follower.candidate_profiles;
+                    if (!candidate) return null;
+                    
+                    const cardContent = (
+                      <div className="flex items-start space-x-4">
+                        <Avatar className="w-16 h-16">
+                          <AvatarImage src={candidate.profiles?.avatar_url} />
+                          <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                            {candidate.profiles?.full_name?.charAt(0) || 'C'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-h4 font-heading text-foreground">
+                              {candidate.profiles?.full_name || 'Candidate'}
+                            </h4>
+                          </div>
+                          <p className="text-body-sm text-muted-foreground mb-2">
+                            {candidate.job_title || 'No Title'}
+                          </p>
+                          <div className="flex flex-wrap gap-3 text-caption text-muted-foreground">
+                            <div className="flex items-center">
+                              <Calendar className="w-3 h-3 mr-1" strokeWidth={1.5} />
+                              Following since {formatDate(follower.followed_at || follower.created_at)}
+                            </div>
+                            {candidate.city && (
+                              <div className="flex items-center">
+                                <MapPin className="w-3 h-3 mr-1" strokeWidth={1.5} />
+                                {candidate.city}, {candidate.country}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+
+                    return (
+                      <Card
+                        key={follower.id}
+                        className="p-4 border border-border bg-background hover:shadow-md transition-all duration-normal cursor-pointer"
+                        onClick={() => {
+                          if (hasActivePackage) {
+                            setModalOpen(false);
+                            navigate(`/employer/candidates/${candidate.id}`);
+                          }
+                        }}
+                      >
+                        <BlurredContent
+                          isBlurred={!hasActivePackage}
+                          message="Upgrade to view who is following you"
+                          upgradeLink="/employer/packages"
+                        >
+                          {cardContent}
+                        </BlurredContent>
+                      </Card>
+                    );
+                  })
                 )}
               </div>
             )}

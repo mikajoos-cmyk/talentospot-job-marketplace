@@ -36,6 +36,7 @@ const Network: React.FC = () => {
 
         // Check if user has active package
         const hasPackage = await packagesService.hasActivePackage(user.id);
+        console.log(`[Network] hasActivePackage: ${hasPackage}`);
         setHasActivePackage(hasPackage);
 
         if (isCandidate) {
@@ -150,12 +151,12 @@ const Network: React.FC = () => {
             {isEmployer && (
               <TabsTrigger value="shortlisted" className="data-[state=active]:bg-background data-[state=active]:text-foreground">
                 <Heart className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                Shortlisted ({shortlistedCandidates.length})
+                Shortlisted ({hasActivePackage ? shortlistedCandidates.length : '?'})
               </TabsTrigger>
             )}
             <TabsTrigger value="followers" className="data-[state=active]:bg-background data-[state=active]:text-foreground">
               <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              Followers ({followers.length})
+              Followers ({(!isEmployer || hasActivePackage) ? followers.length : '?'})
             </TabsTrigger>
           </TabsList>
 
@@ -412,43 +413,54 @@ const Network: React.FC = () => {
                     const candidate = item.candidate_profiles;
                     if (!candidate) return null;
 
+                    const cardContent = (
+                      <div className="space-y-4">
+                        <div className="flex items-start space-x-4">
+                          <Avatar
+                            className="w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => hasActivePackage && navigate(`/employer/candidates/${candidate.id}`)}
+                          >
+                            <AvatarImage src={candidate.profiles?.avatar_url} alt={candidate.profiles?.full_name} />
+                            <AvatarFallback className="bg-primary/10 text-primary text-h4 font-heading">
+                              {candidate.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'C'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <h3
+                              className="text-h4 font-heading text-foreground mb-1 truncate cursor-pointer hover:text-primary transition-colors"
+                              onClick={() => hasActivePackage && navigate(`/employer/candidates/${candidate.id}`)}
+                            >
+                              {candidate.profiles?.full_name || 'Candidate'}
+                            </h3>
+                            <p className="text-body-sm text-muted-foreground truncate">{candidate.job_title || 'No Title'}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center text-caption text-muted-foreground">
+                          <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                          <span>Following since {new Date(item.followed_at || item.created_at).toLocaleDateString()}</span>
+                        </div>
+
+                        <Button
+                          onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
+                          className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                          disabled={!hasActivePackage}
+                        >
+                          <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                          View Profile
+                        </Button>
+                      </div>
+                    );
+
                     return (
                       <Card key={item.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
-                        <div className="space-y-4">
-                          <div className="flex items-start space-x-4">
-                            <Avatar
-                              className="w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
-                            >
-                              <AvatarImage src={candidate.profiles?.avatar_url} alt={candidate.profiles?.full_name} />
-                              <AvatarFallback className="bg-primary/10 text-primary text-h4 font-heading">
-                                {candidate.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'C'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <h3
-                                className="text-h4 font-heading text-foreground mb-1 truncate cursor-pointer hover:text-primary transition-colors"
-                                onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
-                              >
-                                {candidate.profiles?.full_name || 'Candidate'}
-                              </h3>
-                              <p className="text-body-sm text-muted-foreground truncate">{candidate.job_title || 'No Title'}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center text-caption text-muted-foreground">
-                            <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                            <span>Following since {new Date(item.followed_at || item.created_at).toLocaleDateString()}</span>
-                          </div>
-
-                          <Button
-                            onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
-                            className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                          >
-                            <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                            View Profile
-                          </Button>
-                        </div>
+                        <BlurredContent
+                          isBlurred={!hasActivePackage}
+                          message="Upgrade to view who is following you"
+                          upgradeLink="/employer/packages"
+                        >
+                          {cardContent}
+                        </BlurredContent>
                       </Card>
                     );
                   }

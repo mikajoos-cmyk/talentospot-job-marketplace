@@ -4,12 +4,15 @@ import AppLayout from '../../components/layout/AppLayout';
 import { Button } from '../../components/ui/button';
 import { MessageSquare, UserPlus, Heart, Star, Crown } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
+import { ToastAction } from '../../components/ui/toast';
 import { useToast } from '../../contexts/ToastContext';
+import { toast } from '../../hooks/use-toast';
 import { candidateService } from '../../services/candidate.service';
 import { jobsService } from '../../services/jobs.service';
 import { shortlistsService } from '../../services/shortlists.service';
 import { analyticsService } from '../../services/analytics.service';
 import ReviewModal from '../../components/shared/ReviewModal';
+import UpgradeModal from '../../components/shared/UpgradeModal';
 import { Loader2 } from 'lucide-react';
 import {
   Dialog,
@@ -31,6 +34,8 @@ const CandidateDetailView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeModalContent, setUpgradeModalContent] = useState({ title: '', description: '' });
   const [accessStatus, setAccessStatus] = useState<string>('none');
   const [isShortlisted, setIsShortlisted] = useState(false);
   const [hasActivePackage, setHasActivePackage] = useState(false);
@@ -120,11 +125,28 @@ const CandidateDetailView: React.FC = () => {
         setAccessStatus('pending');
       }
     } catch (e: any) {
-      showToast({
-        title: 'Error',
-        description: e.message || 'Failed to request data.',
-        variant: 'destructive'
-      });
+      console.log('[DEBUG] Limit reached error caught in CandidateDetailView:', e);
+      const errorMessage = e.message || 'Failed to request data.';
+      const isLimitReached = 
+        errorMessage.toLowerCase().includes('limit erreicht') || 
+        errorMessage.toLowerCase().includes('limit reached') ||
+        errorMessage.toLowerCase().includes('abonnement') ||
+        errorMessage.toLowerCase().includes('upgrade') ||
+        errorMessage.toLowerCase().includes('paket');
+      
+      if (isLimitReached) {
+        setUpgradeModalContent({
+          title: 'Upgrade erforderlich',
+          description: errorMessage
+        });
+        setUpgradeModalOpen(true);
+      } else {
+        showToast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive'
+        });
+      }
     }
   };
 
@@ -165,20 +187,17 @@ const CandidateDetailView: React.FC = () => {
             {isShortlisted ? 'Shortlisted' : 'Shortlist'}
           </Button>
 
+          <Button 
+            onClick={handleMessage} 
+            variant="outline"
+            className="bg-transparent text-foreground border-border"
+          >
+            <MessageSquare className="w-4 h-4 mr-2" />
+            {!isBlurred && candidate?.name ? `Message ${candidate.name.split(' ')[0]}` : 'Message'}
+          </Button>
+
           {canContact ? (
               <>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                  <span className="inline-block">
-                    <Button onClick={handleMessage} disabled={!hasActivePackage} className="bg-primary text-primary-foreground">
-                      {!hasActivePackage ? <Crown className="w-4 h-4 mr-2 text-yellow-500" /> : <MessageSquare className="w-4 h-4 mr-2" />}
-                      Send Message
-                    </Button>
-                  </span>
-                    </TooltipTrigger>
-                  </Tooltip>
-                </TooltipProvider>
                 <Button onClick={() => setInviteDialogOpen(true)} variant="outline">
                   <UserPlus className="w-4 h-4 mr-2" /> Invite
                 </Button>
@@ -237,6 +256,13 @@ const CandidateDetailView: React.FC = () => {
             targetName={displayName}
             targetRole="candidate"
             onSubmit={handleSubmitReview}
+        />
+
+        <UpgradeModal
+            open={upgradeModalOpen}
+            onOpenChange={setUpgradeModalOpen}
+            title={upgradeModalContent.title}
+            description={upgradeModalContent.description}
         />
       </AppLayout>
   );

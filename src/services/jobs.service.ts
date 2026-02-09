@@ -233,6 +233,12 @@ export const jobsService = {
 
     if (error) throw error;
 
+    // Snapshot der Nutzung im Abo aktualisieren, falls sich der Status oder "Featured" geändert hat
+    if (data) {
+      await packagesService.incrementUsage(data.employer_id, 'jobs');
+      await packagesService.incrementUsage(data.employer_id, 'featured_jobs');
+    }
+
     // Update language requirements if provided
     if (languagesWithLevels !== undefined) {
       await this.saveJobLanguageRequirements(jobId, languagesWithLevels as any);
@@ -256,12 +262,21 @@ export const jobsService = {
   },
 
   async deleteJob(jobId: string) {
+    // Zuerst Employer-ID holen, um danach den Zähler zu aktualisieren
+    const { data: job } = await supabase.from('jobs').select('employer_id').eq('id', jobId).single();
+
     const { error } = await supabase
       .from('jobs')
       .delete()
       .eq('id', jobId);
 
     if (error) throw error;
+
+    // Snapshot im Abo aktualisieren
+    if (job?.employer_id) {
+      await packagesService.incrementUsage(job.employer_id, 'jobs');
+      await packagesService.incrementUsage(job.employer_id, 'featured_jobs');
+    }
   },
 
   async mapDbJobToFrontend(data: any) {

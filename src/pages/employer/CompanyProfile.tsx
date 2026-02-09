@@ -43,12 +43,13 @@ const CompanyProfile: React.FC = () => {
             companySize: profile.company_size || '',
             city: profile.headquarters_city || '',
             country: profile.headquarters_country || '',
-            street: profile.street || '',
-            houseNumber: profile.house_number || '',
-            postalCode: profile.postal_code || '',
-            state: profile.state || '',
-            latitude: profile.latitude || 0,
-            longitude: profile.longitude || 0,
+            // Initialize with undefined so we can detect if they exist in DB
+            street: profile.street,
+            houseNumber: profile.house_number,
+            postalCode: profile.postal_code,
+            state: profile.state,
+            latitude: profile.latitude,
+            longitude: profile.longitude,
             linkedinUrl: profile.linkedin_url || '',
             twitterUrl: profile.twitter_url || '',
             facebookUrl: profile.facebook_url || '',
@@ -122,7 +123,7 @@ const CompanyProfile: React.FC = () => {
 
     try {
       setLoading(true);
-      const updates = {
+      const updates: any = {
         company_name: formData.companyName,
         website: formData.website,
         contact_person: formData.contactPerson,
@@ -136,16 +137,18 @@ const CompanyProfile: React.FC = () => {
         company_size: formData.companySize,
         headquarters_city: formData.city,
         headquarters_country: formData.country,
-        street: formData.street,
-        house_number: formData.houseNumber,
-        postal_code: formData.postalCode,
-        state: formData.state,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
         linkedin_url: formData.linkedinUrl,
         twitter_url: formData.twitterUrl,
         facebook_url: formData.facebookUrl,
       };
+
+      // Only include address fields if they were in the original profile (exist in DB)
+      if (formData.street !== undefined) updates.street = formData.street;
+      if (formData.houseNumber !== undefined) updates.house_number = formData.houseNumber;
+      if (formData.postalCode !== undefined) updates.postal_code = formData.postalCode;
+      if (formData.state !== undefined) updates.state = formData.state;
+      if (formData.latitude !== undefined) updates.latitude = formData.latitude;
+      if (formData.longitude !== undefined) updates.longitude = formData.longitude;
 
       await employerService.updateEmployerProfile(user.id, updates);
       await refreshUser();

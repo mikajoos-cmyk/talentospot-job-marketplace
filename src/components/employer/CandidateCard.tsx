@@ -5,11 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MapPin, DollarSign, Calendar, UserPlus, Briefcase, Award } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import { toast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 import { useUser } from '@/contexts/UserContext';
 import { jobsService } from '@/services/jobs.service';
 import { invitationsService } from '@/services/invitations.service';
 import { candidateService } from '@/services/candidate.service';
 import { shortlistsService } from '@/services/shortlists.service';
+import UpgradeModal from '@/components/shared/UpgradeModal';
 import {
   Dialog,
   DialogContent,
@@ -31,6 +34,8 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
 
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeModalContent, setUpgradeModalContent] = useState({ title: '', description: '' });
   const [requestPending, setRequestPending] = useState(accessStatus === 'pending');
   const [jobs, setJobs] = useState<any[]>([]);
   const [hasActivePackage, setHasActivePackage] = useState(false);
@@ -148,9 +153,29 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
           });
           setRequestPending(true);
         }
-      } catch (e) {
-        console.error(e);
-        showToast({ title: 'Error', description: 'Failed to send request.', variant: 'destructive' });
+      } catch (e: any) {
+        console.log('[DEBUG] Limit reached error caught in CandidateCard:', e);
+        const errorMessage = e.message || 'Failed to send request.';
+        const isLimitReached = 
+          errorMessage.toLowerCase().includes('limit erreicht') || 
+          errorMessage.toLowerCase().includes('limit reached') ||
+          errorMessage.toLowerCase().includes('abonnement') ||
+          errorMessage.toLowerCase().includes('upgrade') ||
+          errorMessage.toLowerCase().includes('paket');
+
+        if (isLimitReached) {
+          setUpgradeModalContent({
+            title: 'Upgrade erforderlich',
+            description: errorMessage
+          });
+          setUpgradeModalOpen(true);
+        } else {
+          showToast({
+            title: 'Error',
+            description: errorMessage,
+            variant: 'destructive',
+          });
+        }
       }
     } else {
       const statusText = accessStatus === 'rejected' ? 'rejected' : 'pending';
@@ -518,6 +543,13 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
           </div>
         </DialogContent>
       </Dialog>
+
+      <UpgradeModal
+        open={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        title={upgradeModalContent.title}
+        description={upgradeModalContent.description}
+      />
     </>
   );
 };
