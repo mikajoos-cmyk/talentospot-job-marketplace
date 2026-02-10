@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useUser } from '../../contexts/UserContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -8,6 +8,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card } from '../../components/ui/card';
 import { ArrowLeft, User, Building2, Upload, Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 import logoImg from '@/assets/logo.png';
 
@@ -21,6 +22,8 @@ const Register: React.FC = () => {
   const [role, setRole] = useState<'candidate' | 'employer' | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [resumeRequired, setResumeRequired] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -37,6 +40,41 @@ const Register: React.FC = () => {
     setStep('details');
   };
 
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('system_settings')
+          .select('value')
+          .eq('key', 'resume_required_at_registration')
+          .single();
+        if (error) throw error;
+        if (data) {
+          const required = data.value as boolean;
+          setResumeRequired(required);
+          // If candidate step and required, ensure checkbox is checked
+          if (required && role === 'candidate') {
+            setFormData((prev) => ({ ...prev, uploadNow: true }));
+          }
+        }
+      } catch (e) {
+        console.warn('Konnte Systemeinstellungen nicht laden', e);
+      } finally {
+        setSettingsLoading(false);
+      }
+    };
+    loadSettings();
+    // We intentionally exclude role from deps to avoid re-fetch; we handle role change below
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // When role toggles to candidate and resume is required, enforce uploadNow
+    if (role === 'candidate' && resumeRequired) {
+      setFormData((prev) => ({ ...prev, uploadNow: true }));
+    }
+  }, [role, resumeRequired]);
+
   const handleDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -51,8 +89,17 @@ const Register: React.FC = () => {
 
     if (!formData.name || !formData.email || !formData.password) {
       showToast({
-        title: 'Error',
-        description: 'Please fill in all required fields',
+        title: 'Fehler',
+        description: 'Bitte fülle alle Pflichtfelder aus.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (role === 'candidate' && resumeRequired && !formData.uploadNow) {
+      showToast({
+        title: 'Lebenslauf erforderlich',
+        description: 'Bitte lade deinen Lebenslauf jetzt hoch, um die Registrierung abzuschließen.',
         variant: 'destructive',
       });
       return;
@@ -304,10 +351,15 @@ const Register: React.FC = () => {
                         checked={formData.uploadNow}
                         onChange={(e) => setFormData({ ...formData, uploadNow: e.target.checked })}
                         className="w-5 h-5 text-primary border-border rounded focus:ring-primary"
+                        disabled={resumeRequired}
                       />
                       <div className="flex-1">
-                        <p className="text-body-sm font-medium text-foreground">Upload CV/Photo now</p>
-                        <p className="text-caption text-muted-foreground">You can also do this later from your profile</p>
+                        <p className="text-body-sm font-medium text-foreground">
+                          Lebenslauf jetzt hochladen {resumeRequired && <span className="text-error">(Pflicht)</span>}
+                        </p>
+                        <p className="text-caption text-muted-foreground">
+                          {resumeRequired ? 'Diese Plattform verlangt einen Lebenslauf bei der Registrierung.' : 'Du kannst das auch später in deinem Profil erledigen.'}
+                        </p>
                       </div>
                     </label>
 

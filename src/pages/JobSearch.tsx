@@ -626,7 +626,7 @@ const JobSearch: React.FC = () => {
           )}
 
           <div className={`flex flex-col ${user.role === 'guest' ? 'layout-sm:flex-row' : 'layout-md:flex-row'} gap-8`}>
-            {(user.role === 'guest' || user.role === 'candidate') && !accessDenied && (
+            {(user.role === 'guest' || user.role === 'candidate' || user.role === 'admin') && !accessDenied && (
               <div className={`w-full ${user.role === 'guest' ? 'layout-sm:w-96' : 'layout-md:w-96'} shrink-0`}>
                 <JobFilters
                   filters={filters}
