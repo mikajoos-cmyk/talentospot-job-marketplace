@@ -83,8 +83,10 @@ const CandidateDetailView: React.FC = () => {
     fetchData();
   }, [id, user.id, user.role, user.profile?.id]);
 
-  const isBlurred = accessStatus !== 'approved' || (!hasActivePackage && isShortlisted);
-  const canContact = accessStatus === 'approved' && hasActivePackage;
+  // Admins dürfen immer alles sehen – keine Verpixelung
+  const adminOverride = user.role === 'admin';
+  const isBlurred = adminOverride ? false : (accessStatus !== 'approved' || (!hasActivePackage && isShortlisted));
+  const canContact = adminOverride ? true : (accessStatus === 'approved' && hasActivePackage);
   const displayName = isBlurred ? `Candidate #${candidate?.id}` : candidate?.name;
 
   const handleShortlist = async () => {
@@ -111,7 +113,8 @@ const CandidateDetailView: React.FC = () => {
   };
 
   const handleMessage = () => {
-    navigate(`/employer/messages?conversationId=${candidate?.id}`);
+    const basePath = user.role === 'admin' ? '/admin/messages' : '/employer/messages';
+    navigate(`${basePath}?conversationId=${candidate?.id}`);
   };
 
   const handleRequestData = async () => {
@@ -193,7 +196,7 @@ const CandidateDetailView: React.FC = () => {
             className="bg-transparent text-foreground border-border"
           >
             <MessageSquare className="w-4 h-4 mr-2" />
-            {!isBlurred && candidate?.name ? `Message ${candidate.name.split(' ')[0]}` : 'Message'}
+            {adminOverride ? 'Message' : (!isBlurred && candidate?.name ? `Message ${candidate.name.split(' ')[0]}` : 'Message')}
           </Button>
 
           {canContact ? (

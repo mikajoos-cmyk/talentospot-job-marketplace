@@ -314,5 +314,29 @@ export const packagesService = {
   // Check if user can view contact details
   async canViewContactDetails(userId: string): Promise<boolean> {
     return await this.hasActivePackage(userId);
+  },
+
+  async updatePackage(id: string, updates: any) {
+    const { data, error } = await supabase
+        .from('packages')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getAllPackagesForAdmin() {
+    // Kein .eq('is_active', true) Filter hier!
+    const { data, error } = await supabase
+        .from('packages')
+        .select('*')
+        .order('price_yearly', { ascending: true });
+
+    if (error) throw error;
+    return data;
   }
 };
+

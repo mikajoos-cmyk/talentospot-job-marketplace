@@ -121,7 +121,8 @@ const CompanyDetail: React.FC = () => {
       });
     }
   }; const handleMessage = () => {
-    navigate(`/candidate/messages?conversationId=${company?.id}`);
+    const basePath = user.role === 'admin' ? '/admin/messages' : (user.role === 'employer' ? '/employer/messages' : '/candidate/messages');
+    navigate(`${basePath}?conversationId=${company?.id}`);
   };
 
   const handleSubmitReview = (_rating: number, _comment: string) => {
@@ -216,20 +217,20 @@ const CompanyDetail: React.FC = () => {
                           <span className="inline-block">
                             <Button
                               onClick={handleMessage}
-                              disabled={!hasActivePackage}
+                              disabled={user.role === 'admin' ? false : !hasActivePackage}
                               variant="outline"
                               className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal disabled:opacity-50"
                             >
-                              {!hasActivePackage ? (
-                                <Crown className="w-4 h-4 mr-2 text-yellow-500" strokeWidth={1.5} />
-                              ) : (
+                              {user.role === 'admin' || hasActivePackage ? (
                                 <Send className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                              ) : (
+                                <Crown className="w-4 h-4 mr-2 text-yellow-500" strokeWidth={1.5} />
                               )}
                               Send Message
                             </Button>
                           </span>
                         </TooltipTrigger>
-                        {!hasActivePackage && (
+                        {user.role !== 'admin' && !hasActivePackage && (
                           <TooltipContent>
                             <div className="flex items-center gap-2">
                               <Crown className="w-4 h-4 text-yellow-500" />

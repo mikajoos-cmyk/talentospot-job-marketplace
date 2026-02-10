@@ -11,7 +11,7 @@ import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import logoImg from '@/assets/logo.png';
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useUser();
+  const { login, logout } = useUser();
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,6 +33,17 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       const loggedInUser = await login(email, password);
+      
+      if (loggedInUser.status === 'banned') {
+        showToast({
+          title: 'Account gesperrt',
+          description: 'Dein Account wurde gesperrt. Bitte kontaktiere den Support.',
+          variant: 'destructive',
+        });
+        await logout();
+        return;
+      }
+
       showToast({
         title: 'Welcome back!',
         description: 'You have successfully signed in',

@@ -77,7 +77,7 @@ export const messagesService = {
       .from('messages')
       .select(`
         *,
-        sender:profiles!messages_sender_id_fkey(id, full_name, avatar_url)
+        sender:profiles!messages_sender_id_fkey(id, full_name, avatar_url, role)
       `)
       .eq('conversation_id', conversationId)
       .order('sent_at', { ascending: true });

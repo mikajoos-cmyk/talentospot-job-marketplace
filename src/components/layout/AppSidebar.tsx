@@ -61,7 +61,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen bg-secondary text-secondary-foreground transition-all duration-normal z-40 ${collapsed ? 'w-16' : 'w-64'
+      className={`fixed left-0 top-0 h-screen bg-secondary text-secondary-foreground transition-all duration-300 z-40 ${collapsed ? 'w-16' : 'w-64'
         }`}
     >
       <div className="flex flex-col h-full">

@@ -136,6 +136,11 @@ const Messages: React.FC = () => {
         setConversations(convData || []);
 
         // Check messaging permissions
+        if (user.role === 'admin') {
+          setCanSendMessages(true);
+          setCanSendAttachments(true);
+          return;
+        }
         const canMessage = await packagesService.canSendMessages(user.id);
         const canAttach = await packagesService.canSendAttachments(user.id);
         setCanSendMessages(canMessage);
@@ -274,6 +279,14 @@ const Messages: React.FC = () => {
     console.log('🔍 Partner role:', partner?.role);
     console.log('🔍 Employer profiles:', partner?.employer_profiles);
 
+    if (partner?.role === 'admin') {
+      return {
+        ...partner,
+        display_name: partner?.full_name ? `Admin (${partner.full_name})` : 'Admin',
+        contact_person: null,
+      };
+    }
+
     // If partner is an employer, use employer profile data
     // Note: employer_profiles is an object, not an array
     if (partner?.role === 'employer' && partner?.employer_profiles) {
@@ -299,6 +312,16 @@ const Messages: React.FC = () => {
     if (!conversation) return;
 
     const partnerId = getPartnerId(conversation);
+
+    if (user.role === 'admin') {
+      const partner = getPartnerInfo(conversation);
+      if (partner.role === 'employer') {
+        navigate(`/companies/${partnerId}`);
+      } else {
+        navigate(`/candidates/${partnerId}`);
+      }
+      return;
+    }
 
     if (user.role === 'candidate') {
       navigate(`/companies/${partnerId}`);
@@ -697,6 +720,16 @@ const Messages: React.FC = () => {
                                       : 'bg-white border border-border text-foreground rounded-tl-none'
                                       }`}
                                   >
+                                    {!isMe && message.sender?.role === 'admin' && (
+                                      <div className="text-[10px] font-bold text-primary mb-1">
+                                        {message.sender?.full_name ? `Admin (${message.sender.full_name})` : 'Admin'}
+                                      </div>
+                                    )}
+                                    {isMe && user.role === 'admin' && (
+                                      <div className="text-[10px] font-bold text-primary-foreground/80 mb-1">
+                                        {user?.name ? `Admin (${user.name})` : 'Admin'}
+                                      </div>
+                                    )}
                                     {message.file_url ? (
                                       <div className="space-y-2">
                                         {/* Hier wird die neue Komponente genutzt, die sich um Vorschau & Sicherheit kümmert */}
@@ -858,6 +891,12 @@ const Messages: React.FC = () => {
       {/* File Preview Dialog */}
       <Dialog open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/95 border-none shadow-2xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>File Preview</DialogTitle>
+            <DialogDescription>
+              Previewing {previewFile?.name}
+            </DialogDescription>
+          </DialogHeader>
           <div className="absolute top-4 right-4 z-50 flex items-center space-x-2">
             {previewFile && (
               <Button

@@ -14,6 +14,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '../ui/dialog';
 import { X } from 'lucide-react';
 import ReviewCard from '../shared/ReviewCard';
@@ -79,7 +80,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
     const displayName = isBlurred ? `Candidate #${data.id?.toString().padStart(3, '0')}` : user.name;
 
     return (
-        <div className="max-w-7xl mx-auto space-y-6 pb-12">
+        <div className="w-full space-y-6 pb-12">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -773,6 +774,9 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                     <DialogTitle className="text-2xl font-bold text-foreground">
                                         {selectedProject.title || 'Untitled Project'}
                                     </DialogTitle>
+                                    <DialogDescription className="sr-only">
+                                        Details about the portfolio project: {selectedProject.title}
+                                    </DialogDescription>
                                 </DialogHeader>
                                 <div className="prose prose-sm max-w-none text-muted-foreground">
                                     {selectedProject.description || 'No description provided for this project.'}
@@ -803,6 +807,9 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                 )}
                                 <DialogHeader className="mb-2">
                                     <DialogTitle className="text-2xl font-bold text-foreground">{selectedAward.title}</DialogTitle>
+                                    <DialogDescription className="sr-only">
+                                        Award details for {selectedAward.title}
+                                    </DialogDescription>
                                     <p className="text-primary font-medium">{selectedAward.year}</p>
                                 </DialogHeader>
                                 <div className="mt-4 prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">

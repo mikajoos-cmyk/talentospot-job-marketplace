@@ -279,8 +279,8 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </section>
-
-      <Footer />
+      
+      {!isAuthenticated && <Footer />}
     </div>
   );
 };

@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
-  const { user, isAuthenticated, loading } = useUser();
+  const { user, isAuthenticated, loading, logout } = useUser();
 
   if (loading) {
     return (
@@ -19,6 +19,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
   }
 
   if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.status === 'banned') {
+    logout();
     return <Navigate to="/login" replace />;
   }
 

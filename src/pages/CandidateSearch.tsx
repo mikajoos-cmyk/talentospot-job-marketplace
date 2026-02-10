@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import CandidateFilters from '@/components/employer/CandidateFilters';
 import CandidateCard from '@/components/employer/CandidateCard';
-import Footer from '@/components/layout/Footer';
 import { useUser } from '@/contexts/UserContext';
 import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
 import { candidateService } from '@/services/candidate.service';
@@ -652,7 +651,6 @@ const CandidateSearch: React.FC = () => {
           </div>
         </div>
       </AppLayout>
-      <Footer />
     </>
   );
 };

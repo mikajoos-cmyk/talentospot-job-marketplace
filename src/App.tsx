@@ -39,6 +39,13 @@ import Imprint from './pages/Imprint';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
+// Imports oben hinzufügen
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminPackages from './pages/admin/AdminPackages';
+import AdminSettings from './pages/admin/AdminSettings';
+import AdminMessages from './pages/shared/Messages';
+
+// Im Routes Bereich (innerhalb von UserProvider -> Routes):
 
 function App() {
   return (
@@ -270,14 +277,11 @@ function App() {
                 }
               />
 
-              <Route
-                path="/admin/dashboard"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
+              <Route path="/admin/packages" element={<ProtectedRoute requiredRole="admin"><AdminPackages /></ProtectedRoute>} />
+              <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
+              <Route path="/admin/messages" element={<ProtectedRoute requiredRole="admin"><AdminMessages /></ProtectedRoute>} />
 
               <Route path="/jobs/:id" element={<JobDetailView />} />
               <Route path="/jobs" element={<JobSearch />} />

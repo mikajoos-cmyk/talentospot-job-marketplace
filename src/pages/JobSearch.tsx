@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
-import Footer from '@/components/layout/Footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -800,7 +799,6 @@ const JobSearch: React.FC = () => {
           </div>
         </div>
       </AppLayout>
-      <Footer />
     </>
   );
 };

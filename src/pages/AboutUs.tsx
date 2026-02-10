@@ -26,7 +26,7 @@ const AboutUs: React.FC = () => {
 
   return (
     <AppLayout isPublic={true}>
-      <section className="max-w-7xl mx-auto px-6 py-12">
+      <section className="w-full px-6 py-12">
         {/* About Section */}
         <div className="mt-8">
           <h1 className="text-3xl md:text-5xl font-heading font-bold mb-8 text-center">

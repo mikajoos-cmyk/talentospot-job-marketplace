@@ -18,6 +18,7 @@ interface User {
   profile?: any;
   isVisible?: boolean;
   showActivityStatus?: boolean;
+  status?: string;
 }
 
 interface UserContextType {
@@ -38,6 +39,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     name: '',
     email: '',
     role: 'guest',
+    status: 'active',
   });
   const [loading, setLoading] = useState(true);
 
@@ -105,6 +107,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         packageTier: subscription?.packages?.name?.toLowerCase() as any || 'free',
         isVisible: profile.is_visible ?? true,
         showActivityStatus: profile.show_activity_status ?? true,
+        status: profile.status || 'active',
       };
 
       setUser(updatedUser);
@@ -116,6 +119,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         name: '',
         email: '',
         role: 'guest',
+        status: 'active',
       };
       setUser(guestUser);
       return guestUser;
@@ -148,6 +152,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           name: '',
           email: '',
           role: 'guest',
+          status: 'active',
         });
       }
     });
@@ -177,6 +182,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       name: '',
       email: '',
       role: 'guest',
+      status: 'active',
     });
   };
 
