@@ -115,24 +115,36 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
         onChange(suggestion.name);
         if (onSelect) onSelect(suggestion);
         setIsOpen(false);
+        
+        // Ensure value is saved to database if it's a master data category
+        masterDataService.ensureMasterDataExists(category, suggestion.name);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (isOpen && filteredSuggestions.length > 0) {
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setActiveIndex((prev) => (prev + 1) % filteredSuggestions.length);
-                return;
-            }
-            if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setActiveIndex((prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length);
-                return;
-            }
-            if (e.key === 'Enter') {
+        if (isOpen) {
+            if (filteredSuggestions.length > 0) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setActiveIndex((prev) => (prev + 1) % filteredSuggestions.length);
+                    return;
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setActiveIndex((prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length);
+                    return;
+                }
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSelect(filteredSuggestions[activeIndex]);
+                    return;
+                }
+            } else if (e.key === 'Enter' && value.trim() !== '') {
+                // If there are no suggestions but user presses Enter, 
+                // we treat the current value as a new entry
                 e.preventDefault();
                 e.stopPropagation();
-                handleSelect(filteredSuggestions[activeIndex]);
+                handleSelect({ name: value.trim() });
                 return;
             }
         }
@@ -173,7 +185,7 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
             )}
 
             {isOpen && filteredSuggestions.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                <div className="absolute z-[100] w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
                     {filteredSuggestions.map((s, index) => (
                         <button
                             key={s.id || s.name}

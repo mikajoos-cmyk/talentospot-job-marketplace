@@ -1,251 +1,2397 @@
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
 
-src\components\candidate\JobAlertModal.tsx:28:    const { showToast } =
-useToast();
-src\components\candidate\JobAlertModal.tsx:102:                showToast({
-src\components\candidate\JobAlertModal.tsx:139:            showToast({
-src\components\candidate\JobAlertModal.tsx:145:            showToast({
-src\components\candidate\JobAlertModal.tsx:165:                showToast({
-src\components\candidate\JobAlertModal.tsx:178:            showToast({
-src\components\candidate\JobAlertModal.tsx:191:                showToast({
-title: 'Job Alarm aktualisiert', description: 'Ihre Änderungen wurden
-erfolgreich gespeichert.' });
-src\components\candidate\JobAlertModal.tsx:195:                showToast({
-title: 'Job Alarm erstellt', description: 'Ihr neuer Job Alarm ist jetzt
-aktiv.' });
-src\components\candidate\JobAlertModal.tsx:206:            showToast({
-src\components\candidate\MatchingJobsModal.tsx:27:    const { showToast } =
-useToast();
-src\components\candidate\MatchingJobsModal.tsx:42:            showToast({
-src\components\employer\CandidateAlertModal.tsx:29:    const { showToast } =
-useToast();
-src\components\employer\CandidateAlertModal.tsx:149:                showToast({
-src\components\employer\CandidateAlertModal.tsx:160:            showToast({
-src\components\employer\CandidateAlertModal.tsx:178:
-showToast({ title: 'Alert Updated', description: 'Your changes have been saved
-successfully.' });
-src\components\employer\CandidateAlertModal.tsx:181:
-showToast({ title: 'Alert Created', description: 'Your new candidate alert is
-now active.' });
-src\components\employer\CandidateAlertModal.tsx:192:            showToast({
-src\components\employer\CandidateCard.tsx:33:  const { showToast } =
-useToast();
-src\components\employer\CandidateCard.tsx:148:          showToast({ title:
-'Info', description: 'Request already pending or processed.' });
-src\components\employer\CandidateCard.tsx:150:          showToast({
-src\components\employer\CandidateCard.tsx:173:          showToast({
-src\components\employer\CandidateCard.tsx:182:      showToast({
-src\components\employer\CandidateCard.tsx:196:      showToast({
-src\components\employer\CandidateCard.tsx:208:        showToast({
-src\components\employer\CandidateCard.tsx:215:        showToast({
-src\components\employer\CandidateCard.tsx:222:      showToast({
-src\components\employer\CandidateCard.tsx:239:        showToast({
-src\components\employer\CandidateCard.tsx:254:      showToast({
-src\components\employer\CandidateCard.tsx:261:      showToast({
-src\components\employer\MatchingCandidatesModal.tsx:29:    const { showToast }
-= useToast();
-src\components\employer\MatchingCandidatesModal.tsx:59:            showToast({
-src\components\shared\ReviewModal.tsx:29:  const { showToast } = useToast();
-src\components\shared\ReviewModal.tsx:36:      showToast({
-src\components\shared\ReviewModal.tsx:45:      showToast({
-src\contexts\ToastContext.tsx:7:  showToast: (message: { title: string;
-description?: string; variant?: 'default' | 'destructive' }) => void;
-src\contexts\ToastContext.tsx:13:  const showToast = (message: { title:
-string; description?: string; variant?: 'default' | 'destructive' }) => {
-src\contexts\ToastContext.tsx:22:    <ToastContext.Provider value={{ showToast
-}}>
-src\pages\EmployerJobs.tsx:22:  const { showToast } = useToast();
-src\pages\EmployerJobs.tsx:37:        showToast({
-src\pages\EmployerJobs.tsx:89:      showToast({
-src\pages\EmployerJobs.tsx:95:      showToast({
-src\pages\EmployerJobs.tsx:113:      showToast({
-src\pages\EmployerJobs.tsx:119:      showToast({
-src\pages\EmployerJobs.tsx:132:      showToast({
-src\pages\EmployerJobs.tsx:138:      showToast({
-src\pages\JobSearch.tsx:54:  const { showToast } = useToast();
-src\pages\JobSearch.tsx:282:      showToast({
-src\pages\JobSearch.tsx:303:      showToast({
-src\pages\JobSearch.tsx:318:        showToast({
-src\pages\JobSearch.tsx:356:      showToast({
-src\pages\JobSearch.tsx:362:      showToast({
-src\pages\JobSearch.tsx:433:      showToast({
-src\pages\JobSearch.tsx:450:        showToast({ title: 'Job removed from
-saved' });
-src\pages\JobSearch.tsx:454:        showToast({ title: 'Job saved
-successfully' });
-src\pages\JobSearch.tsx:457:      showToast({
-src\pages\JobSearch.tsx:472:      showToast({
-src\pages\JobSearch.tsx:485:      showToast({
-src\pages\JobSearch.tsx:508:      showToast({
-src\pages\JobSearch.tsx:516:      showToast({
-src\pages\Pricing.tsx:13:  const { showToast } = useToast();
-src\pages\Pricing.tsx:31:        showToast({
-src\pages\Settings.tsx:19:  const { showToast } = useToast();
-src\pages\Settings.tsx:49:      showToast({
-src\pages\Settings.tsx:54:      showToast({
-src\pages\Settings.tsx:66:    showToast({
-src\pages\Settings.tsx:75:      showToast({
-src\pages\Settings.tsx:84:      showToast({
-src\pages\Settings.tsx:105:      showToast({
-src\pages\Settings.tsx:111:      showToast({
-src\pages\Settings.tsx:129:        showToast({
-src\pages\Settings.tsx:136:        showToast({
-src\pages\admin\AdminDashboard.tsx:20:  const { showToast } = useToast();
-src\pages\admin\AdminDashboard.tsx:39:    showToast({
-src\pages\admin\AdminDashboard.tsx:46:    showToast({
-src\pages\auth\Login.tsx:15:  const { showToast } = useToast();
-src\pages\auth\Login.tsx:25:      showToast({
-src\pages\auth\Login.tsx:36:      showToast({
-src\pages\auth\Login.tsx:44:      showToast({
-src\pages\auth\Register.tsx:19:  const { showToast } = useToast();
-src\pages\auth\Register.tsx:44:      showToast({
-src\pages\auth\Register.tsx:53:      showToast({
-src\pages\auth\Register.tsx:62:      showToast({
-src\pages\auth\Register.tsx:81:      showToast({
-src\pages\auth\Register.tsx:107:      showToast({
-src\pages\candidate\EditProfile.tsx:46:  const { showToast } = useToast();
-src\pages\candidate\EditProfile.tsx:236:      showToast({ title: 'Error',
-description: 'User session not found. Please log in again.', variant:
-'destructive' });
-src\pages\candidate\EditProfile.tsx:252:      showToast({ title: 'Upload
-Success', description: 'Profile picture uploaded' });
-src\pages\candidate\EditProfile.tsx:255:      showToast({ title: 'Upload
-Failed', description: 'Could not upload image', variant: 'destructive' });
-src\pages\candidate\EditProfile.tsx:282:      showToast({ title: 'Upload
-Success', description: 'Project image added' });
-src\pages\candidate\EditProfile.tsx:284:      showToast({ title: 'Error',
-description: 'Image upload failed', variant: 'destructive' });
-src\pages\candidate\EditProfile.tsx:299:      showToast({ title: 'Success',
-description: 'CV uploaded successfully' });
-src\pages\candidate\EditProfile.tsx:302:      showToast({ title: 'Error',
-description: 'CV upload failed', variant: 'destructive' });
-src\pages\candidate\EditProfile.tsx:343:      showToast({
-src\pages\candidate\EditProfile.tsx:371:    showToast({
-src\pages\candidate\EditProfile.tsx:392:    showToast({
-src\pages\candidate\EditProfile.tsx:400:      showToast({
-src\pages\candidate\EditProfile.tsx:427:    showToast({
-src\pages\candidate\EditProfile.tsx:448:    showToast({
-src\pages\candidate\EditProfile.tsx:502:    showToast({
-src\pages\candidate\EditProfile.tsx:510:    showToast({
-src\pages\candidate\EditProfile.tsx:532:      showToast({
-src\pages\candidate\EditProfile.tsx:556:    showToast({
-src\pages\candidate\EditProfile.tsx:574:    showToast({
-src\pages\candidate\EditProfile.tsx:587:      showToast({ title: 'Upload
-Success', description: 'Certificate image uploaded' });
-src\pages\candidate\EditProfile.tsx:589:      showToast({ title: 'Error',
-description: 'Image upload failed', variant: 'destructive' });
-src\pages\candidate\EditProfile.tsx:598:      showToast({
-src\pages\candidate\EditProfile.tsx:623:    showToast({
-src\pages\candidate\EditProfile.tsx:642:    showToast({
-src\pages\candidate\EditProfile.tsx:720:      showToast({
-src\pages\candidate\EditProfile.tsx:727:      showToast({
-src\pages\candidate\Following.tsx:13:  const { showToast } = useToast();
-src\pages\candidate\Following.tsx:18:    showToast({
-src\pages\candidate\JobAlerts.tsx:12:    const { showToast } = useToast();
-src\pages\candidate\JobAlerts.tsx:25:            showToast({
-src\pages\candidate\JobAlerts.tsx:53:                showToast({ title: 'Alert
-Deleted', description: 'The job alert has been removed.' });
-src\pages\candidate\JobAlerts.tsx:57:                showToast({
-src\pages\candidate\JobAlerts.tsx:69:            showToast({
-src\pages\candidate\JobAlerts.tsx:76:            showToast({
-src\pages\candidate\MyApplications.tsx:24:  const { showToast } = useToast();
-src\pages\candidate\MyApplications.tsx:187:                    showToast({
-src\pages\candidate\MyApplications.tsx:194:                  showToast({
-src\pages\candidate\MyInvitations.tsx:25:  const { showToast } = useToast();
-src\pages\candidate\MyInvitations.tsx:68:      showToast({
-src\pages\candidate\MyInvitations.tsx:74:      showToast({
-src\pages\candidate\MyInvitations.tsx:86:      showToast({
-src\pages\candidate\MyInvitations.tsx:92:      showToast({ title: 'Error',
-description: 'Failed to update request.', variant: 'destructive' });
-src\pages\candidate\MyInvitations.tsx:98:      showToast({
-src\pages\candidate\MyInvitations.tsx:123:      showToast({
-src\pages\candidate\MyInvitations.tsx:134:      showToast({
-src\pages\candidate\SavedJobs.tsx:26:  const { showToast } = useToast();
-src\pages\candidate\SavedJobs.tsx:77:    showToast({
-src\pages\candidate\SavedJobs.tsx:100:      showToast({
-src\pages\candidate\SavedJobs.tsx:125:      showToast({
-src\pages\candidate\SavedJobs.tsx:133:      showToast({
-src\pages\employer\ApplicationDetail.tsx:20:  const { showToast } = useToast();
-src\pages\employer\ApplicationDetail.tsx:91:      showToast({
-src\pages\employer\ApplicationDetail.tsx:102:      showToast({
-src\pages\employer\ApplicationDetail.tsx:122:      showToast({
-src\pages\employer\ApplicationDetail.tsx:133:      showToast({
-src\pages\employer\ApplicationDetail.tsx:144:    showToast({
-src\pages\employer\CandidateAlerts.tsx:13:    const { showToast } = useToast();
-src\pages\employer\CandidateAlerts.tsx:27:            showToast({
-src\pages\employer\CandidateAlerts.tsx:60:                showToast({ title:
-'Alert Deleted', description: 'The candidate alert has been removed.' });
-src\pages\employer\CandidateAlerts.tsx:64:                showToast({
-src\pages\employer\CandidateAlerts.tsx:76:            showToast({
-src\pages\employer\CandidateAlerts.tsx:83:            showToast({
-src\pages\employer\CandidateDetailView.tsx:31:  const { showToast } =
-useToast();
-src\pages\employer\CandidateDetailView.tsx:96:        showToast({ title:
-'Removed from Shortlist', description: 'Candidate removed from shortlist' });
-src\pages\employer\CandidateDetailView.tsx:100:        showToast({ title:
-'Shortlisted', description: 'Candidate added to your shortlist' });
-src\pages\employer\CandidateDetailView.tsx:104:      showToast({ title:
-'Error', description: 'Failed to update shortlist', variant: 'destructive' });
-src\pages\employer\CandidateDetailView.tsx:109:    showToast({ title:
-'Invitation Sent', description: `${displayName} has been invited to apply for
-${jobTitle}` });
-src\pages\employer\CandidateDetailView.tsx:122:        showToast({ title:
-'Info', description: 'Request already pending or processed.' });
-src\pages\employer\CandidateDetailView.tsx:124:        showToast({ title:
-'Request Sent', description: `Personal data request sent.` });
-src\pages\employer\CandidateDetailView.tsx:144:        showToast({
-src\pages\employer\CandidateDetailView.tsx:154:    showToast({ title: 'Review
-Submitted', description: `Your review for ${displayName} has been submitted`
-});
-src\pages\employer\CompanyProfile.tsx:17:  const { showToast } = useToast();
-src\pages\employer\CompanyProfile.tsx:97:      showToast({
-src\pages\employer\CompanyProfile.tsx:103:      showToast({
-src\pages\employer\CompanyProfile.tsx:115:      showToast({
-src\pages\employer\CompanyProfile.tsx:153:      showToast({
-src\pages\employer\CompanyProfile.tsx:159:      showToast({
-src\pages\employer\EditJob.tsx:27:  const { showToast } = useToast();
-src\pages\employer\EditJob.tsx:130:      showToast({
-src\pages\employer\EditJob.tsx:174:      showToast({
-src\pages\employer\EditJob.tsx:181:      showToast({
-src\pages\employer\EditJob_backup.tsx:22:  const { showToast } = useToast();
-src\pages\employer\EditJob_backup.tsx:110:      showToast({
-src\pages\employer\EditJob_backup.tsx:145:      showToast({
-src\pages\employer\EditJob_backup.tsx:152:      showToast({
-src\pages\employer\PostJob.tsx:28:  const { showToast } = useToast();
-src\pages\employer\PostJob.tsx:112:      showToast({
-src\pages\employer\PostJob.tsx:121:      showToast({
-src\pages\employer\PostJob.tsx:169:      showToast({
-src\pages\employer\PostJob.tsx:191:        showToast({
-src\pages\shared\CompanyDetail.tsx:23:  const { showToast } = useToast();
-src\pages\shared\CompanyDetail.tsx:91:      showToast({
-src\pages\shared\CompanyDetail.tsx:103:        showToast({
-src\pages\shared\CompanyDetail.tsx:110:        showToast({
-src\pages\shared\CompanyDetail.tsx:117:      showToast({
-src\pages\shared\CompanyDetail.tsx:128:    showToast({
-src\pages\shared\JobDetailView.tsx:28:  const { showToast } = useToast();
-src\pages\shared\JobDetailView.tsx:75:      showToast({
-src\pages\shared\JobDetailView.tsx:85:      showToast({
-src\pages\shared\JobDetailView.tsx:119:      showToast({
-src\pages\shared\JobDetailView.tsx:128:      showToast({
-src\pages\shared\JobDetailView.tsx:195:                  showToast({
-src\pages\shared\Messages.tsx:37:  const { showToast } = useToast();
-src\pages\shared\Messages.tsx:317:      showToast({
-src\pages\shared\Messages.tsx:327:      showToast({
-src\pages\shared\Messages.tsx:352:      showToast({
-src\pages\shared\Messages.tsx:377:      showToast({
-src\pages\shared\Messages.tsx:417:      showToast({
-src\pages\shared\Messages.tsx:425:      showToast({
-src\pages\shared\Messages.tsx:442:      showToast({
-src\pages\shared\Messages.tsx:451:      showToast({
-src\pages\shared\Messages.tsx:468:      showToast({
-src\pages\shared\Messages.tsx:476:      showToast({
-src\pages\shared\Network.tsx:19:  const { showToast } = useToast();
-src\pages\shared\Network.tsx:61:        showToast({
-src\pages\shared\Network.tsx:82:      showToast({
-src\pages\shared\Network.tsx:88:      showToast({
-src\pages\shared\Network.tsx:102:      showToast({
-src\pages\shared\Network.tsx:108:      showToast({
-src\pages\shared\Packages.tsx:15:  const { showToast } = useToast();
-src\pages\shared\Packages.tsx:39:      showToast({
-src\pages\shared\Packages.tsx:58:      showToast({
-src\pages\shared\Packages.tsx:68:      showToast({
-src\pages\shared\Packages.tsx:76:      showToast({
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+= : Die Benennung "=" wurde nicht als Name eines Cmdlet, einer Funktion, einer
+Skriptdatei oder eines ausführbaren Programms erkannt. Überprüfen Sie die
+Schreibweise des Namens, oder ob der Pfad korrekt ist (sofern enthalten), und
+wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:68
++ ... ldItem -Path src -Filter *.tsx -Recurse | ForEach-Object {  = Get-Con ...
++                                                                 ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundEx
+   ception
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+-match : Die Benennung "-match" wurde nicht als Name eines Cmdlet, einer
+Funktion, einer Skriptdatei oder eines ausführbaren Programms erkannt.
+Überprüfen Sie die Schreibweise des Namens, oder ob der Pfad korrekt ist
+(sofern enthalten), und wiederholen Sie den Vorgang.
+In Zeile:1 Zeichen:103
++ ... | ForEach-Object {  = Get-Content .FullName -Raw; if ( -match '\bcn\( ...
++                                                            ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (-match:String) [], CommandNotFo
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException

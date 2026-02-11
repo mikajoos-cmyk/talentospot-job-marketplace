@@ -23,7 +23,7 @@ import {
     SelectValue,
 } from "../../components/ui/select";
 import { Label } from "../../components/ui/label";
-import { countries } from "../../data/countries";
+import { masterDataService, Country } from "../../services/master-data.service";
 import { searchCities, GeoLocation } from "../../utils/geocoding";
 import { Input } from '../../components/ui/input';
 
@@ -46,6 +46,7 @@ interface LocationPickerProps {
 }
 
 export function LocationPicker({ value, onChange, className, mode = 'address' }: LocationPickerProps) {
+    const [countries, setCountries] = useState<Country[]>([]);
     const [selectedCountryCode, setSelectedCountryCode] = useState<string>("");
     const [open, setOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -54,6 +55,11 @@ export function LocationPicker({ value, onChange, className, mode = 'address' }:
 
     // Debounce ref
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Load countries
+    useEffect(() => {
+        masterDataService.getCountries().then(setCountries);
+    }, []);
 
     // Initialize selected country
     useEffect(() => {

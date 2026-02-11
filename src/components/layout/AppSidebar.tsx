@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { LayoutDashboard, User, Briefcase, Settings, Users, Building2, ChevronLeft, ChevronRight, CreditCard, Bookmark, Mail, MessageSquare, Network as NetworkIcon, Bell, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -13,42 +14,43 @@ interface AppSidebarProps {
 
 const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
   const { user, logout } = useUser();
+  const { t } = useLanguage();
   const location = useLocation();
 
   const candidateMenuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/candidate/dashboard' },
-    { icon: User, label: 'My Profile', path: '/candidate/profile' },
-    { icon: Briefcase, label: 'Find Jobs', path: '/candidate/jobs' },
-    { icon: Bell, label: 'Job Alerts', path: '/candidate/alerts' },
-    { icon: Bookmark, label: 'Saved Jobs', path: '/candidate/saved' },
-    { icon: Mail, label: 'Invitations', path: '/candidate/invitations' },
-    { icon: MessageSquare, label: 'Messages', path: '/candidate/messages' },
-    { icon: NetworkIcon, label: 'My Network', path: '/candidate/network' },
-    { icon: CreditCard, label: 'Packages', path: '/candidate/packages' },
-    { icon: Settings, label: 'Settings', path: '/candidate/settings' },
+    { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/candidate/dashboard' },
+    { icon: User, label: t('nav.profile'), path: '/candidate/profile' },
+    { icon: Briefcase, label: t('nav.jobs'), path: '/candidate/jobs' },
+    { icon: Bell, label: t('nav.alerts'), path: '/candidate/alerts' },
+    { icon: Bookmark, label: t('nav.saved'), path: '/candidate/saved' },
+    { icon: Mail, label: t('nav.invitations'), path: '/candidate/invitations' },
+    { icon: MessageSquare, label: t('nav.messages'), path: '/candidate/messages' },
+    { icon: NetworkIcon, label: t('nav.network'), path: '/candidate/network' },
+    { icon: CreditCard, label: t('nav.packages'), path: '/candidate/packages' },
+    { icon: Settings, label: t('nav.settings'), path: '/candidate/settings' },
   ];
 
   const employerMenuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/employer/dashboard' },
-    { icon: Users, label: 'Find Candidates', path: '/employer/candidates' },
-    { icon: Bell, label: 'Candidate Alerts', path: '/employer/alerts' },
-    { icon: Briefcase, label: 'My Jobs', path: '/employer/jobs' },
-    { icon: Building2, label: 'Company Profile', path: '/employer/profile' },
-    { icon: MessageSquare, label: 'Messages', path: '/employer/messages' },
-    { icon: NetworkIcon, label: 'My Network', path: '/employer/network' },
-    { icon: CreditCard, label: 'Packages', path: '/employer/packages' },
-    { icon: Settings, label: 'Settings', path: '/employer/settings' },
+    { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/employer/dashboard' },
+    { icon: Users, label: t('nav.candidates'), path: '/employer/candidates' },
+    { icon: Bell, label: t('nav.alerts'), path: '/employer/alerts' },
+    { icon: Briefcase, label: t('nav.myJobs'), path: '/employer/jobs' },
+    { icon: Building2, label: t('nav.companyProfile'), path: '/employer/profile' },
+    { icon: MessageSquare, label: t('nav.messages'), path: '/employer/messages' },
+    { icon: NetworkIcon, label: t('nav.network'), path: '/employer/network' },
+    { icon: CreditCard, label: t('nav.packages'), path: '/employer/packages' },
+    { icon: Settings, label: t('nav.settings'), path: '/employer/settings' },
   ];
 
   const adminMenuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: Users, label: 'Users', path: '/admin/users' },
-    { icon: Settings, label: 'Settings', path: '/admin/settings' },
+    { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/admin/dashboard' },
+    { icon: Users, label: t('nav.users'), path: '/admin/users' },
+    { icon: Settings, label: t('nav.settings'), path: '/admin/settings' },
   ];
 
   const guestMenuItems = [
-    { icon: Briefcase, label: 'Find Jobs', path: '/jobs' },
-    { icon: Users, label: 'Find Candidates', path: '/candidates' },
+    { icon: Briefcase, label: t('nav.jobs'), path: '/jobs' },
+    { icon: Users, label: t('nav.candidates'), path: '/candidates' },
   ];
 
   const menuItems = user.role === 'guest'
@@ -120,11 +122,11 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
                 <button
                   onClick={logout}
                   className="w-full flex items-center h-11 px-4 rounded-lg transition-all duration-200 text-error hover:bg-error/10"
-                  title={collapsed ? 'Logout' : undefined}
+                  title={collapsed ? t('common.logout') : undefined}
                 >
                   <LogOut className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
                   {!collapsed && (
-                    <span className="ml-3 text-body font-bold">Logout</span>
+                    <span className="ml-3 text-body font-bold">{t('common.logout')}</span>
                   )}
                 </button>
               </li>

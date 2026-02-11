@@ -17,7 +17,8 @@ import {
   FileText,
   Shield,
   Scale,
-  Headphones
+  Headphones,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -35,7 +36,7 @@ import {
 
 const AppHeader: React.FC = () => {
   const { user, logout } = useUser();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, availableLanguages, isLoading, t } = useLanguage();
   const navigate = useNavigate();
   const [notifications, setNotifications] = React.useState<any[]>([]);
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -63,22 +64,22 @@ const AppHeader: React.FC = () => {
   }, [user]);
 
   const platformLinks = [
-    { name: 'How it Works', path: '/how-it-works', icon: <ArrowRight className="w-4 h-4 mr-2" /> },
-    { name: 'About Us', path: '/about', icon: <Info className="w-4 h-4 mr-2" /> },
-    { name: 'Pricing Plans', path: '/pricing', icon: <CreditCard className="w-4 h-4 mr-2" /> },
-    { name: 'FAQ', path: '/faq', icon: <HelpCircle className="w-4 h-4 mr-2" /> },
+    { name: t('nav.howItWorks'), path: '/how-it-works', icon: <ArrowRight className="w-4 h-4 mr-2" /> },
+    { name: t('nav.aboutUs'), path: '/about', icon: <Info className="w-4 h-4 mr-2" /> },
+    { name: t('nav.pricing'), path: '/pricing', icon: <CreditCard className="w-4 h-4 mr-2" /> },
+    { name: t('nav.faq'), path: '/faq', icon: <HelpCircle className="w-4 h-4 mr-2" /> },
   ];
 
   const legalLinks = [
-    { name: 'Imprint', path: '/imprint', icon: <FileText className="w-4 h-4 mr-2" /> },
-    { name: 'Privacy Policy', path: '/privacy', icon: <Shield className="w-4 h-4 mr-2" /> },
-    { name: 'Terms of Service', path: '/terms', icon: <Scale className="w-4 h-4 mr-2" /> },
-    { name: 'Contact Support', path: '/contact', icon: <Headphones className="w-4 h-4 mr-2" /> },
+    { name: t('nav.imprint'), path: '/imprint', icon: <FileText className="w-4 h-4 mr-2" /> },
+    { name: t('nav.privacy'), path: '/privacy', icon: <Shield className="w-4 h-4 mr-2" /> },
+    { name: t('nav.terms'), path: '/terms', icon: <Scale className="w-4 h-4 mr-2" /> },
+    { name: t('nav.contact'), path: '/contact', icon: <Headphones className="w-4 h-4 mr-2" /> },
   ];
 
   const searchLinks = [
-    { name: 'Find Talent', path: '/candidates', icon: <Users className="w-4 h-4 mr-2" /> },
-    { name: 'Find Jobs', path: '/jobs', icon: <Briefcase className="w-4 h-4 mr-2" /> },
+    { name: t('nav.candidates'), path: '/candidates', icon: <Users className="w-4 h-4 mr-2" /> },
+    { name: t('nav.jobs'), path: '/jobs', icon: <Briefcase className="w-4 h-4 mr-2" /> },
   ];
 
   return (
@@ -93,7 +94,7 @@ const AppHeader: React.FC = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64 bg-card border-border shadow-xl rounded-xl p-2 mt-2 max-h-[85vh] overflow-y-auto">
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Search</DropdownMenuLabel>
+              <DropdownMenuLabel className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('nav.search')}</DropdownMenuLabel>
               {searchLinks.map((link) => (
                 <DropdownMenuItem
                   key={link.path}
@@ -109,7 +110,7 @@ const AppHeader: React.FC = () => {
             <DropdownMenuSeparator className="bg-border my-2" />
 
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Platform</DropdownMenuLabel>
+              <DropdownMenuLabel className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('nav.platform')}</DropdownMenuLabel>
               {platformLinks.map((link) => (
                 <DropdownMenuItem
                   key={link.path}
@@ -125,7 +126,7 @@ const AppHeader: React.FC = () => {
             <DropdownMenuSeparator className="bg-border my-2" />
 
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Legal</DropdownMenuLabel>
+              <DropdownMenuLabel className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('nav.legal')}</DropdownMenuLabel>
               {legalLinks.map((link) => (
                 <DropdownMenuItem
                   key={link.path}
@@ -149,23 +150,37 @@ const AppHeader: React.FC = () => {
               aria-label="Change language"
             >
               <Globe className="w-4 h-4" strokeWidth={1.5} />
-              <span className="uppercase text-xs font-bold">{language}</span>
+              <span className="uppercase text-xs font-bold truncate max-w-[80px]">
+                {isLoading ? '...' : language.toUpperCase()}
+              </span>
               <ChevronDown className="w-3 h-3 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="bg-card border-border shadow-xl rounded-xl p-1 mt-2">
-            <DropdownMenuItem
-              onClick={() => setLanguage('en')}
-              className={`cursor-pointer rounded-lg px-4 py-2 ${language === 'en' ? 'bg-primary/10 text-primary font-bold' : 'text-foreground'}`}
-            >
-              English (EN)
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setLanguage('de')}
-              className={`cursor-pointer rounded-lg px-4 py-2 ${language === 'de' ? 'bg-primary/10 text-primary font-bold' : 'text-foreground'}`}
-            >
-              Deutsch (DE)
-            </DropdownMenuItem>
+          <DropdownMenuContent align="start" className="bg-card border-border shadow-xl rounded-xl p-1 mt-2 max-h-[300px] overflow-y-auto">
+            {isLoading ? (
+              <div className="p-2 flex justify-center"><Loader2 className="w-4 h-4 animate-spin" /></div>
+            ) : (
+              availableLanguages.map((lang) => (
+                <DropdownMenuItem
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
+                  className={`cursor-pointer rounded-lg px-4 py-2 text-sm ${
+                    language === lang.code
+                      ? 'bg-primary/10 text-primary font-bold'
+                      : 'text-foreground'
+                  }`}
+                >
+                  <span className="flex items-center justify-between w-full">
+                    {lang.name}
+                    {(lang.code === 'de' || lang.code === 'en') && (
+                      <span className="ml-2 text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full">
+                        Official
+                      </span>
+                    )}
+                  </span>
+                </DropdownMenuItem>
+              ))
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 

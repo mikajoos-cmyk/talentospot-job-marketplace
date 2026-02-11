@@ -13,6 +13,7 @@ import {
     MessageSquare
 } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils'; // Falls vorhanden, sonst manuell string concat
@@ -25,6 +26,7 @@ interface AdminSidebarProps {
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle }) => {
     const { logout } = useUser();
+    const { t } = useLanguage();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -51,29 +53,29 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle }) => {
 
             <ScrollArea className="flex-1 py-4">
                 <nav className="space-y-1 px-2">
-                    <NavLink to="/admin/dashboard" className={navItemClass} title="Dashboard">
+                    <NavLink to="/admin/dashboard" className={navItemClass} title={t('nav.dashboard')}>
                         <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
-                        {!collapsed && <span className="ml-3">Dashboard</span>}
+                        {!collapsed && <span className="ml-3">{t('nav.dashboard')}</span>}
                     </NavLink>
 
-                    <NavLink to="/admin/users" className={navItemClass} title="Benutzer">
+                    <NavLink to="/admin/users" className={navItemClass} title={t('nav.users')}>
                         <Users className="h-5 w-5 flex-shrink-0" />
-                        {!collapsed && <span className="ml-3">Benutzer</span>}
+                        {!collapsed && <span className="ml-3">{t('nav.users')}</span>}
                     </NavLink>
 
-                    <NavLink to="/admin/packages" className={navItemClass} title="Pakete">
+                    <NavLink to="/admin/packages" className={navItemClass} title={t('nav.packages')}>
                         <Package className="h-5 w-5 flex-shrink-0" />
-                        {!collapsed && <span className="ml-3">Pakete</span>}
+                        {!collapsed && <span className="ml-3">{t('nav.packages')}</span>}
                     </NavLink>
 
-                    <NavLink to="/admin/messages" className={navItemClass} title="Nachrichten">
+                    <NavLink to="/admin/messages" className={navItemClass} title={t('nav.messages')}>
                         <MessageSquare className="h-5 w-5 flex-shrink-0" />
-                        {!collapsed && <span className="ml-3">Nachrichten</span>}
+                        {!collapsed && <span className="ml-3">{t('nav.messages')}</span>}
                     </NavLink>
 
-                    <NavLink to="/admin/settings" className={navItemClass} title="Einstellungen">
+                    <NavLink to="/admin/settings" className={navItemClass} title={t('nav.settings')}>
                         <Settings className="h-5 w-5 flex-shrink-0" />
-                        {!collapsed && <span className="ml-3">Einstellungen</span>}
+                        {!collapsed && <span className="ml-3">{t('nav.settings')}</span>}
                     </NavLink>
 
                     <div className="pt-4 mt-4 border-t border-border">
@@ -82,13 +84,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle }) => {
                                 System
                             </p>
                         )}
-                        <NavLink to="/jobs" className={navItemClass} title="Jobsuche (Public)">
+                        <NavLink to="/jobs" className={navItemClass} title={t('nav.jobs')}>
                             <ExternalLink className="h-5 w-5 flex-shrink-0" />
-                            {!collapsed && <span className="ml-3">Public Jobs</span>}
+                            {!collapsed && <span className="ml-3">{t('nav.jobs')}</span>}
                         </NavLink>
-                        <NavLink to="/candidates" className={navItemClass} title="Talentsuche (Public)">
+                        <NavLink to="/candidates" className={navItemClass} title={t('nav.candidates')}>
                             <ExternalLink className="h-5 w-5 flex-shrink-0" />
-                            {!collapsed && <span className="ml-3">Public Talents</span>}
+                            {!collapsed && <span className="ml-3">{t('nav.candidates')}</span>}
                         </NavLink>
                     </div>
                 </nav>
@@ -100,10 +102,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle }) => {
                     variant="outline"
                     className={cn("w-full", collapsed ? "justify-center px-0" : "justify-start")}
                     onClick={handleLogout}
-                    title="Abmelden"
+                    title={t('common.logout')}
                 >
                     <LogOut className={cn("h-5 w-5 flex-shrink-0", !collapsed && "mr-3")} />
-                    {!collapsed && "Abmelden"}
+                    {!collapsed && t('common.logout')}
                 </Button>
 
                 {/* Toggle Button nur Desktop */}

@@ -294,10 +294,10 @@ const MainHeroFilter = () => {
     };
 
     return (
-        <div className="w-full max-w-5xl mx-auto px-4 relative z-10">
+        <div className="w-full max-w-7xl mx-auto px-4 relative z-10">
             {/* Search Mode Toggle */}
             <div className="flex justify-center mb-6">
-                <div className="bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-primary/10 flex gap-1">
+                <div className="bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-lg border-4 border-primary/40 flex gap-1">
                     <button
                         onClick={() => setSearchMode('candidates')}
                         className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${searchMode === 'candidates'
@@ -319,7 +319,7 @@ const MainHeroFilter = () => {
                 </div>
             </div>
 
-            <Card className="p-3 md:p-6 shadow-2xl border-2 border-primary/20 bg-white/95 backdrop-blur-md rounded-2xl overflow-hidden hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-500">
+            <Card className="p-3 md:p-6 shadow-2xl border-4 border-primary/40 bg-white/95 backdrop-blur-md rounded-2xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-500">
                 {/* Main Search Bar */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                     {/* Job Title */}
@@ -370,7 +370,7 @@ const MainHeroFilter = () => {
                                 onValueChange={(val) => setFilters({ ...filters, talentStatus: val === 'any' ? [] : [val] })}
                             >
                                 <SelectTrigger className="h-12 bg-muted/40 border-none focus:ring-1 focus:ring-primary text-base shadow-none rounded-xl">
-                                    <div className="flex items-center truncate">
+                                    <div className="flex items-center min-w-0">
                                         <User className="w-4 h-4 mr-3 text-primary shrink-0" />
                                         <SelectValue placeholder="Status" />
                                     </div>
@@ -417,7 +417,7 @@ const MainHeroFilter = () => {
                         </CollapsibleTrigger>
                     </div>
 
-                    <CollapsibleContent className="px-4 py-8 border-t border-border mt-2 space-y-12 animate-in slide-in-from-top duration-300 overflow-visible">
+                    <CollapsibleContent className="px-4 py-8 border-4 border-primary/40 rounded-xl mt-4 space-y-12 animate-in slide-in-from-top duration-300 overflow-visible">
 
                         {/* 1. Precise Location & Radius */}
                         <section className="space-y-6">

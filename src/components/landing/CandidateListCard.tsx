@@ -49,7 +49,7 @@ const CandidateListCard: React.FC<CandidateListCardProps> = ({ candidate, onView
                             </div>
                         )}
                     </div>
-                    <h4 className={`text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors ${isBlurred ? 'blur-sm select-none' : ''}`}>{name}</h4>
+                    <h4 className={`text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors ${isBlurred ? 'blur-md select-none' : ''}`}>{name}</h4>
                     <p className="text-sm font-medium text-muted-foreground mb-4">{title}</p>
 
                     <div className="w-full pt-4 border-t border-border/50 space-y-2">

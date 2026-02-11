@@ -318,7 +318,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                 </div>
               )}
             </div>
-            <h4 className={`text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors ${shouldBlurIdentity ? 'blur-sm' : ''}`}>
+            <h4 className={`text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors ${shouldBlurIdentity ? 'blur-md select-none' : ''}`}>
               {displayName}
             </h4>
             <p className="text-sm font-medium text-muted-foreground mb-4">{candidateTitle}</p>

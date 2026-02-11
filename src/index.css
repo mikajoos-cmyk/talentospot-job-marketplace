@@ -4,6 +4,55 @@
 @tailwind components;
 @tailwind utilities;
 
+/* --- Google Translate Overrides --- */
+
+/* --- Google Translate Overrides (Aggressive Fix) --- */
+
+/* 1. Versteckt den Iframe/Balken selbst */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+iframe.goog-te-banner-frame,
+iframe[id=":2.container"],
+body > .skiptranslate {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  border: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* 2. Zwingt den Body nach oben (wichtigster Teil!) */
+body {
+  top: 0px !important;
+  position: static !important;
+  margin-top: 0px !important;
+}
+
+/* 3. Versteckt Tooltips & Popups */
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.goog-tooltip {
+  display: none !important;
+}
+
+/* 4. Entfernt Hover-Effekte im Text */
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* 5. Logo ausblenden */
+.goog-logo-link {
+  display: none !important;
+}
+.goog-te-gadget {
+  height: 0 !important;
+  overflow: hidden;
+}
+
 @layer base {
   :root {
     --color-border: 220 15% 90%;
@@ -63,6 +112,8 @@
     --shadow-lg: 0 6px 12px hsla(220, 15%, 20%, 0.18);
     --shadow-xl: 0 8px 24px hsla(220, 15%, 20%, 0.24);
   }
+
+
 
   * {
     @apply border-border;
@@ -159,4 +210,23 @@
   .prose em {
     font-style: italic;
   }
+}
+
+/* Google Translate UI verstecken */
+.goog-te-banner-frame.skiptranslate {
+    display: none !important;
+}
+body {
+    top: 0px !important;
+}
+/* Optional: Google Tooltips verstecken */
+.goog-tooltip {
+    display: none !important;
+}
+.goog-tooltip:hover {
+    display: none !important;
+}
+.goog-text-highlight {
+    background-color: transparent !important;
+    box-shadow: none !important;
 }

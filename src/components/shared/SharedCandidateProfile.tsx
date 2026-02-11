@@ -20,6 +20,7 @@ import { X } from 'lucide-react';
 import ReviewCard from '../shared/ReviewCard';
 import { getYouTubeEmbedUrl } from '../../lib/utils';
 import { ProjectImageCarousel } from '../shared/ProjectImageCarousel';
+import { cn } from '@/lib/utils';
 
 interface SharedCandidateProfileProps {
     data: any;           // Das Profil-Objekt
@@ -73,7 +74,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
     // Blurring Logic Helpers
     const renderText = (text: string | null | undefined, sensitive = false) => {
         if (!text) return <span className="text-muted-foreground italic">Not specified</span>;
-        if (sensitive && isBlurred) return <span className="blur-sm select-none">••••••••••••</span>;
+        if (sensitive && isBlurred) return <span className="blur-md select-none">{text}</span>;
         return <span>{text}</span>;
     };
 
@@ -160,11 +161,9 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                     </div>
                                     <div className="flex items-center text-sm">
                                         <Calendar className="w-4 h-4 mr-3 text-muted-foreground shrink-0" />
-                                        <span>
-                        {isBlurred
-                            ? '••.••.••••'
-                            : (data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString() : 'No birthdate')}
-                      </span>
+                                        <span className={isBlurred ? "blur-md select-none" : ""}>
+                                            {data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString() : 'No birthdate'}
+                                        </span>
                                     </div>
                                     <div className="flex items-center text-sm">
                                         <Globe className="w-4 h-4 mr-3 text-muted-foreground shrink-0" />
@@ -175,16 +174,13 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                     {hasLocation && (
                                         <div className="flex items-start text-sm mt-1">
                                             <MapPin className="w-4 h-4 mr-3 text-muted-foreground shrink-0 mt-0.5" />
-                                            <div className="flex flex-col text-foreground/90">
-                                                {isBlurred ? (
-                                                    <span className="blur-sm select-none">Hidden Location Data</span>
-                                                ) : (
-                                                    <>
-                                                        {streetDisplay && <span>{streetDisplay}</span>}
-                                                        {cityDisplay && <span>{cityDisplay}</span>}
-                                                        {regionDisplay && <span>{regionDisplay}</span>}
-                                                    </>
-                                                )}
+                                            <div className={cn(
+                                                "flex flex-col text-foreground/90",
+                                                isBlurred && "blur-md select-none"
+                                            )}>
+                                                {streetDisplay && <span>{streetDisplay}</span>}
+                                                {cityDisplay && <span>{cityDisplay}</span>}
+                                                {regionDisplay && <span>{regionDisplay}</span>}
                                             </div>
                                         </div>
                                     )}

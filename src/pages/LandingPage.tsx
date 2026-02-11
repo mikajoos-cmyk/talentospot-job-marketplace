@@ -98,38 +98,41 @@ const LandingPage: React.FC = () => {
         <div className="absolute bottom-0 left-0 w-1/4 h-1/2 bg-accent/5 blur-3xl rounded-full translate-y-1/2 -translate-x-1/2 -z-10"></div>
 
         <div className="container mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-6 border border-primary/20 animate-fade-in">
-            <Star className="w-3 h-3 fill-primary" />
-            The Future of Recruitment
-          </div>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading text-foreground mb-6 leading-[1.1] tracking-tight">
-            Connecting <span className="text-primary italic">Ambition</span> <br className="hidden md:block" /> with Opportunity.
-          </h1>
-          <p className="text-body-lg text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
-            Discover a world of talented professionals and leading employers.
-            Automated matching, verified profiles, and seamless communication.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div className="absolute top-4 right-4 md:top-8 md:right-6 flex flex-col items-end gap-2 z-20">
             <Button
-              size="lg"
+              size="sm"
               onClick={() => navigate('/register')}
-              className="w-full sm:w-auto px-8 bg-primary text-primary-foreground hover:bg-primary/90 font-bold h-14 rounded-xl"
+              className="px-4 bg-primary/10 text-primary hover:bg-primary/20 font-bold h-9 rounded-full border border-primary/20 shadow-none text-xs uppercase tracking-wider"
             >
               Get Started Now
-              <ArrowRight className="ml-2 w-5 h-5" />
+              <ArrowRight className="ml-2 w-3.5 h-3.5" />
             </Button>
             <Button
-              variant="outline"
-              size="lg"
+              variant="ghost"
+              size="sm"
               onClick={() => navigate('/how-it-works')}
-              className="w-full sm:w-auto px-8 border-primary/20 text-primary hover:bg-primary/5 font-bold h-14 rounded-xl"
+              className="px-4 text-muted-foreground hover:bg-muted font-bold h-9 rounded-full border border-transparent hover:border-border text-xs uppercase tracking-wider"
             >
               How it works
             </Button>
           </div>
 
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-6 border border-primary/20 animate-fade-in">
+            <Star className="w-3 h-3 fill-primary" />
+            The Future of Recruitment
+          </div>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading text-foreground mb-6 leading-[1.1] tracking-tight">
+            <span>Connecting</span> <span className="text-primary italic">Ambition</span> <br className="hidden md:block" /> <span>with Opportunity.</span>
+          </h1>
+          <p className="text-body-lg text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
+            <span>Discover a world of talented professionals and leading employers.</span>
+            <br />
+            <span>Automated matching, verified profiles, and seamless communication.</span>
+          </p>
+
           <MainHeroFilter />
+
+          <QuickAccessStatus />
 
           {/* Registration Prompts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto mt-8 mb-12">
@@ -165,8 +168,6 @@ const LandingPage: React.FC = () => {
               </div>
             </Card>
           </div>
-
-          <QuickAccessStatus />
         </div>
       </section>
 
