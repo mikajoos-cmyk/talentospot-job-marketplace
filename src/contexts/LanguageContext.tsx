@@ -109,6 +109,30 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [availableLanguages, setAvailableLanguages] = useState<LanguageOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // NEU: CSS Styles injizieren, um Google Widget zu verstecken
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.id = 'google-translate-hider';
+    style.innerHTML = `
+      .goog-te-banner-frame.skiptranslate { display: none !important; }
+      body { top: 0px !important; }
+      #google_translate_element { display: none !important; visibility: hidden !important; }
+      .goog-te-gadget-icon { display: none !important; }
+      .goog-te-gadget-simple { display: none !important; }
+      .goog-tooltip { display: none !important; }
+      .goog-tooltip:hover { display: none !important; }
+      .goog-text-highlight { background-color: transparent !important; border: none !important; box-shadow: none !important; }
+      font { background-color: transparent !important; box-shadow: none !important; }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      // Cleanup falls nötig
+      const existingStyle = document.getElementById('google-translate-hider');
+      if (existingStyle) existingStyle.remove();
+    };
+  }, []);
+
   // 1. Sprachen aus Supabase laden
   useEffect(() => {
     const fetchLanguages = async () => {
