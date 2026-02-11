@@ -111,7 +111,7 @@ const LandingPage: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={() => navigate('/how-it-works')}
-              className="px-4 text-muted-foreground hover:bg-muted font-bold h-9 rounded-full border border-transparent hover:border-border text-xs uppercase tracking-wider"
+              className="px-4 text-primary hover:bg-primary/10 hover:text-primary font-bold h-9 rounded-full border border-transparent hover:border-primary/30 text-xs uppercase tracking-wider"
             >
               How it works
             </Button>
@@ -179,7 +179,7 @@ const LandingPage: React.FC = () => {
               <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Featured Talents</h2>
               <p className="text-muted-foreground">Discover skilled professionals available for hire.</p>
             </div>
-            <Button variant="ghost" className="text-primary hover:text-primary/80 font-bold" onClick={() => navigate('/candidates')}>
+            <Button variant="ghost" className="text-primary hover:bg-primary/10 font-bold" onClick={() => navigate('/candidates')}>
               View All Candidates
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
@@ -263,7 +263,7 @@ const LandingPage: React.FC = () => {
               <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Latest Opportunities</h2>
               <p className="text-muted-foreground">Explore the most recent job postings.</p>
             </div>
-            <Button variant="ghost" className="text-primary hover:text-primary/80 font-bold" onClick={() => navigate('/jobs')}>
+            <Button variant="ghost" className="text-primary hover:bg-primary/10 font-bold" onClick={() => navigate('/jobs')}>
               Browse All Jobs
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
@@ -280,7 +280,7 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </section>
-      
+
       {!isAuthenticated && <Footer />}
     </div>
   );

@@ -137,10 +137,10 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
       return v ? v[2] : null;
     };
-    
+
     const googleCookie = getCookie('googtrans');
     // Format von googleCookie ist oft "/auto/de" oder "/en/de"
-    
+
     if (googleCookie) {
       const langCode = googleCookie.split('/').pop();
       if (langCode) {
@@ -166,20 +166,20 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + domain;
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + domain;
-      
+
       // Seite neu laden um Google Translate Artefakte zu entfernen
       window.location.reload();
     } else {
       // AUTOMATISCHER MODUS: Google Translate aktivieren
       // Cookie setzen: /quellsprache/zielsprache (auto = auto detect source)
       document.cookie = `googtrans=/auto/${langCode}; path=/`;
-      
+
       // Optional: Auch für die Domain setzen, falls nötig
       const domain = window.location.hostname;
       if (domain !== 'localhost') {
         document.cookie = `googtrans=/auto/${langCode}; path=/; domain=.${domain}`;
       }
-      
+
       // Seite neu laden um Übersetzung zu triggern
       window.location.reload();
     }
@@ -191,8 +191,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (language === 'de') {
       return manualTranslations.de[key] || key;
     }
-    
-    // Wir geben immer den englischen Key zurück, damit Google Translate 
+
+    // Wir geben immer den englischen Key zurück, damit Google Translate
     // eine stabile Basis zum Übersetzen hat.
     // Aber für Menü-Labels, die NICHT in manualTranslations stehen,
     // geben wir den Key selbst zurück.
@@ -200,9 +200,9 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, availableLanguages, isLoading }}>
-      {children}
-    </LanguageContext.Provider>
+      <LanguageContext.Provider value={{ language, setLanguage, t, availableLanguages, isLoading }}>
+        {children}
+      </LanguageContext.Provider>
   );
 };
 

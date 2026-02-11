@@ -74,21 +74,21 @@ const PublicHeader: React.FC = () => {
                         <Button
                             variant="ghost"
                             onClick={() => navigate('/candidates')}
-                            className="text-foreground hover:bg-muted font-medium rounded-lg"
+                            className="text-foreground hover:bg-primary/10 hover:text-foreground font-medium rounded-lg"
                         >
                             {t('nav.candidates')}
                         </Button>
                         <Button
                             variant="ghost"
                             onClick={() => navigate('/jobs')}
-                            className="text-foreground hover:bg-muted font-medium rounded-lg"
+                            className="text-foreground hover:bg-primary/10 hover:text-foreground font-medium rounded-lg"
                         >
                             {t('nav.jobs')}
                         </Button>
                         <Button
                             variant="ghost"
                             onClick={() => navigate('/how-it-works')}
-                            className="text-foreground hover:bg-muted font-medium rounded-lg"
+                            className="text-foreground hover:bg-primary/10 hover:text-foreground font-medium rounded-lg"
                         >
                             {t('nav.howItWorks')}
                         </Button>
@@ -99,7 +99,7 @@ const PublicHeader: React.FC = () => {
                     {/* Hamburger Menu */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="rounded-lg">
+                            <Button variant="ghost" size="icon" className="rounded-lg hover:bg-primary/10 hover:text-foreground">
                                 <Menu className="w-6 h-6" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -110,7 +110,7 @@ const PublicHeader: React.FC = () => {
                                     <DropdownMenuItem
                                         key={link.path}
                                         onClick={() => navigate(link.path)}
-                                        className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-muted transition-colors"
+                                        className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-primary/10 hover:text-foreground transition-colors"
                                     >
                                         {link.icon}
                                         <span className="font-medium text-sm">{link.name}</span>
@@ -126,7 +126,7 @@ const PublicHeader: React.FC = () => {
                                     <DropdownMenuItem
                                         key={link.path}
                                         onClick={() => navigate(link.path)}
-                                        className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-muted transition-colors"
+                                        className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-primary/10 hover:text-foreground transition-colors"
                                     >
                                         {link.icon}
                                         <span className="font-medium text-sm">{link.name}</span>
@@ -142,7 +142,7 @@ const PublicHeader: React.FC = () => {
                                     <DropdownMenuItem
                                         key={link.path}
                                         onClick={() => navigate(link.path)}
-                                        className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-muted transition-colors"
+                                        className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-primary/10 hover:text-foreground transition-colors"
                                     >
                                         {link.icon}
                                         <span className="font-medium text-sm">{link.name}</span>
@@ -153,11 +153,11 @@ const PublicHeader: React.FC = () => {
                             {!isAuthenticated && (
                                 <>
                                     <DropdownMenuSeparator className="bg-border my-2" />
-                                    <DropdownMenuItem onClick={() => navigate('/login')} className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-muted">
+                                    <DropdownMenuItem onClick={() => navigate('/login')} className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-primary/10 hover:text-foreground">
                                         <LogIn className="w-4 h-4 mr-2" />
                                         <span className="font-medium text-sm">{t('common.login')}</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => navigate('/register')} className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-primary/10 text-primary">
+                                    <DropdownMenuItem onClick={() => navigate('/register')} className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-primary/10 hover:text-primary text-primary">
                                         <UserPlus className="w-4 h-4 mr-2" />
                                         <span className="font-bold text-sm">{t('common.getStarted')}</span>
                                     </DropdownMenuItem>
@@ -171,7 +171,7 @@ const PublicHeader: React.FC = () => {
                         <DropdownMenuTrigger asChild>
                             <Button
                                 variant="ghost"
-                                className="flex items-center gap-1.5 px-3 py-2 hover:bg-muted rounded-lg font-medium"
+                                className="flex items-center gap-1.5 px-3 py-2 hover:bg-primary/10 hover:text-foreground rounded-lg font-medium"
                             >
                                 <Globe className="w-4 h-4" />
                                 <span className="uppercase text-xs font-bold truncate max-w-[80px]">
@@ -188,10 +188,10 @@ const PublicHeader: React.FC = () => {
                                     <DropdownMenuItem
                                         key={lang.code}
                                         onClick={() => setLanguage(lang.code)}
-                                        className={`cursor-pointer rounded-lg px-4 py-2 text-sm ${
+                                        className={`cursor-pointer rounded-lg px-4 py-2 text-sm transition-colors ${
                                             language === lang.code 
-                                            ? 'bg-primary/10 text-primary font-bold' 
-                                            : 'text-foreground'
+                                            ? 'bg-primary/10 text-primary font-bold hover:bg-primary/20 hover:text-primary' 
+                                            : 'text-foreground hover:bg-primary/10 hover:text-foreground'
                                         }`}
                                     >
                                         <span className="flex items-center justify-between w-full">
@@ -218,14 +218,14 @@ const PublicHeader: React.FC = () => {
                                         const dashboardPath = user?.role === 'employer' ? '/employer/dashboard' : '/candidate/dashboard';
                                         navigate(dashboardPath);
                                     }}
-                                    className="text-foreground hover:bg-muted font-medium rounded-lg"
+                                    className="text-foreground hover:bg-primary/10 font-medium rounded-lg"
                                 >
                                     Dashboard
                                 </Button>
                                 <Button
                                     onClick={logout}
                                     variant="outline"
-                                    className="border-border text-foreground hover:bg-muted font-medium rounded-lg"
+                                    className="border-border text-foreground hover:bg-primary/10 font-medium rounded-lg"
                                 >
                                     Logout
                                 </Button>
@@ -235,7 +235,7 @@ const PublicHeader: React.FC = () => {
                                 <Button
                                     variant="ghost"
                                     onClick={() => navigate('/login')}
-                                    className="text-foreground hover:bg-muted font-medium rounded-lg"
+                                    className="text-foreground hover:bg-primary/10 hover:text-foreground font-medium rounded-lg"
                                 >
                                     Sign In
                                 </Button>
