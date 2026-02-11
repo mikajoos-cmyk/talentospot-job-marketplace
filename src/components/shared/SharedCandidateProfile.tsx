@@ -5,8 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Progress } from '../ui/progress';
 import {
     MapPin, Mail, Phone, Briefcase, GraduationCap, Award, Video,
-    Image as ImageIcon, DollarSign, Plane, Globe, Car, Star, Tag, Download,
-    User, Calendar, Layers, Activity, UserCircle, CheckCircle2, Home, Clock,
+    Image as ImageIcon, DollarSign, Plane, Globe, Car, Download,
+    User, Calendar, Layers, Activity, UserCircle, Home, Clock,
     FileText, ArrowLeft
 } from 'lucide-react';
 import {
@@ -17,7 +17,6 @@ import {
     DialogDescription,
 } from '../ui/dialog';
 import { X } from 'lucide-react';
-import ReviewCard from '../shared/ReviewCard';
 import { getYouTubeEmbedUrl } from '../../lib/utils';
 import { ProjectImageCarousel } from '../shared/ProjectImageCarousel';
 import { cn } from '@/lib/utils';
@@ -78,7 +77,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
         return <span>{text}</span>;
     };
 
-    const displayName = isBlurred ? `Candidate #${data.id?.toString().padStart(3, '0')}` : user.name;
+    const displayName = isBlurred ? 'TalentoSPOT Candidate' : user.name;
 
     return (
         <div className="w-full space-y-6 pb-12">
@@ -119,8 +118,8 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                             )}
                         </div>
                         <div className="px-6 pb-6">
-                            <div className="relative flex justify-between items-end -mt-12 mb-4">
-                                <Avatar className={`w-24 h-24 border-4 border-card bg-card shadow-md ${isBlurred ? 'blur-md' : ''}`}>
+                            <div className="relative flex justify-between items-end -mt-20 mb-6">
+                                <Avatar className={`w-48 h-48 rounded-2xl overflow-hidden border border-border bg-card shadow-md ${isBlurred ? 'blur-md' : ''}`}>
                                     <AvatarImage src={user.avatar} alt={displayName} />
                                     <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
                                         {displayName?.charAt(0) || 'U'}
@@ -165,6 +164,18 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                             {data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString() : 'No birthdate'}
                                         </span>
                                     </div>
+                                    {hasLicenses && (
+                                        <div className="flex items-start text-sm">
+                                            <Car className="w-4 h-4 mr-3 text-muted-foreground shrink-0 mt-0.5" />
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {data.drivingLicenses.map((license: string, idx: number) => (
+                                                    <span key={idx} className="px-2 py-0.5 bg-muted text-foreground text-xs rounded border border-border">
+                                                        {license}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="flex items-center text-sm">
                                         <Globe className="w-4 h-4 mr-3 text-muted-foreground shrink-0" />
                                         <span>{data.nationality || 'Nationality not set'}</span>
@@ -214,6 +225,18 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                           </span>
                                         <span className="text-sm font-semibold">{data.yearsOfExperience || 0} years</span>
                                     </div>
+                                    <div className="flex flex-col">
+                          <span className="text-xs text-muted-foreground flex items-center mb-1">
+                              <GraduationCap className="w-3 h-3 mr-1" /> Qualification
+                          </span>
+                                        <span className="text-sm font-semibold capitalize">{(data.highestQualification) || (hasQualifications ? data.qualifications[0] : 'N/A')}</span>
+                                    </div>
+                                    <div className="flex flex-col">
+                          <span className="text-xs text-muted-foreground flex items-center mb-1">
+                              <Clock className="w-3 h-3 mr-1" /> Notice Period
+                          </span>
+                                        <span className="text-sm font-semibold capitalize">{data.noticePeriod || data.conditions?.noticePeriod || 'None'}</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -224,6 +247,20 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                         <span className="text-xs font-bold text-primary">{profileCompletion}%</span>
                                     </div>
                                     <Progress value={profileCompletion} className="h-2" />
+                                </div>
+                            )}
+
+                            {/* Qualifications / Titles */}
+                            {hasQualifications && (
+                                <div className="mt-6 pt-4 border-t border-border">
+                                    <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Qualifications / Titles</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {data.qualifications.map((q: string, idx: number) => (
+                                            <span key={idx} className="px-2 py-1 bg-accent/5 text-accent text-xs rounded border border-accent/20">
+                                                {q}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -293,12 +330,172 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                     </div>
                                 </div>
                             )}
+
+                            {/* Abilities */}
+                            {hasRequirements && (
+                                <div>
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">Abilities</p>
+                                    <ul className="space-y-1.5">
+                                        {data.requirements.map((req: string, idx: number) => (
+                                            <li key={idx} className="flex items-start text-sm text-muted-foreground">
+                                                <div className="mt-1 mr-2 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                                {req}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* RIGHT COLUMN: Main Content */}
                 <div className="lg:col-span-8 space-y-6">
+
+                    {/* About / Summary */}
+
+                    {/* Conditions Dashboard */}
+                    <Card className="border-blue-500 bg-card shadow-sm border">
+                        <CardHeader className="py-3">
+                            <CardTitle className="text-base flex items-center">
+                                <DollarSign className="w-4 h-4 mr-2 text-primary" />
+                                Work Preferences & Conditions
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-0 text-sm">
+                            <div className="flex flex-wrap gap-3">
+                                {/* Salary */}
+                                <div className="p-3 bg-muted/40 rounded-xl border border-border/50 inline-flex flex-col w-auto max-w-full">
+                                    <div className="flex items-center text-muted-foreground mb-1 text-xs uppercase tracking-wide">
+                                        <DollarSign className="w-3.5 h-3.5 mr-1" /> Salary
+                                    </div>
+                                    <p className="text-lg font-semibold text-foreground whitespace-nowrap">
+                                        {(data.salary?.min || data.salary?.max)
+                                            ? `${data.currency || '€'}${data.salary.min?.toLocaleString() || '0'} - ${data.salary.max?.toLocaleString() || '0'}`
+                                            : 'Not specified'}
+                                    </p>
+                                    {data.conditions?.entryBonus > 0 && (
+                                        <div className="mt-1 inline-flex items-center px-2 py-0.5 bg-orange-500/10 text-orange-600 text-[11px] font-medium rounded-2xl border border-orange-500/30">
+                                            + {data.currency || '€'}{data.conditions.entryBonus.toLocaleString()} Bonus
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Availability */}
+                                <div className="p-3 bg-muted/40 rounded-xl border border-border/50 inline-flex flex-col w-auto max-w-full">
+                                    <div className="flex items-center text-muted-foreground mb-1 text-[11px] uppercase tracking-wide">
+                                        Available From
+                                    </div>
+                                    <p className="font-medium text-foreground whitespace-nowrap">
+                                        {data.availableFrom
+                                            ? new Date(data.availableFrom).toLocaleDateString()
+                                            : 'Negotiable'}
+                                    </p>
+                                </div>
+
+                                {/* Notice Period */}
+                                <div className="p-3 bg-muted/40 rounded-xl border border-border/50 inline-flex flex-col w-auto max-w-full">
+                                    <div className="flex items-center text-muted-foreground mb-1 text-[11px] uppercase tracking-wide">
+                                        Notice Period
+                                    </div>
+                                    <p className="font-medium text-foreground whitespace-nowrap">
+                                        {data.noticePeriod || data.conditions?.noticePeriod || 'None'}
+                                    </p>
+                                </div>
+
+                                {/* Contract Terms */}
+                                <div className="p-3 bg-muted/40 rounded-xl border border-border/50 inline-flex flex-col w-auto max-w-full">
+                                    <div className="flex items-center text-muted-foreground mb-1 text-[11px] uppercase tracking-wide">
+                                        <FileText className="w-3.5 h-3.5 mr-1" /> Contract Terms
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 mt-1">
+                                        {data.contractTermPreference && data.contractTermPreference.length > 0 ? (
+                                            data.contractTermPreference.map((term: string) => (
+                                                <span key={term} className="px-2 py-0.5 bg-blue-500/10 text-blue-600 text-[11px] rounded-md border border-blue-500/20 capitalize font-medium">
+                                                    {term === 'unlimited' ? 'Permanent' : term}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="font-medium text-foreground">Open</span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Preferred Location */}
+                                <div className="p-3 bg-muted/40 rounded-xl border border-border/50 inline-flex flex-col w-auto max-w-full">
+                                    <div className="flex items-center text-muted-foreground mb-1 text-[11px] uppercase tracking-wide">
+                                        <MapPin className="w-3.5 h-3.5 mr-1" /> Preferred Location
+                                    </div>
+                                    <p className="font-medium whitespace-nowrap">
+                                        {data.preferredWorkLocation || (data.preferredLocations && data.preferredLocations.length > 0
+                                            ? [data.preferredLocations[0].city, data.preferredLocations[0].country].filter(Boolean).join(', ')
+                                            : (primaryLocationString || 'N/A'))}
+                                    </p>
+                                </div>
+
+                                {/* Work Radius */}
+                                <div className="p-3 bg-muted/40 rounded-xl border border-border/50 inline-flex flex-col w-auto max-w-full">
+                                    <div className="flex items-center text-muted-foreground mb-1 text-[11px] uppercase tracking-wide">
+                                        <MapPin className="w-3.5 h-3.5 mr-1" /> Radius
+                                    </div>
+                                    <p className="font-medium whitespace-nowrap">{data.conditions?.workRadius ? `${data.conditions.workRadius} km` : 'N/A'}</p>
+                                </div>
+
+                                {/* Home Office */}
+                                <div className="p-3 bg-muted/40 rounded-xl border border-border/50 inline-flex flex-col w-auto max-w-full">
+                                    <div className="flex items-center text-muted-foreground mb-1 text-[11px] uppercase tracking-wide">
+                                        <Home className="w-3.5 h-3.5 mr-1" /> Remote
+                                    </div>
+                                    <p className="font-medium capitalize whitespace-nowrap">{data.conditions?.homeOfficePreference || 'N/A'}</p>
+                                </div>
+
+                                {/* Travel */}
+                                <div className="p-3 bg-muted/40 rounded-xl border border-border/50 inline-flex flex-col w-auto max-w-full">
+                                    <div className="flex items-center text-muted-foreground mb-1 text-[11px] uppercase tracking-wide">
+                                        <Plane className="w-3.5 h-3.5 mr-1" /> Travel
+                                    </div>
+                                    <p className="font-medium whitespace-nowrap">
+                                        {data.travelWillingness > 0 ? `${data.travelWillingness}%` : 'None'}
+                                    </p>
+                                </div>
+
+                                {/* Vacation */}
+                                <div className="p-3 bg-muted/40 rounded-xl border border-border/50 inline-flex flex-col w-auto max-w-full">
+                                    <div className="flex items-center text-muted-foreground mb-1 text-[11px] uppercase tracking-wide">
+                                        <Activity className="w-3.5 h-3.5 mr-1" /> Vacation
+                                    </div>
+                                    <p className="font-medium whitespace-nowrap">
+                                        {data.conditions?.vacationDays ? `${data.conditions.vacationDays} days` : 'N/A'}
+                                    </p>
+                                </div>
+
+                                {/* Job Types */}
+                                {hasJobTypes && (
+                                    <div className="p-3 bg-muted/40 rounded-xl border border-border/50 inline-flex flex-col sm:flex-row sm:items-center gap-2 w-auto max-w-full">
+                                        <span className="text-[12px] font-medium text-muted-foreground shrink-0">Looking for:</span>
+                                        <div className="flex flex-wrap gap-2">
+                                            {data.jobTypes.map((type: string) => (
+                                                <span key={type} className="px-2.5 py-1 bg-background text-foreground text-[11px] font-medium rounded-md shadow-sm border border-border capitalize">
+                                                    {type}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Additional Conditions */}
+                                {((data.additionalConditions && data.additionalConditions.length > 0) || (data.conditions?.additionalConditions && data.conditions.additionalConditions.length > 0)) && (
+                                    <div className="w-full flex flex-wrap gap-2 mt-1">
+                                        {((data.additionalConditions && data.additionalConditions.length > 0) ? data.additionalConditions : data.conditions?.additionalConditions).map((cond: string, idx: number) => (
+                                            <span key={idx} className="px-3 py-1 bg-orange-500/10 text-orange-600 text-[12px] rounded-2xl border border-orange-500/30 font-medium">
+                                                {cond}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     {/* About / Summary */}
                     {data.description && !isBlurred && (
@@ -313,163 +510,6 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                             </CardContent>
                         </Card>
                     )}
-
-                    {/* Conditions Dashboard */}
-                    <Card className="border-border bg-card shadow-sm">
-                        <CardHeader>
-                            <CardTitle className="text-xl flex items-center">
-                                <DollarSign className="w-5 h-5 mr-2 text-primary" />
-                                Work Preferences & Conditions
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {/* Salary (Big Box) */}
-                                <div className="col-span-2 md:col-span-2 p-4 bg-muted/40 rounded-xl border border-border/50">
-                                    <div className="flex items-center text-muted-foreground mb-1 text-sm">
-                                        <DollarSign className="w-4 h-4 mr-1.5" />
-                                        Salary Expectation
-                                    </div>
-                                    <p className="text-2xl font-bold text-foreground">
-                                        {(data.salary?.min || data.salary?.max)
-                                            ? `${data.currency || '€'}${data.salary.min?.toLocaleString() || '0'} - ${data.salary.max?.toLocaleString() || '0'}`
-                                            : 'Not specified'}
-                                    </p>
-                                    {data.conditions?.entryBonus > 0 && (
-                                        <div className="mt-2 inline-flex items-center px-2 py-0.5 bg-yellow-500/10 text-yellow-600 text-xs font-medium rounded border border-yellow-500/20">
-                                            + {data.currency || '€'}{data.conditions.entryBonus.toLocaleString()} Bonus
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Availability */}
-                                <div className="col-span-1 p-4 bg-muted/40 rounded-xl border border-border/50">
-                                    <div className="flex items-center text-muted-foreground mb-1 text-xs uppercase tracking-wide">
-                                        Available From
-                                    </div>
-                                    <p className="text-lg font-semibold text-foreground truncate">
-                                        {data.availableFrom
-                                            ? new Date(data.availableFrom).toLocaleDateString()
-                                            : 'Negotiable'}
-                                    </p>
-                                </div>
-
-                                {/* Notice Period */}
-                                <div className="col-span-1 p-4 bg-muted/40 rounded-xl border border-border/50">
-                                    <div className="flex items-center text-muted-foreground mb-1 text-xs uppercase tracking-wide">
-                                        Notice Period
-                                    </div>
-                                    <p className="text-lg font-semibold text-foreground truncate">
-                                        {data.noticePeriod || data.conditions?.noticePeriod || 'None'}
-                                    </p>
-                                </div>
-
-                                {/* Contract Terms */}
-                                <div className="col-span-2 md:col-span-2 p-4 bg-muted/40 rounded-xl border border-border/50">
-                                    <div className="flex items-center text-muted-foreground mb-1 text-xs uppercase tracking-wide">
-                                        <FileText className="w-3.5 h-3.5 mr-1" /> Contract Terms
-                                    </div>
-                                    <div className="flex flex-wrap gap-2 mt-1">
-                                        {data.contractTermPreference && data.contractTermPreference.length > 0 ? (
-                                            data.contractTermPreference.map((term: string) => (
-                                                <span key={term} className="px-2 py-0.5 bg-info/10 text-info text-xs rounded-md border border-info/20 capitalize font-medium">
-                                          {term === 'unlimited' ? 'Permanent' : term}
-                                      </span>
-                                            ))
-                                        ) : (
-                                            <span className="font-medium text-foreground">Open</span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Work Radius */}
-                                <div className="col-span-1 p-4 bg-muted/40 rounded-xl border border-border/50">
-                                    <div className="flex items-center text-muted-foreground mb-1 text-xs uppercase tracking-wide">
-                                        <MapPin className="w-3.5 h-3.5 mr-1" /> Radius
-                                    </div>
-                                    <p className="font-medium">{data.conditions?.workRadius ? `${data.conditions.workRadius} km` : 'N/A'}</p>
-                                </div>
-
-                                {/* Home Office */}
-                                <div className="col-span-1 p-4 bg-muted/40 rounded-xl border border-border/50">
-                                    <div className="flex items-center text-muted-foreground mb-1 text-xs uppercase tracking-wide">
-                                        <Home className="w-3.5 h-3.5 mr-1" /> Remote
-                                    </div>
-                                    <p className="font-medium capitalize">{data.conditions?.homeOfficePreference || 'N/A'}</p>
-                                </div>
-
-                                {/* Travel */}
-                                <div className="col-span-1 p-4 bg-muted/40 rounded-xl border border-border/50">
-                                    <div className="flex items-center text-muted-foreground mb-1 text-xs uppercase tracking-wide">
-                                        <Plane className="w-3.5 h-3.5 mr-1" /> Travel
-                                    </div>
-                                    <p className="font-medium">
-                                        {data.travelWillingness > 0 ? `${data.travelWillingness}%` : 'None'}
-                                    </p>
-                                </div>
-
-                                {/* Vacation */}
-                                <div className="col-span-1 p-4 bg-muted/40 rounded-xl border border-border/50">
-                                    <div className="flex items-center text-muted-foreground mb-1 text-xs uppercase tracking-wide">
-                                        <Activity className="w-3.5 h-3.5 mr-1" /> Vacation
-                                    </div>
-                                    <p className="font-medium">
-                                        {data.conditions?.vacationDays ? `${data.conditions.vacationDays} days` : 'N/A'}
-                                    </p>
-                                </div>
-
-                                {/* Job Types (Full Width) */}
-                                {hasJobTypes && (
-                                    <div className="col-span-2 md:col-span-4 p-4 bg-muted/40 rounded-xl border border-border/50 flex flex-col sm:flex-row sm:items-center gap-3">
-                                        <span className="text-sm font-medium text-muted-foreground shrink-0">Looking for:</span>
-                                        <div className="flex flex-wrap gap-2">
-                                            {data.jobTypes.map((type: string) => (
-                                                <span key={type} className="px-2.5 py-1 bg-background text-foreground text-xs font-medium rounded shadow-sm border border-border capitalize">
-                                          {type}
-                                      </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Experience (Timeline Design) */}
-                    <Card className="border-border bg-card shadow-sm">
-                        <CardHeader>
-                            <CardTitle className="text-xl flex items-center">
-                                <Briefcase className="w-5 h-5 mr-2 text-primary" />
-                                Work Experience
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-2">
-                            {!hasExperience ? (
-                                <div className="text-center py-8 border-2 border-dashed border-border rounded-xl">
-                                    <Briefcase className="w-10 h-10 mx-auto text-muted-foreground mb-2 opacity-50" />
-                                    <p className="text-muted-foreground">No experience listed.</p>
-                                </div>
-                            ) : (
-                                <div className="relative border-l-2 border-border/60 ml-3 space-y-8 pb-2">
-                                    {data.experience.map((exp: any, idx: number) => (
-                                        <div key={exp.id || idx} className="relative pl-8">
-                                            <span className="absolute -left-[9px] top-1.5 h-4 w-4 rounded-full border-4 border-card bg-primary ring-1 ring-border" />
-                                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-1">
-                                                <h3 className="text-lg font-bold text-foreground">{exp.job_title || exp.title}</h3>
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground mt-1 sm:mt-0 w-fit">
-                                          {exp.period || `${new Date(exp.startDate).toLocaleDateString()} - ${exp.endDate ? new Date(exp.endDate).toLocaleDateString() : 'Present'}`}
-                                      </span>
-                                            </div>
-                                            <p className="text-primary font-medium text-sm mb-3">{exp.company}</p>
-                                            <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                                                {exp.description}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
 
                     {/* Education (Timeline Design) */}
                     <Card className="border-border bg-card shadow-sm">
@@ -503,74 +543,41 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                         </CardContent>
                     </Card>
 
-                    {/* Abilities (Grid) */}
-                    {(hasRequirements || hasLicenses || hasQualifications) && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {hasRequirements && (
-                                <Card className="border-border bg-card shadow-sm h-full">
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="text-lg flex items-center">
-                                            <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                                            Abilities
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <ul className="space-y-2">
-                                            {data.requirements.map((req: string, idx: number) => (
-                                                <li key={idx} className="flex items-start text-sm text-muted-foreground">
-                                                    <div className="mt-1.5 mr-2 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                                                    {req}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </CardContent>
-                                </Card>
+                    {/* Work Experience */}
+                    <Card className="border-border bg-card shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-xl flex items-center">
+                                <Briefcase className="w-5 h-5 mr-2 text-primary" />
+                                Work Experience
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-2">
+                            {!hasExperience ? (
+                                <div className="text-center py-8 border-2 border-dashed border-border rounded-xl">
+                                    <Briefcase className="w-10 h-10 mx-auto text-muted-foreground mb-2 opacity-50" />
+                                    <p className="text-muted-foreground">No experience listed.</p>
+                                </div>
+                            ) : (
+                                <div className="relative border-l-2 border-border/60 ml-3 space-y-8 pb-2">
+                                    {data.experience.map((exp: any, idx: number) => (
+                                        <div key={exp.id || idx} className="relative pl-8">
+                                            <span className="absolute -left-[9px] top-1.5 h-4 w-4 rounded-full border-4 border-card bg-primary ring-1 ring-border" />
+                                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-1">
+                                                <h3 className="text-lg font-bold text-foreground">{exp.job_title || exp.title}</h3>
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground mt-1 sm:mt-0 w-fit">
+                                                    {exp.period || `${new Date(exp.startDate).toLocaleDateString()} - ${exp.endDate ? new Date(exp.endDate).toLocaleDateString() : 'Present'}`}
+                                                </span>
+                                            </div>
+                                            <p className="text-primary font-medium text-sm mb-3">{exp.company}</p>
+                                            <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                                                {exp.description}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
-
-                            <div className="space-y-6">
-                                {hasQualifications && (
-                                    <Card className="border-border bg-card shadow-sm">
-                                        <CardHeader className="pb-3">
-                                            <CardTitle className="text-lg flex items-center">
-                                                <Award className="w-4 h-4 mr-2 text-accent" />
-                                                Qualifications
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="flex flex-wrap gap-2">
-                                                {data.qualifications.map((q: string, idx: number) => (
-                                                    <span key={idx} className="px-2 py-1 bg-accent/5 text-accent text-xs rounded border border-accent/20">
-                                              {q}
-                                          </span>
-                                                ))}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )}
-
-                                {hasLicenses && (
-                                    <Card className="border-border bg-card shadow-sm">
-                                        <CardHeader className="pb-3">
-                                            <CardTitle className="text-lg flex items-center">
-                                                <Car className="w-4 h-4 mr-2 text-primary" />
-                                                Licenses
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="flex flex-wrap gap-2">
-                                                {data.drivingLicenses.map((license: string, idx: number) => (
-                                                    <span key={idx} className="px-2 py-1 bg-muted text-foreground text-xs rounded border border-border">
-                                              {license}
-                                          </span>
-                                                ))}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
+                        </CardContent>
+                    </Card>
 
                     {/* Awards */}
                     {data.awards && data.awards.length > 0 && (
@@ -670,83 +677,6 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                         </Card>
                     )}
 
-                    {/* ÄNDERUNG: Primary Location Card (Always Visible) */}
-                    {(data.city || data.country) && (
-                        <Card className="border-border bg-card shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="text-xl flex items-center">
-                                    <MapPin className="w-5 h-5 mr-2 text-primary" />
-                                    Primary Location
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex items-center p-4 bg-muted/40 rounded-lg border border-border/50">
-                                    <MapPin className="w-5 h-5 mr-3 text-primary shrink-0" />
-                                    <span className="text-lg font-medium text-foreground">
-                             {primaryLocationString}
-                           </span>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Preferred Locations */}
-                    {data.preferredLocations && data.preferredLocations.length > 0 && (
-                        <Card className="border-border bg-card shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center">
-                                    <MapPin className="w-5 h-5 mr-2 text-accent" />
-                                    Preferred Locations
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {data.preferredLocations.map((loc: any, idx: number) => (
-                                        <div key={idx} className="flex items-center p-3 bg-muted/40 rounded-lg border border-border/50">
-                                            <MapPin className="w-4 h-4 mr-2 text-accent shrink-0" />
-                                            <span className="text-sm font-medium">
-                                      {[loc.city, loc.country].filter(Boolean).join(', ')}
-                                                {loc.continent && <span className="text-muted-foreground ml-1">({loc.continent})</span>}
-                                  </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Reviews */}
-                    <Card className="border-border bg-card shadow-sm">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle className="text-xl flex items-center">
-                                <Star className="w-5 h-5 mr-2 text-yellow-500" />
-                                Reviews
-                            </CardTitle>
-                            {reviews.length > 0 && (
-                                <div className="flex items-center bg-muted/50 px-3 py-1 rounded-full">
-                                    <span className="font-bold mr-1">{averageRating.toFixed(1)}</span>
-                                    <div className="flex">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star key={i} className={`w-3 h-3 ${i < Math.round(averageRating) ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'}`} />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </CardHeader>
-                        <CardContent>
-                            {reviews.length === 0 ? (
-                                <div className="text-center py-8 text-muted-foreground text-sm">
-                                    No reviews received yet.
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {reviews.map((review) => (
-                                        <ReviewCard key={review.id} review={review} />
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
 
                 </div>
             </div>

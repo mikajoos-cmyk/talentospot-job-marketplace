@@ -13,6 +13,9 @@ import JobListCard from '@/components/landing/JobListCard';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/contexts/ToastContext';
 
+import { packagesService } from '@/services/packages.service';
+import { useUser } from '@/contexts/UserContext';
+
 interface MatchingJobsModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -23,14 +26,24 @@ interface MatchingJobsModalProps {
 const MatchingJobsModal: React.FC<MatchingJobsModalProps> = ({ isOpen, onClose, filters, alertTitle }) => {
     const [jobs, setJobs] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
+    const { user } = useUser();
     const navigate = useNavigate();
     const { showToast } = useToast();
 
     useEffect(() => {
         if (isOpen) {
+            checkAccess();
             loadMatchingJobs();
         }
     }, [isOpen, filters]);
+
+    const checkAccess = async () => {
+        if (user?.id && user.role === 'candidate') {
+            const access = await packagesService.hasActivePackage(user.id);
+            setHasPremiumAccess(access);
+        }
+    };
 
     const loadMatchingJobs = async () => {
         try {
@@ -76,8 +89,9 @@ const MatchingJobsModal: React.FC<MatchingJobsModalProps> = ({ isOpen, onClose, 
                                 <JobListCard
                                     key={job.id}
                                     job={job}
-                                    onViewDetail={(id) => navigate(`/jobs/${id}`)}
+                                    onViewDetail={(id) => hasPremiumAccess || user?.role !== 'candidate' ? navigate(`/jobs/${id}`) : navigate('/packages')}
                                     showMatchScore={true}
+                                    obfuscate={!hasPremiumAccess && user?.role === 'candidate'}
                                 />
                             ))}
                         </div>

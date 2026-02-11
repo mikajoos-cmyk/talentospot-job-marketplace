@@ -87,7 +87,7 @@ const CandidateDetailView: React.FC = () => {
   const adminOverride = user.role === 'admin';
   const isBlurred = adminOverride ? false : (accessStatus !== 'approved' || (!hasActivePackage && isShortlisted));
   const canContact = adminOverride ? true : (accessStatus === 'approved' && hasActivePackage);
-  const displayName = isBlurred ? `Candidate #${candidate?.id}` : candidate?.name;
+  const displayName = isBlurred ? 'TalentoSPOT Candidate' : candidate?.name;
 
   const handleShortlist = async () => {
     if (!user?.profile?.id) return;

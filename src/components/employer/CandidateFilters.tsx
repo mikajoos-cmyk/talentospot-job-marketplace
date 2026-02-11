@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { X, Plus, ChevronDown, User, Briefcase, Sparkles, MapPin } from 'lucide-react';
 import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
-import { refugeeOriginCountries } from '@/data/locationData';
+import { masterDataService } from '@/services/master-data.service';
 import { getLanguageLevelOptions } from '@/utils/language-levels';
 import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
 import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
@@ -50,6 +50,19 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
   const [tagInput, setTagInput] = useState('');
   const [personalInfoOpen, setPersonalInfoOpen] = useState(false);
   const [conditionsOpen, setConditionsOpen] = useState(false);
+  const [allCountries, setAllCountries] = useState<{ id: string, name: string }[]>([]);
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const countries = await masterDataService.getCountries();
+        setAllCountries(countries);
+      } catch (error) {
+        console.error('Error fetching countries:', error);
+      }
+    };
+    fetchCountries();
+  }, []);
 
   const handleAddSkill = () => {
     if (skillInput.trim() && !filters.skills.includes(skillInput.trim())) {
@@ -412,8 +425,8 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
                   <SelectContent>
-                    {refugeeOriginCountries.map(country => (
-                      <SelectItem key={country} value={country}>{country}</SelectItem>
+                    {allCountries.map(c => (
+                      <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

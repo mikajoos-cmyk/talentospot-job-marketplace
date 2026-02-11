@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import RichTextEditor from '@/components/ui/rich-text-editor';
-import { Briefcase, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Briefcase, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Sparkles } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
 import { jobsService } from '@/services/jobs.service';
@@ -61,7 +61,7 @@ const JobSearch: React.FC = () => {
   const [coverLetter, setCoverLetter] = useState('');
   const [appliedJobIds, setAppliedJobIds] = useState<string[]>([]);
   const [applying, setApplying] = useState(false);
-  const [accessDenied, setAccessDenied] = useState(false);
+  const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [sortAscending, setSortAscending] = useState<boolean>(false);
 
@@ -189,11 +189,8 @@ const JobSearch: React.FC = () => {
   useEffect(() => {
     const checkAccess = async () => {
       if (user.role === 'candidate') {
-        const canSearch = await packagesService.canSearch(user.id);
-        if (!canSearch) {
-          setAccessDenied(true);
-          return;
-        }
+        const hasPremium = await packagesService.hasActivePackage(user.id);
+        setHasPremiumAccess(hasPremium);
       }
       loadJobs();
     };
@@ -626,7 +623,7 @@ const JobSearch: React.FC = () => {
           )}
 
           <div className={`flex flex-col ${user.role === 'guest' ? 'layout-sm:flex-row' : 'layout-md:flex-row'} gap-8`}>
-            {(user.role === 'guest' || user.role === 'candidate' || user.role === 'admin') && !accessDenied && (
+            {(user.role === 'guest' || user.role === 'candidate' || user.role === 'admin') && (
               <div className={`w-full ${user.role === 'guest' ? 'layout-sm:w-96' : 'layout-md:w-96'} shrink-0`}>
                 <JobFilters
                   filters={filters}
@@ -639,23 +636,25 @@ const JobSearch: React.FC = () => {
             )}
 
             <div className="flex-1 min-w-0 space-y-8">
+              <div>
+                {!hasPremiumAccess && user.role === 'candidate' && (
+                  <Card className="p-6 border border-primary/20 bg-primary/5 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 text-left">
+                      <div className="p-3 rounded-full bg-primary/10 text-primary">
+                        <Sparkles className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-foreground">Unlock Full Job Details</h4>
+                        <p className="text-sm text-muted-foreground">Upgrade your package to see company names, locations and to apply for jobs.</p>
+                      </div>
+                    </div>
+                    <Button onClick={() => navigate('/packages')} className="bg-primary text-primary-foreground hover:bg-primary-hover shrink-0 font-bold">
+                      Upgrade Now
+                    </Button>
+                  </Card>
+                )}
 
-              {accessDenied ? (
-                <Card className="p-12 border border-border bg-card text-center">
-                  <Briefcase className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-h3 font-heading text-foreground mb-4">Search Not Available</h3>
-                  <p className="text-body text-muted-foreground mb-6">
-                    Active job search is available for Starting, Standard and Premium packages.
-                    <br />
-                    As a Free user, you are visible to employers but cannot actively search for jobs.
-                  </p>
-                  <Button onClick={() => navigate('/packages')} className="bg-primary text-primary-foreground hover:bg-primary-hover">
-                    Upgrade Package
-                  </Button>
-                </Card>
-              ) : (
-                <div>
-                  {loading ? (
+                {loading ? (
                     <div className="flex items-center justify-center py-12">
                       <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     </div>
@@ -728,12 +727,13 @@ const JobSearch: React.FC = () => {
                             <JobListCard
                               key={job.id}
                               job={job}
-                              onViewDetail={(id) => navigate(`/jobs/${id}`)}
+                              onViewDetail={(id) => hasPremiumAccess || user.role === 'guest' ? navigate(`/jobs/${id}`) : navigate('/packages')}
                               onApply={handleApply}
                               onSave={handleSaveJob}
                               isSaved={savedJobs.includes(job.id)}
                               isApplied={appliedJobIds.includes(job.id)}
                               showMatchScore={true}
+                              obfuscate={!hasPremiumAccess && user.role === 'candidate'}
                             />
                           ))}
                         </div>
@@ -741,7 +741,6 @@ const JobSearch: React.FC = () => {
                     </>
                   )}
                 </div>
-              )}
             </div>
 
             <Dialog open={applyDialogOpen} onOpenChange={setApplyDialogOpen}>

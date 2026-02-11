@@ -11,7 +11,7 @@ interface CandidateListCardProps {
 
 const CandidateListCard: React.FC<CandidateListCardProps> = ({ candidate, onViewProfile }) => {
     // Extract info safely
-    const name = candidate.profiles?.full_name || `Candidate #${candidate.id.substring(0, 4)}`;
+    const name = candidate.profiles?.full_name || 'TalentoSPOT Candidate';
     const title = candidate.job_title || 'Professional';
     const location = `${candidate.city || ''}, ${candidate.country || ''}`;
     const status = candidate.employment_status || candidate.employmentStatus || 'Available';

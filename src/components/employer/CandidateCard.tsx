@@ -267,7 +267,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   };
 
   const displayName = isBlurredEffect
-    ? `Candidate #${String(candidate.id).slice(-3).padStart(3, '0')}`
+    ? 'TalentoSPOT Candidate'
     : candidate.profiles?.full_name || candidate.name || 'Candidate';
 
   const shouldBlurIdentity = isBlurredEffect;
@@ -453,7 +453,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                 const path = user.role === 'guest' ? `/candidates/${candidate.id}` : `/employer/candidates/${candidate.id}`;
                 navigate(path);
               }}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 shadow-lg shadow-blue-200"
+              className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-11 shadow-lg shadow-primary/20"
             >
               View Profile
             </Button>
@@ -471,7 +471,8 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
             <Button
               onClick={handleAction}
               disabled={requestPending && !canContact}
-              className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-11 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="outline"
+              className="w-full border-primary/20 text-primary hover:bg-primary/5 font-bold h-11"
             >
               {canContact ? 'Message' : accessStatus === 'rejected' ? 'Rejected' : requestPending ? 'Pending' : 'Request Data'}
             </Button>

@@ -15,6 +15,7 @@ import { candidateService } from '@/services/candidate.service';
 import { savedJobsService } from '@/services/saved-jobs.service';
 import { shortlistsService } from '@/services/shortlists.service';
 import { analyticsService } from '@/services/analytics.service';
+import { packagesService } from '@/services/packages.service';
 import { dataAccessService } from '@/services/data-access.service';
 import { Activity } from '@/components/candidate/ActivityFeed';
 import {
@@ -48,6 +49,8 @@ const CandidateDashboard: React.FC = () => {
   const [shortlistedBy, setShortlistedBy] = useState<any[]>([]);
   const [dataRequests, setDataRequests] = useState<any[]>([]);
   const [viewStats, setViewStats] = useState<any[]>([]);
+  const [detailedViews, setDetailedViews] = useState<any[]>([]);
+  const [hasPackage, setHasPackage] = useState<boolean>(false);
   const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
@@ -59,17 +62,21 @@ const CandidateDashboard: React.FC = () => {
 
         const candidateProfile = user.profile || await candidateService.getCandidateProfile(user.id);
 
-        const [appsData, invitationsData, savedJobsData, followersData, requestsData, statsData, totalViewsCount] = await Promise.all([
+        const [appsData, invitationsData, savedJobsData, followersData, requestsData, statsData, totalViewsCount, detailed, hasPkg] = await Promise.all([
           applicationsService.getApplicationsByCandidate(candidateProfile.id),
           invitationsService.getInvitationsByCandidate(candidateProfile.id),
           savedJobsService.getSavedJobs(candidateProfile.id),
           shortlistsService.getCompaniesShortlistingCandidate(candidateProfile.id),
           dataAccessService.getRequestsByCandidate(candidateProfile.id),
           analyticsService.getViewStats(user.id),
-          analyticsService.getTotalViews(user.id)
+          analyticsService.getTotalViews(user.id),
+          analyticsService.getDetailedViews(user.id),
+          packagesService.hasActivePackage(user.id)
         ]);
 
         setViewStats(statsData);
+        setDetailedViews(detailed || []);
+        setHasPackage(!!hasPkg);
         setApplications(appsData || []);
         const appliedJobIds = new Set(appsData?.map((app: any) => app.job_id) || []);
         const filteredInvitations = invitationsData?.filter((inv: any) =>
@@ -337,8 +344,8 @@ const CandidateDashboard: React.FC = () => {
                   </Button>
                 )}
                 {modalType === 'requests' && (
-                  <Button onClick={() => { setModalOpen(false); navigate('/candidate/messages'); }} size="sm" variant="outline">
-                    View Messages
+                  <Button onClick={() => { setModalOpen(false); navigate('/candidate/invitations'); }} size="sm" variant="outline">
+                    View Requests
                   </Button>
                 )}
               </div>
@@ -529,6 +536,65 @@ const CandidateDashboard: React.FC = () => {
                     <p className="text-h3 font-heading text-foreground">{stats.profileViews}</p>
                   </Card>
                 </div>
+
+                {!hasPackage && (
+                  <div className="relative overflow-hidden rounded-xl border border-warning/30 bg-gradient-to-r from-amber-50/80 to-yellow-50/60 dark:from-amber-900/10 dark:to-yellow-900/10 p-5">
+                    <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-amber-200/30 blur-2xl" />
+                    <div className="flex items-start gap-4">
+                      <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+                          <path d="M3 10.5V9a6 6 0 1 1 12 0v1.5" />
+                          <path d="M5 10.5h8a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6.5a2 2 0 0 1 2-2Z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-body font-semibold text-amber-900 dark:text-amber-200">Unternehmensnamen ausblendet</h4>
+                        <p className="text-sm text-amber-800/90 dark:text-amber-200/80 mt-1">
+                          Um die Unternehmen zu sehen, die dein Profil besucht haben, benötigst du ein aktives, bezahltes Paket.
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-3">
+                          <Button
+                            className="bg-primary text-primary-foreground hover:bg-primary-hover"
+                            size="sm"
+                            onClick={() => { setModalOpen(false); navigate('/candidate/packages'); }}
+                          >
+                            Jetzt upgraden
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {detailedViews.length === 0 ? (
+                    <p className="text-body-sm text-muted-foreground text-center py-8">Noch keine Profilaufrufe.</p>
+                  ) : (
+                    detailedViews.map((v: any) => {
+                      const name = v.employer_profiles?.company_name || 'Unternehmen';
+                      return (
+                        <Card key={v.id} className="p-3 border border-border bg-background">
+                          <div className="flex items-center gap-3">
+                            <div className={!hasPackage ? 'blur-sm select-none' : ''}>
+                              <Avatar className="w-10 h-10 rounded-lg">
+                                <AvatarImage src={v.employer_profiles?.logo_url || ''} className="object-cover" />
+                                <AvatarFallback className="rounded-lg">
+                                  <Building2 className="w-5 h-5 text-muted-foreground" />
+                                </AvatarFallback>
+                              </Avatar>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-body font-medium text-foreground ${!hasPackage ? 'blur-sm select-none' : ''}`}>
+                                {name}
+                              </p>
+                              <p className="text-caption text-muted-foreground">{formatDate(v.created_at)}</p>
+                            </div>
+                          </div>
+                        </Card>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             )}
 
@@ -583,7 +649,7 @@ const CandidateDashboard: React.FC = () => {
                       className="p-4 border border-border bg-background hover:shadow-md transition-all duration-normal cursor-pointer"
                       onClick={() => {
                         setModalOpen(false);
-                        navigate('/candidate/messages');
+                        navigate('/candidate/invitations');
                       }}
                     >
                       <div className="flex items-center space-x-4">

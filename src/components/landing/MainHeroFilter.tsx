@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -15,7 +15,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
 import { Separator } from '@/components/ui/separator';
-import { refugeeOriginCountries } from '@/data/locationData';
+import { masterDataService } from '@/services/master-data.service';
 import { getLanguageLevelOptions } from '@/utils/language-levels';
 import { LocationPicker, LocationValue } from '@/components/shared/LocationPicker';
 import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
@@ -82,6 +82,19 @@ const MainHeroFilter = () => {
     const [languageLevel, setLanguageLevel] = useState('B2');
     const [tagInput, setTagInput] = useState('');
     const [benefitInput, setBenefitInput] = useState('');
+    const [allCountries, setAllCountries] = useState<{ id: string, name: string }[]>([]);
+
+    useEffect(() => {
+        const fetchCountries = async () => {
+            try {
+                const countries = await masterDataService.getCountries();
+                setAllCountries(countries);
+            } catch (error) {
+                console.error('Error fetching countries:', error);
+            }
+        };
+        fetchCountries();
+    }, []);
 
 
     const handleSearch = () => {
@@ -593,7 +606,7 @@ const MainHeroFilter = () => {
                                                     <Select value={filters.originCountry} onValueChange={(val) => setFilters({ ...filters, originCountry: val })}>
                                                         <SelectTrigger className="h-10 bg-muted/40 border-none rounded-lg"><SelectValue placeholder="Select Country" /></SelectTrigger>
                                                         <SelectContent>
-                                                            {refugeeOriginCountries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                                            {allCountries.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                                                         </SelectContent>
                                                     </Select>
                                                 </div>

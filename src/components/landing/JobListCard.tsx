@@ -12,6 +12,7 @@ interface JobListCardProps {
     isSaved?: boolean;
     isApplied?: boolean;
     showMatchScore?: boolean;
+    obfuscate?: boolean;
 }
 
 const JobListCard: React.FC<JobListCardProps> = ({
@@ -21,7 +22,8 @@ const JobListCard: React.FC<JobListCardProps> = ({
     onSave,
     isSaved = false,
     isApplied = false,
-    showMatchScore = false
+    showMatchScore = false,
+    obfuscate = false
 }) => {
     const { isAuthenticated } = useUser();
     // Helper to format currency
@@ -35,7 +37,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
             <div className={`flex flex-col ${isAuthenticated ? 'layout-xl:flex-row' : 'layout-md:flex-row'}`}>
                 {/* Left Section: Identity & Primary Info */}
                 <div className={`p-6 ${isAuthenticated ? 'layout-xl:w-1/4 layout-xl:border-b-0 layout-xl:border-r' : 'layout-md:w-1/4 layout-md:border-b-0 layout-md:border-r'} flex flex-col items-center text-center border-b border-border bg-muted/5`}>
-                    <div className={`relative mb-4 w-24 h-24 rounded-xl overflow-hidden bg-white shadow-sm border border-border/40 p-1 flex items-center justify-center group-hover:scale-105 transition-transform duration-500 ${!isAuthenticated ? 'blur-md select-none' : ''}`}>
+                    <div className={`relative mb-4 w-24 h-24 rounded-xl overflow-hidden bg-white shadow-sm border border-border/40 p-1 flex items-center justify-center group-hover:scale-105 transition-transform duration-500 ${obfuscate ? 'blur-md select-none' : ''}`}>
                         {job.employer_profiles?.logo_url ? (
                             <img
                                 src={job.employer_profiles.logo_url}
@@ -48,7 +50,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                     </div>
 
                     <h4 className="text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">{job.title}</h4>
-                    <p className={`text-sm font-medium text-muted-foreground mb-1 ${!isAuthenticated ? 'blur-md select-none' : ''}`}>{job.employer_profiles?.company_name}</p>
+                    <p className={`text-sm font-medium text-muted-foreground mb-1 ${obfuscate ? 'blur-md select-none' : ''}`}>{job.employer_profiles?.company_name}</p>
 
                     <div className="w-full pt-4 mt-auto border-t border-border/50 space-y-2">
                         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -85,7 +87,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Location</p>
-                                <p className="text-sm font-semibold">{job.city}, {job.country}</p>
+                                <p className={`text-sm font-semibold ${obfuscate ? 'blur-[4px] select-none' : ''}`}>{job.city}, {job.country}</p>
                             </div>
                         </div>
 
@@ -107,11 +109,11 @@ const JobListCard: React.FC<JobListCardProps> = ({
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Salary Offer</p>
-                                <p className="text-sm font-semibold">
+                                <p className={`text-sm font-semibold ${obfuscate ? 'blur-[4px] select-none' : ''}`}>
                                     {job.salary_min ? `${formatMoney(job.salary_min)} - ${formatMoney(job.salary_max)} ${job.salary_currency || 'EUR'}` : 'Competitive Salary'}
                                 </p>
                                 {job.entry_bonus && (
-                                    <p className="text-xs font-bold text-[#FFB800] mt-0.5">Entry Bonus: €{formatMoney(job.entry_bonus)}</p>
+                                    <p className={`text-xs font-bold text-[#FFB800] mt-0.5 ${obfuscate ? 'blur-[2px] select-none' : ''}`}>Entry Bonus: €{formatMoney(job.entry_bonus)}</p>
                                 )}
                             </div>
                         </div>
@@ -135,7 +137,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight flex items-center gap-1.5">
                                 <CheckCircle2 className="w-3 h-3" /> Required Skills
                             </p>
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className={`flex flex-wrap gap-1.5 ${obfuscate ? 'blur-[3px] select-none' : ''}`}>
                                 {(job.required_skills || []).slice(0, 4).map((skill: any, i: number) => {
                                     const skillName = typeof skill === 'string' ? skill : (skill.name || 'Skill');
                                     return (
@@ -157,7 +159,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight flex items-center gap-1.5">
                                 <Award className="w-3 h-3" /> Qualifications
                             </p>
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className={`flex flex-wrap gap-1.5 ${obfuscate ? 'blur-[3px] select-none' : ''}`}>
                                 {(job.required_qualifications || []).slice(0, 3).map((qual: any, i: number) => {
                                     const qualName = typeof qual === 'string' ? qual : (qual.name || 'Qualification');
                                     return (
@@ -174,7 +176,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight flex items-center gap-1.5">
                                 <Languages className="w-3 h-3" /> Languages
                             </p>
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className={`flex flex-wrap gap-1.5 ${obfuscate ? 'blur-[3px] select-none' : ''}`}>
                                 {(job.required_languages || []).slice(0, 3).map((lang: any, i: number) => {
                                     const langName = typeof lang === 'string' ? lang : (lang.name || 'Language');
                                     const level = typeof lang === 'string' ? '' : (lang.level || lang.proficiency_level || '');
@@ -193,7 +195,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight flex items-center gap-1.5">
                                     <Sparkles className="w-3 h-3" /> Benefits
                                 </p>
-                                <div className="flex flex-wrap gap-1.5">
+                                <div className={`flex flex-wrap gap-1.5 ${obfuscate ? 'blur-[3px] select-none' : ''}`}>
                                     {job.benefits.slice(0, 4).map((benefit: string, i: number) => (
                                         <span key={i} className="px-2 py-0.5 bg-secondary/10 text-secondary text-[11px] font-bold rounded-md border border-secondary/20">
                                             {benefit}
@@ -217,14 +219,14 @@ const JobListCard: React.FC<JobListCardProps> = ({
                         variant="outline"
                         className="w-full border-primary/20 text-primary hover:bg-primary/5 font-bold h-10 shadow-sm"
                     >
-                        View Details
+                        {obfuscate ? 'Unlock Details' : 'View Details'}
                     </Button>
 
                     {onApply && (
                         <Button
                             onClick={() => onApply(job)}
-                            disabled={isApplied}
-                            className={`w-full font-bold h-10 shadow-md ${isApplied
+                            disabled={isApplied || obfuscate}
+                            className={`w-full font-bold h-10 shadow-md ${isApplied || obfuscate
                                 ? 'bg-muted text-muted-foreground'
                                 : 'bg-primary hover:bg-primary/90 text-white shadow-primary/20'
                                 }`}
@@ -237,8 +239,9 @@ const JobListCard: React.FC<JobListCardProps> = ({
                         <Button
                             variant="ghost"
                             onClick={() => onSave(job.id)}
+                            disabled={obfuscate}
                             className={`w-full gap-2 ${isSaved ? 'text-accent' : 'text-muted-foreground'
-                                } hover:text-foreground`}
+                                } ${obfuscate ? 'opacity-50 cursor-not-allowed' : 'hover:text-foreground'}`}
                         >
                             <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
                             <span className="text-xs font-bold">{isSaved ? 'Saved' : 'Save'}</span>

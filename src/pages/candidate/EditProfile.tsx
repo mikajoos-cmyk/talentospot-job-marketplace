@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { Card } from '../../components/ui/card';
@@ -14,7 +14,7 @@ import { storageService } from '../../services/storage.service';
 import { ArrowLeft, Upload, X, Plus, Trash2, Image as ImageIcon, Briefcase, GraduationCap, MapPin, Video, Car, Plane, Loader2, Globe, Edit2, Award } from 'lucide-react';
 import { ProjectImageCarousel } from '../../components/shared/ProjectImageCarousel';
 import { Switch } from '../../components/ui/switch';
-import { refugeeOriginCountries } from '../../data/locationData';
+import { masterDataService } from '../../services/master-data.service';
 import { AutocompleteInput } from '../../components/shared/AutocompleteInput';
 import { LocationPicker } from '../../components/shared/LocationPicker';
 import { findContinent } from '../../utils/locationUtils';
@@ -55,6 +55,19 @@ const EditProfile: React.FC = () => {
   const cvInputRef = useRef<HTMLInputElement>(null);
   const awardImageInputRef = useRef<HTMLInputElement>(null);
   const [tagInput, setTagInput] = useState('');
+  const [allCountries, setAllCountries] = useState<{ id: string, name: string }[]>([]);
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const countries = await masterDataService.getCountries();
+        setAllCountries(countries);
+      } catch (error) {
+        console.error('Error fetching countries:', error);
+      }
+    };
+    fetchCountries();
+  }, []);
 
   const [experience, setExperience] = useState<any[]>([]);
   const [education, setEducation] = useState<any[]>([]);
@@ -977,9 +990,9 @@ const EditProfile: React.FC = () => {
                         <SelectValue placeholder="Select country of origin" />
                       </SelectTrigger>
                       <SelectContent>
-                        {refugeeOriginCountries.sort().map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
+                        {allCountries.map((c) => (
+                          <SelectItem key={c.id} value={c.name}>
+                            {c.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
