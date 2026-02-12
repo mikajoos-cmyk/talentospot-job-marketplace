@@ -11,7 +11,7 @@ import { packagesService } from '../../services/packages.service';
 import ReviewModal from '../../components/shared/ReviewModal';
 import ReviewCard from '../../components/shared/ReviewCard';
 import UpgradeModal from '../../components/shared/UpgradeModal';
-import { reviewsService } from '../../services/reviews.service';
+import { reviewsService } from '@/services/reviews.service';
 import { Review } from '../../types/review';
 import { Progress } from '../../components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
