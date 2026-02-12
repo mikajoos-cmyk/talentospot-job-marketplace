@@ -19,6 +19,9 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useUser();
 
+  // Zentrale Konfiguration für die Inhaltsbreite auf der Landing Page
+  const contentMaxWidth = "max-w-7xl";
+
   useEffect(() => {
     if (isAuthenticated) {
       const dashboardPath = user.role === 'employer' ? '/employer/dashboard' : '/candidate/dashboard';
@@ -97,7 +100,7 @@ const LandingPage: React.FC = () => {
         <div className="absolute top-0 right-0 w-1/3 h-full bg-primary/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 -z-10"></div>
         <div className="absolute bottom-0 left-0 w-1/4 h-1/2 bg-accent/5 blur-3xl rounded-full translate-y-1/2 -translate-x-1/2 -z-10"></div>
 
-        <div className="container mx-auto px-6 text-center">
+        <div className={`container mx-auto px-6 ${contentMaxWidth} text-center`}>
           <div className="absolute top-4 right-4 md:top-8 md:right-6 flex flex-col items-end gap-2 z-20">
             <Button
               size="sm"
@@ -124,18 +127,18 @@ const LandingPage: React.FC = () => {
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading text-foreground mb-6 leading-[1.1] tracking-tight">
             <span>Connecting</span> <span className="text-primary italic">Ambition</span> <br className="hidden md:block" /> <span>with Opportunity.</span>
           </h1>
-          <p className="text-body-lg text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
+          <p className={`text-body-lg text-muted-foreground mb-12 mx-auto leading-relaxed ${contentMaxWidth}`}>
             <span>Discover a world of talented professionals and leading employers.</span>
             <br />
             <span>Automated matching, verified profiles, and seamless communication.</span>
           </p>
 
-          <MainHeroFilter />
+          <MainHeroFilter className={contentMaxWidth} />
 
-          <QuickAccessStatus />
+          <QuickAccessStatus className={contentMaxWidth} />
 
           {/* Registration Prompts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto mt-8 mb-12">
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 mx-auto mt-8 mb-12 ${contentMaxWidth}`}>
             <Card
               className="p-6 border-2 border-primary/20 hover:border-primary/40 bg-white/50 backdrop-blur-sm cursor-pointer group transition-all duration-300 hover:-translate-y-1"
               onClick={() => navigate('/register?role=candidate')}
@@ -173,7 +176,7 @@ const LandingPage: React.FC = () => {
 
       {/* Featured Talent Section */}
       <section className="py-24 bg-white">
-        <div className="container mx-auto px-6">
+        <div className={`container mx-auto px-6 ${contentMaxWidth}`}>
           <div className="flex items-end justify-between mb-12">
             <div>
               <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Featured Talents</h2>
@@ -200,7 +203,7 @@ const LandingPage: React.FC = () => {
       {/* Featured Jobs Section */}
       {featuredJobs.length > 0 && (
         <section className="py-24 bg-primary/5">
-          <div className="container mx-auto px-6">
+          <div className={`container mx-auto px-6 ${contentMaxWidth}`}>
             <div className="flex items-end justify-between mb-12">
               <div>
                 <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Featured Jobs</h2>
@@ -223,7 +226,7 @@ const LandingPage: React.FC = () => {
 
       {/* Top Employers Section */}
       <section className="py-24 bg-white">
-        <div className="container mx-auto px-6">
+        <div className={`container mx-auto px-6 ${contentMaxWidth}`}>
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Top Employers</h2>
             <p className="text-muted-foreground">Work with industry leaders and innovative companies.</p>
@@ -257,7 +260,7 @@ const LandingPage: React.FC = () => {
 
       {/* Latest Jobs Section */}
       <section className="py-24 bg-white">
-        <div className="container mx-auto px-6">
+        <div className={`container mx-auto px-6 ${contentMaxWidth}`}>
           <div className="flex items-end justify-between mb-12">
             <div>
               <h2 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Latest Opportunities</h2>

@@ -17,7 +17,7 @@ const statuses = [
     { id: 'any', label: 'All Talents', icon: Users },
 ];
 
-const QuickAccessStatus = () => {
+const QuickAccessStatus = ({ className }: { className?: string }) => {
     const navigate = useNavigate();
 
     const handleStatusClick = (statusId: string) => {
@@ -29,7 +29,7 @@ const QuickAccessStatus = () => {
     };
 
     return (
-        <div className="w-full max-w-6xl mx-auto px-4 mt-8">
+        <div className={`w-full mx-auto px-4 mt-8 ${className}`}>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {statuses.map((status) => (
                     <button

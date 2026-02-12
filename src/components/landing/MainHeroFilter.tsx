@@ -21,7 +21,7 @@ import { LocationPicker, LocationValue } from '@/components/shared/LocationPicke
 import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
 import { findContinent } from '@/utils/locationUtils';
 
-const MainHeroFilter = () => {
+const MainHeroFilter = ({ className }: { className?: string }) => {
     const navigate = useNavigate();
     const [searchMode, setSearchMode] = useState<'candidates' | 'jobs'>('candidates');
     const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
@@ -307,7 +307,7 @@ const MainHeroFilter = () => {
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 relative z-10">
+        <div className={`w-full mx-auto px-4 relative z-10 ${className}`}>
             {/* Search Mode Toggle */}
             <div className="flex justify-center mb-6">
                 <div className="bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-lg border-4 border-primary/40 flex gap-1">
