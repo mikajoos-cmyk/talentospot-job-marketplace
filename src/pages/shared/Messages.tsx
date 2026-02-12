@@ -28,6 +28,7 @@ import { userActionsService } from '../../services/user-actions.service';
 import { packagesService } from '../../services/packages.service';
 import { MessageAttachment } from '@/components/shared/MessageAttachment';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import UpgradeModal from '@/components/shared/UpgradeModal';
 
 const Messages: React.FC = () => {
   const navigate = useNavigate();
@@ -57,6 +58,8 @@ const Messages: React.FC = () => {
   const [blockStatus, setBlockStatus] = useState<{ isBlocked: boolean; blockedByMe: boolean } | null>(null);
   const [canSendMessages, setCanSendMessages] = useState(false);
   const [canSendAttachments, setCanSendAttachments] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeModalContent, setUpgradeModalContent] = useState({ title: '', description: '' });
 
   const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString);
@@ -337,21 +340,37 @@ const Messages: React.FC = () => {
 
     // Check if user can send messages
     if (!canSendMessages) {
-      showToast({
-        title: 'Upgrade Required',
-        description: 'You need an active package to send messages.',
-        variant: 'destructive',
-      });
+      if (user.role === 'employer') {
+        setUpgradeModalContent({
+          title: 'Paket erforderlich',
+          description: 'Sie benötigen ein aktives Paket, um Nachrichten senden zu können.'
+        });
+        setUpgradeModalOpen(true);
+      } else {
+        showToast({
+          title: 'Upgrade Required',
+          description: 'You need an active package to send messages.',
+          variant: 'destructive',
+        });
+      }
       return;
     }
 
     // Check if user can send attachments
     if (fileUrl && !canSendAttachments) {
-      showToast({
-        title: 'Upgrade Required',
-        description: 'You need an active package to send attachments.',
-        variant: 'destructive',
-      });
+      if (user.role === 'employer') {
+        setUpgradeModalContent({
+          title: 'Paket erforderlich',
+          description: 'Sie benötigen ein aktives Paket, um Anhänge senden zu können.'
+        });
+        setUpgradeModalOpen(true);
+      } else {
+        showToast({
+          title: 'Upgrade Required',
+          description: 'You need an active package to send attachments.',
+          variant: 'destructive',
+        });
+      }
       return;
     }
 
@@ -1002,6 +1021,13 @@ const Messages: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <UpgradeModal
+        open={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        title={upgradeModalContent.title}
+        description={upgradeModalContent.description}
+      />
     </AppLayout>
   );
 };

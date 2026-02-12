@@ -30,6 +30,40 @@ const PostJob: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeModalContent, setUpgradeModalContent] = useState({ title: '', description: '' });
+  const [loadingInitial, setLoadingInitial] = useState(true);
+
+  React.useEffect(() => {
+    const checkLimit = async () => {
+      if (!user?.id) {
+        setLoadingInitial(false);
+        return;
+      }
+      try {
+        const { packagesService } = await import('../../services/packages.service');
+        const limitCheck = await packagesService.checkLimit(user.id, 'jobs');
+        if (!limitCheck.allowed) {
+          setUpgradeModalContent({
+            title: 'Upgrade erforderlich',
+            description: limitCheck.message || 'Ihr aktuelles Paket erlaubt keine weiteren Stellenausschreibungen.'
+          });
+          setUpgradeModalOpen(true);
+        }
+      } catch (err) {
+        console.error('Error checking limit on load:', err);
+      } finally {
+        setLoadingInitial(false);
+      }
+    };
+    checkLimit();
+  }, [user?.id]);
+
+  const handleUpgradeModalChange = (open: boolean) => {
+    setUpgradeModalOpen(open);
+    if (!open) {
+      // Wenn das Modal geschlossen wird, navigiere zurück zu My Jobs
+      navigate('/employer/jobs');
+    }
+  };
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -206,6 +240,16 @@ const PostJob: React.FC = () => {
   const handlePublish = () => {
     saveJob('active');
   };
+
+  if (loadingInitial) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -675,7 +719,7 @@ const PostJob: React.FC = () => {
       </div>
       <UpgradeModal
         open={upgradeModalOpen}
-        onOpenChange={setUpgradeModalOpen}
+        onOpenChange={handleUpgradeModalChange}
         title={upgradeModalContent.title}
         description={upgradeModalContent.description}
       />

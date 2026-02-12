@@ -170,7 +170,7 @@ const CandidateListCard: React.FC<CandidateListCardProps> = ({ candidate, onView
                 <div className="p-6 md:w-48 flex flex-col justify-center items-center gap-3 bg-muted/5 border-t md:border-t-0 md:border-l border-border">
                     <Button
                         onClick={() => onViewProfile(candidate.id)}
-                        className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-11 shadow-lg shadow-primary/20"
+                        className="w-full bg-primary hover:bg-primary-hover text-white font-bold h-11 shadow-lg shadow-primary/20"
                     >
                         View Profile
                     </Button>

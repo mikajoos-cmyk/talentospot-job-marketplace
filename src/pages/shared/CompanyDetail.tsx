@@ -11,10 +11,12 @@ import { jobsService } from '../../services/jobs.service';
 import { packagesService } from '../../services/packages.service';
 import { useToast } from '../../contexts/ToastContext';
 import ReviewCard from '../../components/shared/ReviewCard';
-// import ReviewModal from '../../components/shared/ReviewModal';
+import ReviewModal from '../../components/shared/ReviewModal';
 import { useUser } from '../../contexts/UserContext';
 import { followsService } from '../../services/follows.service';
 import { analyticsService } from '../../services/analytics.service';
+import { reviewsService } from '../../services/reviews.service';
+import { Review } from '../../types/review';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import UpgradeBanner from '../../components/shared/UpgradeBanner';
 
@@ -25,6 +27,8 @@ const CompanyDetail: React.FC = () => {
   const { user } = useUser(); // Need user context
   const [company, setCompany] = useState<any>(null);
   const [companyJobs, setCompanyJobs] = useState<any[]>([]);
+  const [companyReviews, setCompanyReviews] = useState<Review[]>([]);
+  const [averageRating, setAverageRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -36,12 +40,16 @@ const CompanyDetail: React.FC = () => {
       if (!id) return;
       setLoading(true);
       try {
-        const [companyData, jobsData] = await Promise.all([
+        const [companyData, jobsData, reviewsData, ratingData] = await Promise.all([
           employerService.getEmployerById(id),
-          jobsService.getJobsByEmployer(id)
+          jobsService.getJobsByEmployer(id),
+          reviewsService.getReviewsForTarget(id),
+          reviewsService.getAverageRating(id)
         ]);
         setCompany(companyData);
         setCompanyJobs(jobsData);
+        setCompanyReviews(reviewsData);
+        setAverageRating(ratingData);
 
         // Check follow status if user is logged in
         if (user?.profile?.id && user.role === 'candidate') {
@@ -83,9 +91,7 @@ const CompanyDetail: React.FC = () => {
     }
   }, [company]);
 
-  // Use empty reviews/rating for now as they are not in the current DB schema per survey
-  const companyReviews: any[] = [];
-  const averageRating = 0;
+  // No longer using static reviews/rating
 
   const handleFollow = async () => {
     if (!user?.profile?.id) {
@@ -132,12 +138,39 @@ const CompanyDetail: React.FC = () => {
     navigate(`${basePath}?conversationId=${company?.id}`);
   };
 
-  const handleSubmitReview = (_rating: number, _comment: string) => {
-    showToast({
-      title: 'Review Submitted',
-      description: `Your review for ${company?.company_name} has been submitted`,
-    });
-    setReviewModalOpen(false);
+  const handleSubmitReview = async (rating: number, comment: string) => {
+    if (!user?.id || !id) return;
+
+    try {
+      await reviewsService.submitReview({
+        reviewer_id: user.id,
+        target_id: id,
+        target_role: 'employer',
+        rating,
+        comment
+      });
+
+      showToast({
+        title: 'Review Submitted',
+        description: `Your review for ${company?.company_name} has been submitted`,
+      });
+
+      // Refresh reviews
+      const [reviewsData, ratingData] = await Promise.all([
+        reviewsService.getReviewsForTarget(id),
+        reviewsService.getAverageRating(id)
+      ]);
+      setCompanyReviews(reviewsData);
+      setAverageRating(ratingData);
+      setReviewModalOpen(false);
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      showToast({
+        title: 'Error',
+        description: 'Failed to submit review. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
 
@@ -458,14 +491,13 @@ const CompanyDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Reviews are temporarily disabled as they are not in the current DB schema */}
-      {/* <ReviewModal
+      <ReviewModal
         open={reviewModalOpen}
         onOpenChange={setReviewModalOpen}
         targetName={company.company_name}
         targetRole="employer"
         onSubmit={handleSubmitReview}
-      /> */}
+      />
     </AppLayout>
   );
 };

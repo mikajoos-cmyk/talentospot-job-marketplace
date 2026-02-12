@@ -13,6 +13,7 @@ import { employerService } from '@/services/employer.service';
 import { followsService } from '@/services/follows.service';
 import { analyticsService } from '@/services/analytics.service';
 import { packagesService } from '@/services/packages.service';
+import UpgradeModal from '@/components/shared/UpgradeModal';
 import ProfileViewsChart from '@/components/candidate/ProfileViewsChart';
 import BlurredContent from '@/components/shared/BlurredContent';
 import {
@@ -45,6 +46,9 @@ const EmployerDashboard: React.FC = () => {
   const [viewStats, setViewStats] = useState<any[]>([]);
   const [detailedViews, setDetailedViews] = useState<any[]>([]);
   const [hasActivePackage, setHasActivePackage] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeModalContent, setUpgradeModalContent] = useState({ title: '', description: '' });
+  const [isCheckingLimit, setIsCheckingLimit] = useState(false);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -102,6 +106,29 @@ const EmployerDashboard: React.FC = () => {
     setModalOpen(true);
   };
 
+  const handlePostJobClick = async () => {
+    if (!user.id) return;
+
+    try {
+      setIsCheckingLimit(true);
+      const limitCheck = await packagesService.checkLimit(user.id, 'jobs');
+      if (!limitCheck.allowed) {
+        setUpgradeModalContent({
+          title: 'Upgrade erforderlich',
+          description: limitCheck.message || 'Ihr aktuelles Paket erlaubt keine weiteren Stellenausschreibungen.'
+        });
+        setUpgradeModalOpen(true);
+        return;
+      }
+      navigate('/employer/post-job');
+    } catch (error) {
+      console.error('Error checking job limit:', error);
+      navigate('/employer/post-job');
+    } finally {
+      setIsCheckingLimit(false);
+    }
+  };
+
   const getModalTitle = () => {
     switch (modalType) {
       case 'candidates': return 'All Candidates';
@@ -145,12 +172,21 @@ const EmployerDashboard: React.FC = () => {
             <p className="text-body text-muted-foreground">Manage your recruitment pipeline.</p>
           </div>
           <Button
-            onClick={() => navigate('/employer/post-job')}
+            onClick={handlePostJobClick}
+            disabled={isCheckingLimit}
             className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
           >
+            {isCheckingLimit && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Post New Job
           </Button>
         </div>
+
+        <UpgradeModal
+          open={upgradeModalOpen}
+          onOpenChange={setUpgradeModalOpen}
+          title={upgradeModalContent.title}
+          description={upgradeModalContent.description}
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
           <DashboardStatsCard

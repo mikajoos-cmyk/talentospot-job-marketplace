@@ -9,6 +9,10 @@ import { useToast } from '../../contexts/ToastContext';
 import { applicationsService } from '../../services/applications.service';
 import { packagesService } from '../../services/packages.service';
 import ReviewModal from '../../components/shared/ReviewModal';
+import ReviewCard from '../../components/shared/ReviewCard';
+import UpgradeModal from '../../components/shared/UpgradeModal';
+import { reviewsService } from '../../services/reviews.service';
+import { Review } from '../../types/review';
 import { Progress } from '../../components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
@@ -25,9 +29,12 @@ const ApplicationDetail: React.FC = () => {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [hasActivePackage, setHasActivePackage] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [candidateReviews, setCandidateReviews] = useState<Review[]>([]);
+  const [averageRating, setAverageRating] = useState(0);
 
   React.useEffect(() => {
-    const fetchApplication = async () => {
+    const fetchData = async () => {
       if (!id) return;
       setLoading(true);
       try {
@@ -36,15 +43,26 @@ const ApplicationDetail: React.FC = () => {
           const canMessage = await packagesService.canSendMessages(user.id);
           setHasActivePackage(canMessage);
         }
-        const data = await applicationsService.getApplicationById(id);
-        setApplication(data);
+        
+        const appData = await applicationsService.getApplicationById(id);
+        setApplication(appData);
+
+        // After getting appData, we can fetch reviews for the correct candidate_id
+        if (appData?.candidate_id) {
+          const [rData, avgData] = await Promise.all([
+            reviewsService.getReviewsForTarget(appData.candidate_id),
+            reviewsService.getAverageRating(appData.candidate_id)
+          ]);
+          setCandidateReviews(rData);
+          setAverageRating(avgData);
+        }
       } catch (error) {
         console.error('Error fetching application detail:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchApplication();
+    fetchData();
   }, [id]);
 
   if (loading) {
@@ -140,11 +158,50 @@ const ApplicationDetail: React.FC = () => {
     }
   };
 
-  const handleSubmitReview = (_rating: number, _comment: string) => {
-    showToast({
-      title: 'Review Submitted',
-      description: `Your review for ${candidate?.full_name} has been submitted`,
-    });
+  const handleSubmitReview = async (rating: number, comment: string) => {
+    if (!application?.candidate_id) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      await reviewsService.submitReview({
+        reviewer_id: user.id,
+        target_id: application.candidate_id,
+        target_role: 'candidate',
+        rating,
+        comment
+      });
+
+      showToast({
+        title: 'Review Submitted',
+        description: `Your review for ${candidate?.full_name} has been submitted`,
+      });
+
+      // Refresh reviews
+      const [rData, avgData] = await Promise.all([
+        reviewsService.getReviewsForTarget(application.candidate_id),
+        reviewsService.getAverageRating(application.candidate_id)
+      ]);
+      setCandidateReviews(rData);
+      setAverageRating(avgData);
+      setReviewModalOpen(false);
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      showToast({
+        title: 'Error',
+        description: 'Failed to submit review. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleMessageClick = () => {
+    if (!hasActivePackage) {
+      setUpgradeModalOpen(true);
+      return;
+    }
+    navigate(`/employer/messages?conversationId=${id}`);
   };
 
   return (
@@ -338,8 +395,8 @@ const ApplicationDetail: React.FC = () => {
                       <TooltipTrigger asChild>
                         <span className="inline-block w-full">
                           <Button
-                            onClick={() => navigate(`/employer/messages?conversationId=${id}`)}
-                            disabled={!hasActivePackage}
+                            onClick={handleMessageClick}
+                            disabled={false}
                             className="w-full bg-info text-info-foreground hover:bg-info/90 font-normal disabled:opacity-50"
                           >
                             {!hasActivePackage ? (
@@ -491,6 +548,13 @@ const ApplicationDetail: React.FC = () => {
         targetName={candidate?.full_name}
         targetRole="candidate"
         onSubmit={handleSubmitReview}
+      />
+
+      <UpgradeModal
+        open={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        title="Paket erforderlich"
+        description="Sie benötigen ein aktives Paket, um Nachrichten an Talente senden zu können."
       />
 
       <AlertDialog open={acceptDialogOpen} onOpenChange={setAcceptDialogOpen}>

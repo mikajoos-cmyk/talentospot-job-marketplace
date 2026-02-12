@@ -53,8 +53,8 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
           // Dynamically import to avoid circular dependency if any, or just use it.
           // Assuming packagesService is available global or imported
           const { packagesService } = await import('@/services/packages.service');
-          const sub = await packagesService.getUserSubscription(user.id);
-          setHasActivePackage(!!sub);
+          const hasPackage = await packagesService.hasActivePackage(user.id);
+          setHasActivePackage(hasPackage);
         } catch (e) {
           console.error("Error checking package", e);
         }
@@ -138,10 +138,18 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
       return;
     }
 
+    // Check for package if employer
+    if (user.role === 'employer' && !hasActivePackage) {
+      setUpgradeModalContent({
+        title: 'Paket erforderlich',
+        description: 'Sie benötigen ein aktives Paket, um diese Aktion ausführen zu können.'
+      });
+      setUpgradeModalOpen(true);
+      return;
+    }
+
     if (canContact) {
       navigate(`/employer/messages?conversationId=${candidate.id}`);
-    } else if (user.role === 'employer' && !hasActivePackage && accessStatus === 'approved') {
-        navigate('/employer/packages');
     } else if (isBlurredEffect && accessStatus !== 'pending' && accessStatus !== 'rejected') {
       try {
         if (!user.profile?.id) return;
@@ -234,6 +242,16 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
       navigate('/login');
       return;
     }
+
+    if (user.role === 'employer' && !hasActivePackage) {
+      setUpgradeModalContent({
+        title: 'Paket erforderlich',
+        description: 'Sie benötigen ein aktives Paket, um Einladungen an Talente senden zu können.'
+      });
+      setUpgradeModalOpen(true);
+      return;
+    }
+
     try {
       const candidateName = candidate.profiles?.full_name || 'candidate';
 
@@ -455,7 +473,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                 const path = user.role === 'guest' ? `/candidates/${candidate.id}` : `/employer/candidates/${candidate.id}`;
                 navigate(path);
               }}
-              className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-11 shadow-lg shadow-primary/20"
+              className="w-full bg-primary hover:bg-primary-hover text-white font-bold h-11 shadow-lg shadow-primary/20"
             >
               View Profile
             </Button>
@@ -463,7 +481,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
             <Button
               onClick={handleShortlist}
               variant={isShortlisted ? "default" : "outline"}
-              className={`w-full font-bold h-11 ${isShortlisted ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'border-amber-500/20 text-amber-600 hover:bg-amber-50'}`}
+              className={`w-full font-bold h-11 ${isShortlisted ? 'bg-amber-500 hover:bg-amber-600 hover:text-white text-white' : 'border-amber-500/20 text-amber-600 hover:bg-amber-50 hover:text-amber-600'}`}
             >
               {isShortlisted ? 'Shortlisted' : 'Shortlist'}
             </Button>
@@ -474,7 +492,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
               onClick={handleAction}
               disabled={requestPending && !canContact}
               variant="outline"
-              className="w-full border-primary/20 text-primary hover:bg-primary/5 font-bold h-11"
+              className="w-full border-primary/20 text-primary hover:bg-primary/5 hover:text-primary font-bold h-11"
             >
               {canContact ? 'Message' : accessStatus === 'rejected' ? 'Rejected' : requestPending ? 'Pending' : 'Request Data'}
             </Button>
@@ -488,7 +506,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                 }
               }}
               variant="outline"
-              className="w-full border-primary/20 text-primary hover:bg-primary/5 font-bold h-11"
+              className="w-full border-primary/20 text-primary hover:bg-primary/5 hover:text-primary font-bold h-11"
             >
               <UserPlus className="w-4 h-4 mr-2" />
               Invite

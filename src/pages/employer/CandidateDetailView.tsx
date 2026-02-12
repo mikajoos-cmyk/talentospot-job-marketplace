@@ -12,6 +12,7 @@ import { jobsService } from '../../services/jobs.service';
 import { shortlistsService } from '../../services/shortlists.service';
 import { analyticsService } from '../../services/analytics.service';
 import ReviewModal from '../../components/shared/ReviewModal';
+import { reviewsService } from '../../services/reviews.service';
 import UpgradeModal from '../../components/shared/UpgradeModal';
 import { Loader2 } from 'lucide-react';
 import {
@@ -51,7 +52,7 @@ const CandidateDetailView: React.FC = () => {
           (user.role === 'employer' && user.id) ? jobsService.getJobsByEmployer(user.id) : Promise.resolve([])
         ]);
         setCandidate(candidateData);
-        setEmployerJobs(jobsData);
+        setEmployerJobs(jobsData?.filter((j: any) => j.status === 'active') || []);
 
         if (user.role === 'employer' && user.profile?.id) {
           try {
@@ -108,14 +109,49 @@ const CandidateDetailView: React.FC = () => {
     }
   };
 
-  const handleInvite = (jobTitle: string) => {
-    showToast({ title: 'Invitation Sent', description: `${displayName} has been invited to apply for ${jobTitle}` });
-    setInviteDialogOpen(false);
+  const handleInvite = async (jobTitle: string) => {
+    if (user.role === 'employer' && !hasActivePackage) {
+      setUpgradeModalContent({
+        title: 'Paket erforderlich',
+        description: 'Sie benötigen ein aktives Paket, um Einladungen an Talente senden zu können.'
+      });
+      setUpgradeModalOpen(true);
+      return;
+    }
+    
+    try {
+      const candidateName = candidate.name || 'candidate';
+      
+      // Find the job ID for the selected title
+      const selectedJob = employerJobs.find(j => j.title === jobTitle);
+      if (!selectedJob) {
+        showToast({ title: 'Error', description: 'Job not found', variant: 'destructive' });
+        return;
+      }
+
+      const { invitationsService } = await import('../../services/invitations.service');
+      await invitationsService.sendInvitation({
+        job_id: selectedJob.id,
+        candidate_id: candidate.id,
+        employer_id: user.profile.id,
+        message: `We would like to invite you to apply for the position: ${jobTitle}`,
+      });
+
+      showToast({ title: 'Invitation Sent', description: `${displayName} has been invited to apply for ${jobTitle}` });
+      setInviteDialogOpen(false);
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      showToast({ title: 'Error', description: 'Failed to send invitation', variant: 'destructive' });
+    }
   };
 
   const handleMessage = () => {
     if (user.role === 'employer' && !hasActivePackage) {
-      navigate('/employer/packages');
+      setUpgradeModalContent({
+        title: 'Paket erforderlich',
+        description: 'Sie benötigen ein aktives Paket, um Nachrichten an Talente senden zu können.'
+      });
+      setUpgradeModalOpen(true);
       return;
     }
     const basePath = user.role === 'admin' ? '/admin/messages' : '/employer/messages';
@@ -124,6 +160,14 @@ const CandidateDetailView: React.FC = () => {
 
   const handleRequestData = async () => {
     if (!user.profile?.id) return;
+    if (user.role === 'employer' && !hasActivePackage) {
+      setUpgradeModalContent({
+        title: 'Paket erforderlich',
+        description: 'Sie benötigen ein aktives Paket, um Datenanfragen an Talente senden zu können.'
+      });
+      setUpgradeModalOpen(true);
+      return;
+    }
     try {
       const result = await candidateService.requestDataAccess(candidate.id, user.profile.id);
       if (result.status === 'exists') {
@@ -158,8 +202,22 @@ const CandidateDetailView: React.FC = () => {
     }
   };
 
-  const handleSubmitReview = (_rating: number, _comment: string) => {
-    showToast({ title: 'Review Submitted', description: `Your review for ${displayName} has been submitted` });
+  const handleSubmitReview = async (rating: number, comment: string) => {
+    if (!id || !user?.id) return;
+    try {
+      await reviewsService.submitReview({
+        reviewer_id: user.id,
+        target_id: id,
+        target_role: 'candidate',
+        rating,
+        comment
+      });
+      showToast({ title: 'Review Submitted', description: `Your review for ${displayName} has been submitted` });
+      setReviewModalOpen(false);
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      showToast({ title: 'Error', description: 'Failed to submit review', variant: 'destructive' });
+    }
   };
 
   if (loading) {
@@ -204,16 +262,19 @@ const CandidateDetailView: React.FC = () => {
             {adminOverride ? 'Message' : (!isBlurred && candidate?.name ? `Message ${candidate.name.split(' ')[0]}` : 'Message')}
           </Button>
 
-          {canContact ? (
+          <Button onClick={() => setInviteDialogOpen(true)} variant="outline">
+            <UserPlus className="w-4 h-4 mr-2" /> Invite
+          </Button>
+
+          {(canContact || (accessStatus === 'approved')) && (
               <>
-                <Button onClick={() => setInviteDialogOpen(true)} variant="outline">
-                  <UserPlus className="w-4 h-4 mr-2" /> Invite
-                </Button>
                 <Button onClick={() => setReviewModalOpen(true)} variant="outline" className="text-accent border-accent hover:bg-accent/10">
                   <Star className="w-4 h-4 mr-2" /> Review
                 </Button>
               </>
-          ) : (
+          )}
+
+          {!canContact && accessStatus !== 'approved' && (
               <Button
                   onClick={handleRequestData}
                   disabled={['pending', 'rejected', 'approved'].includes(accessStatus)}
@@ -256,12 +317,18 @@ const CandidateDetailView: React.FC = () => {
               <DialogDescription>Select a job to invite {displayName} to apply</DialogDescription>
             </DialogHeader>
             <div className="space-y-3 py-4 max-h-96 overflow-y-auto">
-              {employerJobs.map((job: any) => (
+              {employerJobs.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No active jobs available. Post a job first to invite candidates.
+                </p>
+              ) : (
+                employerJobs.map((job: any) => (
                   <div key={job.id} className="p-4 border border-border rounded-lg hover:bg-muted cursor-pointer" onClick={() => handleInvite(job.title)}>
                     <h4 className="font-medium">{job.title}</h4>
                     <p className="text-sm text-muted-foreground">{job.city}</p>
                   </div>
-              ))}
+                ))
+              )}
             </div>
           </DialogContent>
         </Dialog>

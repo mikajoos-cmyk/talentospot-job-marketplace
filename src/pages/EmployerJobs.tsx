@@ -4,10 +4,12 @@ import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, DollarSign, Users, MoreVertical, Edit, Eye, Archive, Trash2, CheckCircle, Loader2, TrendingUp } from 'lucide-react';
+import { MapPin, DollarSign, Users, MoreVertical, Edit, Eye, Archive, Trash2, CheckCircle, Loader2, TrendingUp, Plus } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
 import { jobsService } from '@/services/jobs.service';
+import { packagesService } from '@/services/packages.service';
+import UpgradeModal from '@/components/shared/UpgradeModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +25,9 @@ const EmployerJobs: React.FC = () => {
 
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeModalContent, setUpgradeModalContent] = useState({ title: '', description: '' });
+  const [isCheckingLimit, setIsCheckingLimit] = useState(false);
 
   useEffect(() => {
     const loadJobs = async () => {
@@ -68,12 +73,47 @@ const EmployerJobs: React.FC = () => {
     navigate(`/employer/jobs/${jobId}/edit`);
   };
 
+  const handlePostJobClick = async () => {
+    if (!user.profile?.id) return;
+
+    try {
+      setIsCheckingLimit(true);
+      const limitCheck = await packagesService.checkLimit(user.id, 'jobs');
+      if (!limitCheck.allowed) {
+        setUpgradeModalContent({
+          title: 'Upgrade erforderlich',
+          description: limitCheck.message || 'Ihr aktuelles Paket erlaubt keine weiteren Stellenausschreibungen.'
+        });
+        setUpgradeModalOpen(true);
+        return;
+      }
+      navigate('/employer/post-job');
+    } catch (error) {
+      console.error('Error checking job limit:', error);
+      navigate('/employer/post-job'); // Fallback to let the page handle it
+    } finally {
+      setIsCheckingLimit(false);
+    }
+  };
+
   const handleViewJob = (jobId: string) => {
     navigate(`/jobs/${jobId}`);
   };
 
   const handleChangeStatus = async (jobId: string, newStatus: 'active' | 'draft' | 'closed') => {
     try {
+      if (newStatus === 'active') {
+        const limitCheck = await packagesService.checkLimit(user.id, 'jobs');
+        if (!limitCheck.allowed) {
+          setUpgradeModalContent({
+            title: 'Upgrade erforderlich',
+            description: limitCheck.message || 'Ihr aktuelles Paket erlaubt keine weiteren aktiven Stellenausschreibungen.'
+          });
+          setUpgradeModalOpen(true);
+          return;
+        }
+      }
+
       await jobsService.updateJob(jobId, { status: newStatus });
 
       setJobs(jobs.map(job =>
@@ -291,12 +331,25 @@ const EmployerJobs: React.FC = () => {
             <p className="text-body text-muted-foreground">Manage your job postings and applications.</p>
           </div>
           <Button
-            onClick={() => navigate('/employer/post-job')}
+            onClick={handlePostJobClick}
+            disabled={isCheckingLimit}
             className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
           >
+            {isCheckingLimit ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4 mr-2" />
+            )}
             Post New Job
           </Button>
         </div>
+
+        <UpgradeModal
+          open={upgradeModalOpen}
+          onOpenChange={setUpgradeModalOpen}
+          title={upgradeModalContent.title}
+          description={upgradeModalContent.description}
+        />
 
         <Tabs defaultValue="active" className="w-full">
           <TabsList className="bg-muted">

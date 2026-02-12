@@ -217,7 +217,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                     <Button
                         onClick={() => onViewDetail(job.id)}
                         variant="outline"
-                        className="w-full border-primary/20 text-primary hover:bg-primary/5 font-bold h-10 shadow-sm"
+                        className="w-full border-primary/20 text-primary hover:bg-primary/5 hover:text-primary font-bold h-10 shadow-sm"
                     >
                         {obfuscate ? 'View Details' : 'View Details'}
                     </Button>
@@ -228,7 +228,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                             disabled={isApplied}
                             className={`w-full font-bold h-10 shadow-md ${isApplied
                                 ? 'bg-muted text-muted-foreground'
-                                : 'bg-primary hover:bg-primary/90 text-white shadow-primary/20'
+                                : 'bg-primary hover:bg-primary-hover text-white shadow-primary/20'
                                 }`}
                         >
                             {isApplied ? 'Applied' : 'Apply Now'}
