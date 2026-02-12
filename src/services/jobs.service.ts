@@ -374,9 +374,16 @@ export const jobsService = {
     }
 
     if (filters.sector) {
-      const escapedSector = `"${filters.sector}"`;
-      query = query.or(`sector.eq.${escapedSector},employer_profiles.industry.eq.${escapedSector}`);
+      const useClientSideFiltering = filters.enablePartialMatch || filters.enableFlexibleMatch;
+
+      if (!useClientSideFiltering) {
+        const escapedSector = `"${filters.sector}"`;
+        // Nutze jetzt die neue virtuelle Spalte 'employer_industry'
+        // Kein 'employer_profiles.' Prefix mehr nötig!
+        query = query.or(`sector.eq.${escapedSector},employer_industry.eq.${escapedSector}`);
+      }
     }
+
 
     if (filters.city) {
       // 2. RADIUS SEARCH for Jobs

@@ -865,7 +865,9 @@ export const candidateService = {
     }
 
     if (filters.sector) {
-      query = query.eq('sector', filters.sector);
+      if (!filters.enablePartialMatch) {
+        query = query.eq('sector', filters.sector);
+      }
     }
 
     if (filters.city) {

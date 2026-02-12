@@ -49,9 +49,10 @@ export const calculateJobMatchScore = (job: any, filters: any, flexibleMode: boo
     // Sector
     if (filters.sector && filters.sector !== '' && filters.sector !== 'all') {
         total += 1;
-        if (job.company?.industry === filters.sector) {
+        // Check both job's sector and employer's industry
+        if (job.sector === filters.sector || job.company?.industry === filters.sector) {
             matched += 1;
-        } else if (!job.company?.industry) {
+        } else if (!job.sector && !job.company?.industry) {
             matched += 0.5;
         }
     }
