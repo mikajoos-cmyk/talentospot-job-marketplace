@@ -128,7 +128,7 @@ const EditProfile: React.FC = () => {
             currency: profile.currency || 'EUR',
             isRefugee: profile.isRefugee || false,
             originCountry: profile.originCountry || '',
-            contractTermPreference: (profile.contractTermPreference || []).map((t: string) => t === 'permanent' ? 'unlimited' : t),
+            contractTermPreference: (profile.contractTermPreference || []).map((t: string) => t === 'permanent' ? 'permanent' : t),
             yearsOfExperience: profile.yearsOfExperience || 0,
             nationalityCode: profile.nationalityCode || '',
           });
@@ -1121,23 +1121,13 @@ const EditProfile: React.FC = () => {
                 <Label htmlFor="sector" className="text-body-sm font-medium text-foreground mb-2 block">
                   Sector
                 </Label>
-                <Select value={formData.sector} onValueChange={(value) => setFormData({ ...formData, sector: value })}>
-                  <SelectTrigger className="bg-background text-foreground border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="IT">IT</SelectItem>
-                    <SelectItem value="Healthcare">Healthcare</SelectItem>
-                    <SelectItem value="Finance">Finance</SelectItem>
-                    <SelectItem value="Engineering">Engineering</SelectItem>
-                    <SelectItem value="Marketing">Marketing</SelectItem>
-                    <SelectItem value="Sales">Sales</SelectItem>
-                    <SelectItem value="Education">Education</SelectItem>
-                    <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                    <SelectItem value="Retail">Retail</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+                <AutocompleteInput
+                  category="sectors"
+                  value={formData.sector}
+                  onChange={(value) => setFormData({ ...formData, sector: value })}
+                  placeholder="Search sector..."
+                  className="bg-background text-foreground border-border"
+                />
               </div>
 
               <div>
@@ -1520,7 +1510,7 @@ const EditProfile: React.FC = () => {
                 Preferred Contract Terms
               </Label>
               <div className="flex flex-wrap gap-3">
-                {['unlimited', 'temporary'].map((term) => (
+                {['permanent', 'temporary'].map((term) => (
                   <button
                     key={term}
                     type="button"

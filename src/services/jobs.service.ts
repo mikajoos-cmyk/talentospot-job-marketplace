@@ -374,7 +374,8 @@ export const jobsService = {
     }
 
     if (filters.sector) {
-      query = query.or(`sector.eq.${filters.sector},employer_profiles.industry.eq.${filters.sector}`);
+      const escapedSector = `"${filters.sector}"`;
+      query = query.or(`sector.eq.${escapedSector},employer_profiles.industry.eq.${escapedSector}`);
     }
 
     if (filters.city) {

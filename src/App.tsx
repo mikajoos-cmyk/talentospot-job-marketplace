@@ -223,7 +223,7 @@ function App() {
               <Route
                 path="/employer/candidates/:id"
                 element={
-                  <ProtectedRoute requiredRole="employer">
+                  <ProtectedRoute requiredRole="employer" allowOwnProfilePreview={true}>
                     <CandidateDetailView />
                   </ProtectedRoute>
                 }

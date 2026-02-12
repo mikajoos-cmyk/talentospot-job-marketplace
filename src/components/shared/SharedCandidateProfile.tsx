@@ -106,14 +106,14 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
             {/* Optionaler Banner unterhalb des Zurück-Buttons */}
             {bannerBelowHeader}
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
 
                 {/* LEFT COLUMN: Sidebar (Sticky) */}
-                <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-6">
+                <div className="xl:col-span-4 space-y-6 xl:sticky xl:top-6">
 
                     {/* Identity Card */}
                     <Card className="overflow-hidden border-border bg-card shadow-sm">
-                        <div className="h-32 bg-gradient-to-r from-primary/10 via-primary/5 to-background border-b border-border/50 relative">
+                        <div className="h-28 sm:h-36 xl:h-40 bg-gradient-to-r from-primary/10 via-primary/5 to-background border-b border-border/50 relative">
                             {data.isRefugee && (
                                 <div className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm border border-accent/20 text-accent text-xs font-medium px-2.5 py-1 rounded-full flex items-center shadow-sm">
                                     <Globe className="w-3 h-3 mr-1.5" />
@@ -123,29 +123,31 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                             )}
                         </div>
                         <div className="px-6 pb-6">
-                            <div className="relative flex justify-between items-end -mt-20 mb-6">
-                                <Avatar className={`w-48 h-48 rounded-2xl overflow-hidden border border-border bg-card shadow-md ${isBlurred ? 'blur-sm select-none' : ''}`}>
+                            <div className="relative flex justify-between items-end -mt-16 sm:-mt-24 xl:-mt-28 mb-6">
+                                <Avatar className={`w-40 h-40 sm:w-56 sm:h-56 xl:w-64 xl:h-64 rounded-2xl overflow-hidden border border-border bg-card shadow-md ${isBlurred ? 'blur-sm select-none' : ''}`}>
                                     <AvatarImage src={user.avatar} alt={displayName} />
-                                    <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+                                    <AvatarFallback className="bg-primary/10 text-primary text-3xl font-bold">
                                         {displayName?.charAt(0) || 'U'}
                                     </AvatarFallback>
                                 </Avatar>
+                            </div>
+
+                            <div className="mb-6 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-foreground leading-tight">{displayName}</h2>
+                                    <p className="text-primary font-medium mt-1">{data.title || 'No job title specified'}</p>
+                                </div>
                                 {data.cvUrl && !isBlurred && (
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        className="rounded-full h-10 w-10 bg-card hover:bg-muted shadow-sm"
+                                        className="rounded-full h-10 w-10 bg-card hover:bg-muted shadow-sm ml-4"
                                         onClick={() => window.open(data.cvUrl, '_blank')}
                                         title="Download CV"
                                     >
                                         <Download className="w-4 h-4 text-foreground" />
                                     </Button>
                                 )}
-                            </div>
-
-                            <div className="mb-6">
-                                <h2 className="text-2xl font-bold text-foreground leading-tight">{displayName}</h2>
-                                <p className="text-primary font-medium mt-1">{data.title || 'No job title specified'}</p>
                             </div>
 
                             {/* Contact & Personal Details */}
@@ -355,7 +357,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                 </div>
 
                 {/* RIGHT COLUMN: Main Content */}
-                <div className="lg:col-span-8 space-y-6">
+                <div className="xl:col-span-8 space-y-6">
 
                     {/* About / Summary */}
 
@@ -426,16 +428,27 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                     </div>
                                 </div>
 
-                                {/* Preferred Location */}
+                                {/* Preferred Locations */}
                                 <div className="p-3 bg-muted/40 rounded-xl border border-border/50 inline-flex flex-col w-auto max-w-full">
                                     <div className="flex items-center text-muted-foreground mb-1 text-[11px] uppercase tracking-wide">
-                                        <MapPin className="w-3.5 h-3.5 mr-1" /> Preferred Location
+                                        <MapPin className="w-3.5 h-3.5 mr-1" /> Preferred Locations
                                     </div>
-                                    <p className="font-medium whitespace-nowrap">
-                                        {data.preferredWorkLocation || (data.preferredLocations && data.preferredLocations.length > 0
-                                            ? [data.preferredLocations[0].city, data.preferredLocations[0].country].filter(Boolean).join(', ')
-                                            : (primaryLocationString || 'N/A'))}
-                                    </p>
+                                    {Array.isArray(data.preferredLocations) && data.preferredLocations.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {data.preferredLocations.map((loc: any, idx: number) => {
+                                                const label = [loc.city, loc.country].filter(Boolean).join(', ') || loc.country || loc.continent || 'N/A';
+                                                return (
+                                                    <span key={idx} className="px-2.5 py-1 bg-background text-foreground text-[11px] font-medium rounded-md shadow-sm border border-border">
+                                                        {label}
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p className="font-medium whitespace-nowrap">
+                                            {data.preferredWorkLocation || (primaryLocationString || 'N/A')}
+                                        </p>
+                                    )}
                                 </div>
 
                                 {/* Work Radius */}

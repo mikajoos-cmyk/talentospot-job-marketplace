@@ -4,10 +4,11 @@ import { useUser } from '@/contexts/UserContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'candidate' | 'employer' | 'admin';
+  requiredRole?: 'candidate' | 'employer' | 'admin' | ('candidate' | 'employer' | 'admin')[];
+  allowOwnProfilePreview?: boolean;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole, allowOwnProfilePreview }) => {
   const { user, isAuthenticated, loading, logout } = useUser();
 
   if (loading) {
@@ -27,13 +28,24 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
-    let redirectPath = '/';
-    if (user.role === 'candidate') redirectPath = '/candidate/dashboard';
-    else if (user.role === 'employer') redirectPath = '/employer/dashboard';
-    else if (user.role === 'admin') redirectPath = '/admin/dashboard';
+  if (requiredRole) {
+    const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    
+    if (!roles.includes(user.role)) {
+      // Ausnahme für Kandidaten, die ihr eigenes Profil in der Vorschau sehen wollen
+      if (allowOwnProfilePreview && user.role === 'candidate') {
+        console.log('[ProtectedRoute] Allowing candidate to preview own profile');
+        return <>{children}</>;
+      }
 
-    return <Navigate to={redirectPath} replace />;
+      console.log('[ProtectedRoute] Access denied. User role:', user.role, 'Required:', roles);
+      let redirectPath = '/';
+      if (user.role === 'candidate') redirectPath = '/candidate/dashboard';
+      else if (user.role === 'employer') redirectPath = '/employer/dashboard';
+      else if (user.role === 'admin') redirectPath = '/admin/dashboard';
+
+      return <Navigate to={redirectPath} replace />;
+    }
   }
 
   return <>{children}</>;

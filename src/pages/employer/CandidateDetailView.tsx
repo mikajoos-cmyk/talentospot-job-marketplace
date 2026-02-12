@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { Button } from '../../components/ui/button';
 import { MessageSquare, UserPlus, Heart, Star, Crown } from 'lucide-react';
@@ -29,7 +29,10 @@ import UpgradeBanner from '@/components/shared/UpgradeBanner';
 const CandidateDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useUser();
+  const searchParams = new URLSearchParams(location.search);
+  const isPreview = searchParams.get('preview') === 'true';
   const { showToast } = useToast();
   const [candidate, setCandidate] = useState<any>(null);
   const [employerJobs, setEmployerJobs] = useState<any[]>([]);
@@ -45,12 +48,14 @@ const CandidateDetailView: React.FC = () => {
   React.useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
+      console.log('[CandidateDetailView] Fetching data for ID:', id, 'User ID:', user?.id, 'Is Preview:', isPreview);
       setLoading(true);
       try {
         const [candidateData, jobsData] = await Promise.all([
           candidateService.getCandidateProfile(id),
           (user.role === 'employer' && user.id) ? jobsService.getJobsByEmployer(user.id) : Promise.resolve([])
         ]);
+        console.log('[CandidateDetailView] Candidate data loaded:', !!candidateData);
         setCandidate(candidateData);
         setEmployerJobs(jobsData?.filter((j: any) => j.status === 'active') || []);
 
@@ -77,7 +82,7 @@ const CandidateDetailView: React.FC = () => {
           }
         }
       } catch (error) {
-        console.error('Error fetching candidate detail:', error);
+        console.error('[CandidateDetailView] Error fetching candidate detail:', error);
       } finally {
         setLoading(false);
       }
@@ -86,8 +91,14 @@ const CandidateDetailView: React.FC = () => {
   }, [id, user.id, user.role, user.profile?.id]);
 
   // Admins dürfen immer alles sehen – keine Verpixelung
+  // Wenn isPreview aktiv ist und es das eigene Profil ist, auch keine Verpixelung
+  const isOwnProfile = user?.id && id ? user.id.toLowerCase() === id.toLowerCase() : false;
   const adminOverride = user.role === 'admin';
-  const isBlurred = adminOverride ? false : (accessStatus !== 'approved' || (!hasActivePackage && isShortlisted));
+  const previewOverride = isPreview && isOwnProfile;
+  
+  console.log('[CandidateDetailView] Override status:', { isOwnProfile, adminOverride, previewOverride, userRole: user?.role });
+
+  const isBlurred = (adminOverride || previewOverride) ? false : (accessStatus !== 'approved' || (!hasActivePackage && isShortlisted));
   const canContact = adminOverride ? true : (accessStatus === 'approved' && hasActivePackage);
   const displayName = isBlurred ? 'TalentoSPOT Candidate' : candidate?.name;
 
@@ -234,6 +245,7 @@ const CandidateDetailView: React.FC = () => {
 
   // Action Buttons Component
   const ActionButtons = () => {
+    if (isPreview) return null;
     if (user.role === 'guest') {
       return (
           <Button size="sm" onClick={() => navigate('/login')} className="bg-primary text-primary-foreground">
@@ -301,7 +313,7 @@ const CandidateDetailView: React.FC = () => {
             actions={<ActionButtons />}
             onBack={() => navigate(user.role === 'guest' ? '/candidates' : '/employer/candidates')}
             bannerBelowHeader={
-              !adminOverride && isBlurred ? (
+              !adminOverride && !previewOverride && isBlurred ? (
                 <UpgradeBanner
                   message="Sie benötigen ein Paket und/oder eine Freigabe, um die Kontaktdaten dieses Talents sehen zu können."
                   upgradeLink="/employer/packages"

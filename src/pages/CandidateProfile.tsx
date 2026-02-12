@@ -78,7 +78,11 @@ const CandidateProfile: React.FC = () => {
       <>
         <Button
             variant="outline"
-            onClick={() => navigate('/candidate/profile/preview')}
+            onClick={() => {
+              const url = `/employer/candidates/${user?.id}?preview=true`;
+              console.log('[CandidateProfile] Opening Public View URL:', url);
+              window.open(url, '_blank');
+            }}
             className="hidden sm:flex"
         >
           <UserCircle className="w-4 h-4 mr-2" />
