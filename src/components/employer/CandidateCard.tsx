@@ -115,7 +115,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   // In that case, `hasActivePackage` is false, but `accessStatus` is `approved`.
   // Should I blur then? Yes, "Restricting ... for employers without a purchased package".
   // So:
-  const isBlurredEffect = user.role === 'guest' || accessStatus !== 'approved' || (user.role === 'employer' && !hasActivePackage);
+  const isBlurredEffect = user.role === 'guest' || accessStatus !== 'approved';
   const canContact = user.role !== 'guest' && accessStatus === 'approved' && hasActivePackage;
 
   useEffect(() => {
@@ -140,7 +140,9 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
 
     if (canContact) {
       navigate(`/employer/messages?conversationId=${candidate.id}`);
-    } else if (isBlurred && accessStatus !== 'pending' && accessStatus !== 'rejected') {
+    } else if (user.role === 'employer' && !hasActivePackage && accessStatus === 'approved') {
+        navigate('/employer/packages');
+    } else if (isBlurredEffect && accessStatus !== 'pending' && accessStatus !== 'rejected') {
       try {
         if (!user.profile?.id) return;
         const result = await candidateService.requestDataAccess(candidate.id, user.profile.id);
@@ -298,7 +300,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
           <div className={`p-6 ${user.role !== 'guest' ? 'layout-xl:w-72 layout-xl:border-b-0 layout-xl:border-r' : 'layout-md:w-72 layout-md:border-b-0 layout-md:border-r'} flex flex-col items-center text-center border-b border-border bg-muted/5 shrink-0`}>
             <div className="relative mb-4">
               <div className="relative">
-                <Avatar className={`w-24 h-24 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-500 ${shouldBlurIdentity ? 'blur-md' : ''}`}>
+                <Avatar className={`w-24 h-24 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-500 ${shouldBlurIdentity ? 'blur-sm select-none' : ''}`}>
                   <AvatarImage src={candidateAvatar} alt={displayName} className="object-cover" />
                   <AvatarFallback className="text-2xl bg-primary text-white">
                     {displayName.split(' ').map((n: string) => n[0]).join('')}
@@ -318,7 +320,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                 </div>
               )}
             </div>
-            <h4 className={`text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors ${shouldBlurIdentity ? 'blur-md select-none' : ''}`}>
+            <h4 className={`text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors ${shouldBlurIdentity ? 'blur-sm select-none' : ''}`}>
               {displayName}
             </h4>
             <p className="text-sm font-medium text-muted-foreground mb-4">{candidateTitle}</p>

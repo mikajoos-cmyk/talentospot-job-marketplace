@@ -13,6 +13,7 @@ import { applicationsService } from '../../services/applications.service';
 import { candidateService } from '../../services/candidate.service';
 import { packagesService } from '../../services/packages.service';
 import BlurredContent from '../../components/shared/BlurredContent';
+import UpgradeBanner from '../../components/shared/UpgradeBanner';
 import {
   Dialog,
   DialogContent,
@@ -81,6 +82,10 @@ const SavedJobs: React.FC = () => {
   };
 
   const handleApply = (job: any) => {
+    if (!hasActivePackage) {
+      navigate('/candidate/packages');
+      return;
+    }
     setSelectedJob(job);
     setApplyDialogOpen(true);
   };
@@ -151,6 +156,14 @@ const SavedJobs: React.FC = () => {
         </div>
 
         <div>
+          {/* Hinweis-Banner oben, wenn Paket fehlt */}
+          {!hasActivePackage && (
+            <UpgradeBanner
+              message="Sie benötigen ein Paket, um Kontaktdaten und vollständige Jobdetails sehen zu können."
+              upgradeLink="/candidate/packages"
+            />
+          )}
+
           <p className="text-body text-foreground mb-6">
             <span className="font-medium">{savedJobs.length}</span> saved jobs
           </p>
@@ -159,40 +172,42 @@ const SavedJobs: React.FC = () => {
             {savedJobs.map((job) => {
               const cardContent = (
                 <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <img
-                      src={job.jobs?.employer_profiles?.logo_url || "https://via.placeholder.com/48"}
-                      alt={job.jobs?.employer_profiles?.company_name}
-                      className="w-12 h-12 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                      loading="lazy"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (job.jobs?.employer_id) navigate(`/companies/${job.jobs.employer_id}`);
-                      }}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemove(job.jobs?.title)}
-                      className="bg-transparent text-error hover:bg-error/10 hover:text-error"
-                      aria-label="Remove from saved"
-                    >
-                      <Trash2 className="w-5 h-5" strokeWidth={1.5} />
-                    </Button>
-                  </div>
+                    <div className="flex items-start justify-between">
+                      <div className={!hasActivePackage ? 'blur-sm select-none' : ''}>
+                        <img
+                          src={job.jobs?.employer_profiles?.logo_url || "https://via.placeholder.com/48"}
+                          alt={job.jobs?.employer_profiles?.company_name}
+                          className="w-12 h-12 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                          loading="lazy"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (job.jobs?.employer_id) navigate(`/companies/${job.jobs.employer_id}`);
+                          }}
+                        />
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemove(job.jobs?.title)}
+                        className="bg-transparent text-error hover:bg-error/10 hover:text-error"
+                        aria-label="Remove from saved"
+                      >
+                        <Trash2 className="w-5 h-5" strokeWidth={1.5} />
+                      </Button>
+                    </div>
 
-                  <div>
-                    <h3 className="text-h4 font-heading text-foreground mb-1">{job.jobs?.title}</h3>
-                    <p
-                      className="text-body-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (job.jobs?.employer_id) navigate(`/companies/${job.jobs.employer_id}`);
-                      }}
-                    >
-                      {job.jobs?.employer_profiles?.company_name}
-                    </p>
-                  </div>
+                    <div>
+                      <h3 className="text-h4 font-heading text-foreground mb-1">{job.jobs?.title}</h3>
+                      <p
+                        className={`text-body-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors ${!hasActivePackage ? 'blur-sm select-none' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (job.jobs?.employer_id) navigate(`/companies/${job.jobs.employer_id}`);
+                        }}
+                      >
+                        {job.jobs?.employer_profiles?.company_name}
+                      </p>
+                    </div>
 
                   <p className="text-body-sm text-foreground line-clamp-2">
                     {job.jobs?.description?.replace(/<[^>]*>/g, '') || 'No description available'}
@@ -226,7 +241,6 @@ const SavedJobs: React.FC = () => {
                       onClick={() => navigate(`/jobs/${job.job_id}`)}
                       variant="outline"
                       className="flex-1 min-w-[120px] bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
-                      disabled={!hasActivePackage}
                     >
                       <Eye className="w-4 h-4 mr-2" strokeWidth={1.5} />
                       View Details
@@ -237,7 +251,7 @@ const SavedJobs: React.FC = () => {
                         ? 'bg-muted text-muted-foreground'
                         : 'bg-primary text-primary-foreground hover:bg-primary-hover'
                         }`}
-                      disabled={appliedJobIds.includes(job.job_id) || !hasActivePackage}
+                      disabled={appliedJobIds.includes(job.job_id)}
                     >
                       {appliedJobIds.includes(job.job_id) ? 'Already Applied' : 'Apply Now'}
                     </Button>
@@ -247,13 +261,7 @@ const SavedJobs: React.FC = () => {
 
               return (
                 <Card key={job.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
-                  <BlurredContent
-                    isBlurred={!hasActivePackage}
-                    message="Upgrade to view saved jobs"
-                    upgradeLink="/candidate/packages"
-                  >
-                    {cardContent}
-                  </BlurredContent>
+                  {cardContent}
                 </Card>
               );
             })}

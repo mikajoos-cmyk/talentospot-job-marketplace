@@ -573,7 +573,10 @@ const CandidateDashboard: React.FC = () => {
                     detailedViews.map((v: any) => {
                       const name = v.employer_profiles?.company_name || 'Unternehmen';
                       return (
-                        <Card key={v.id} className="p-3 border border-border bg-background">
+                        <Card key={v.id} className="p-3 border border-border bg-background hover:shadow-md transition-all duration-normal cursor-pointer" onClick={() => {
+                          setModalOpen(false);
+                          if (v.employer_profiles?.id) navigate(`/companies/${v.employer_profiles.id}`);
+                        }}>
                           <div className="flex items-center gap-3">
                             <div className={!hasPackage ? 'blur-sm select-none' : ''}>
                               <Avatar className="w-10 h-10 rounded-lg">
@@ -611,25 +614,27 @@ const CandidateDashboard: React.FC = () => {
                       className="p-4 border border-border bg-background hover:shadow-md transition-all duration-normal cursor-pointer"
                       onClick={() => {
                         setModalOpen(false);
-                        navigate(`/employer-profile/${item.employer_id}`);
+                        navigate(`/companies/${item.employer_id}`);
                       }}
                     >
-                      <div className="flex items-center space-x-4">
-                        <Avatar className="w-12 h-12 rounded-lg">
-                          <AvatarImage src={item.employer_profiles?.logo_url || ''} className="object-cover" />
-                          <AvatarFallback className="rounded-lg">
-                            <Building2 className="w-6 h-6 text-muted-foreground" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <h4 className="text-body font-heading text-foreground">
-                            {item.employer_profiles?.company_name || 'Employer'}
-                          </h4>
-                          <p className="text-caption text-muted-foreground">
-                            Shortlisted {formatDate(item.created_at)}
-                          </p>
+                        <div className="flex items-center space-x-4">
+                          <div className={!hasPackage ? 'blur-sm select-none' : ''}>
+                            <Avatar className="w-12 h-12 rounded-lg">
+                              <AvatarImage src={item.employer_profiles?.logo_url || ''} className="object-cover" />
+                              <AvatarFallback className="rounded-lg">
+                                <Building2 className="w-6 h-6 text-muted-foreground" />
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className={`text-body font-heading text-foreground ${!hasPackage ? 'blur-sm select-none' : ''}`}>
+                              {item.employer_profiles?.company_name || 'Employer'}
+                            </h4>
+                            <p className="text-caption text-muted-foreground">
+                              Shortlisted {formatDate(item.created_at)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
                     </Card>
                   ))
                 )}

@@ -16,6 +16,7 @@ import { useUser } from '../../contexts/UserContext';
 import { followsService } from '../../services/follows.service';
 import { analyticsService } from '../../services/analytics.service';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
+import UpgradeBanner from '../../components/shared/UpgradeBanner';
 
 const CompanyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -120,7 +121,13 @@ const CompanyDetail: React.FC = () => {
         variant: 'destructive',
       });
     }
-  }; const handleMessage = () => {
+  }; 
+
+  const handleMessage = () => {
+    if (user.role === 'candidate' && !hasActivePackage) {
+      navigate('/candidate/packages');
+      return;
+    }
     const basePath = user.role === 'admin' ? '/admin/messages' : (user.role === 'employer' ? '/employer/messages' : '/candidate/messages');
     navigate(`${basePath}?conversationId=${company?.id}`);
   };
@@ -173,18 +180,25 @@ const CompanyDetail: React.FC = () => {
             Back to Jobs
           </Button>
         </div>
+        {/* Hinweis-Banner unter dem Zurück-Button, wenn Kontaktdaten wegen fehlendem Paket eingeschränkt sind */}
+        {user.role === 'candidate' && !hasActivePackage && (
+          <UpgradeBanner
+            message="Sie benötigen ein Paket, um die Kontaktdaten dieses Unternehmens sehen und Nachrichten senden zu können."
+            upgradeLink="/candidate/packages"
+          />
+        )}
         <div className="space-y-8">
           <Card className="p-8 md:p-12 border border-border bg-card">
             <div className="flex flex-col md:flex-row items-start md:items-center space-y-6 md:space-y-0 md:space-x-8">
               <img
                 src={company.logo_url || "https://via.placeholder.com/128"}
                 alt={company.company_name}
-                className={`w-32 h-32 rounded-lg object-cover shadow-md ${user.role === 'guest' ? 'blur-md select-none' : ''}`}
+                className={`w-32 h-32 rounded-lg object-cover shadow-md ${(user.role === 'guest' || (user.role === 'candidate' && !hasActivePackage)) ? 'blur-sm select-none' : ''}`}
                 loading="lazy"
               />
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-3 mb-4">
-                  <h1 className={`text-h1 font-heading text-foreground ${user.role === 'guest' ? 'blur-md select-none' : ''}`}>
+                  <h1 className={`text-h1 font-heading text-foreground ${user.role === 'candidate' && !hasActivePackage ? 'blur-sm select-none' : ''}`}>
                     {company.company_name}
                   </h1>
                   {company.open_for_refugees && (
@@ -217,9 +231,8 @@ const CompanyDetail: React.FC = () => {
                           <span className="inline-block">
                             <Button
                               onClick={handleMessage}
-                              disabled={user.role === 'admin' ? false : !hasActivePackage}
                               variant="outline"
-                              className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal disabled:opacity-50"
+                              className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
                             >
                               {user.role === 'admin' || hasActivePackage ? (
                                 <Send className="w-4 h-4 mr-2" strokeWidth={1.5} />
@@ -276,7 +289,7 @@ const CompanyDetail: React.FC = () => {
                         href={company.website?.startsWith('http') ? company.website : `https://${company.website}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`text-primary hover:text-primary-hover hover:underline ${user.role === 'guest' ? 'blur-md select-none pointer-events-none' : ''}`}
+                        className={`text-primary hover:text-primary-hover hover:underline ${user.role === 'guest' || !hasActivePackage ? 'blur-md select-none pointer-events-none' : ''}`}
                       >
                         Website
                       </a>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import DashboardStatsCard from '@/components/candidate/DashboardStatsCard';
-import { Users, Briefcase, Eye, CheckCircle, MapPin, DollarSign, Calendar, Mail, Phone, Loader2 } from 'lucide-react';
+import { Users, Briefcase, Eye, CheckCircle, MapPin, DollarSign, Calendar, Mail, Phone, Loader2, Building2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -43,6 +43,7 @@ const EmployerDashboard: React.FC = () => {
   const [followers, setFollowers] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [viewStats, setViewStats] = useState<any[]>([]);
+  const [detailedViews, setDetailedViews] = useState<any[]>([]);
   const [hasActivePackage, setHasActivePackage] = useState(false);
 
   useEffect(() => {
@@ -61,15 +62,17 @@ const EmployerDashboard: React.FC = () => {
         setHasActivePackage(hasPackage);
         setProfile(employerProfile);
 
-        const [jobsData, applicationsData, followersData, statsData, totalViewsCount] = await Promise.all([
+        const [jobsData, applicationsData, followersData, statsData, totalViewsCount, detailedViewsData] = await Promise.all([
           jobsService.getJobsByEmployer(employerProfile.id),
           applicationsService.getApplicationsByEmployer(employerProfile.id),
           followsService.getFollowerCandidates(employerProfile.id),
           analyticsService.getViewStats(user.id),
-          analyticsService.getTotalViews(user.id)
+          analyticsService.getTotalViews(user.id),
+          analyticsService.getDetailedViews(user.id)
         ]);
 
         setViewStats(statsData);
+        setDetailedViews(detailedViewsData || []);
 
         setJobs(jobsData || []);
         setApplications(applicationsData || []);
@@ -181,7 +184,7 @@ const EmployerDashboard: React.FC = () => {
           <DashboardStatsCard
             icon={Users}
             label="Followers"
-            value={hasActivePackage ? stats.followersCount : '?'}
+            value={stats.followersCount}
             color="primary"
             onClick={() => handleOpenModal('followers')}
           />
@@ -456,6 +459,95 @@ const EmployerDashboard: React.FC = () => {
                 )}
               </div>
             )}
+            {modalType === 'views' && (
+              <div className="space-y-6">
+                <ProfileViewsChart data={viewStats} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Card className="p-4 bg-background border-border">
+                    <p className="text-caption text-muted-foreground mb-1">Total Views</p>
+                    <p className="text-h3 font-heading text-foreground">{stats.profileViews}</p>
+                  </Card>
+                </div>
+
+                {!hasActivePackage && (
+                  <div className="relative overflow-hidden rounded-xl border border-warning/30 bg-gradient-to-r from-amber-50/80 to-yellow-50/60 dark:from-amber-900/10 dark:to-yellow-900/10 p-5">
+                    <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-amber-200/30 blur-2xl" />
+                    <div className="flex items-start gap-4">
+                      <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+                          <path d="M3 10.5V9a6 6 0 1 1 12 0v1.5" />
+                          <path d="M5 10.5h8a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6.5a2 2 0 0 1 2-2Z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-body font-semibold text-amber-900 dark:text-amber-200">Besucher ausgeblendet</h4>
+                        <p className="text-sm text-amber-800/90 dark:text-amber-200/80 mt-1">
+                          Um zu sehen, wer Ihr Profil besucht hat, benötigen Sie ein aktives, bezahltes Paket.
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-3">
+                          <Button
+                            className="bg-primary text-primary-foreground hover:bg-primary-hover"
+                            size="sm"
+                            onClick={() => { setModalOpen(false); navigate('/employer/packages'); }}
+                          >
+                            Jetzt upgraden
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {detailedViews.length === 0 ? (
+                    <p className="text-body-sm text-muted-foreground text-center py-8">Noch keine Profilaufrufe.</p>
+                  ) : (
+                    detailedViews.map((v: any) => {
+                      const isCandidate = !!v.candidate_profiles;
+                      const name = isCandidate
+                        ? (v.candidate_profiles?.profiles?.full_name || 'Kandidat')
+                        : (v.employer_profiles?.company_name || 'Unternehmen');
+                      const avatarUrl = isCandidate
+                        ? (v.candidate_profiles?.profiles?.avatar_url || '')
+                        : (v.employer_profiles?.logo_url || '');
+                      const onClick = () => {
+                        setModalOpen(false);
+                        if (isCandidate) {
+                          navigate(`/employer/candidates/${v.candidate_profiles?.id}`);
+                        } else if (v.employer_profiles?.id) {
+                          navigate(`/companies/${v.employer_profiles.id}`);
+                        }
+                      };
+                      return (
+                        <Card key={v.id} className="p-3 border border-border bg-background hover:shadow-md transition-all duration-normal cursor-pointer" onClick={onClick}>
+                      <div className="flex items-center gap-3">
+                        <div className={!hasActivePackage ? 'blur-sm select-none' : ''}>
+                          <Avatar className="w-10 h-10 rounded-lg">
+                            <AvatarImage src={avatarUrl} className="object-cover" />
+                            <AvatarFallback className="rounded-lg">
+                              {isCandidate ? (
+                                <Users className="w-5 h-5 text-muted-foreground" />
+                              ) : (
+                                <Building2 className="w-5 h-5 text-muted-foreground" />
+                              )}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-body font-medium text-foreground ${!hasActivePackage ? 'blur-sm select-none' : ''}`}>
+                            {name}
+                          </p>
+                          <p className="text-caption text-muted-foreground">{formatDate(v.created_at)}</p>
+                        </div>
+                      </div>
+                        </Card>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
             {modalType === 'followers' && (
               <div className="space-y-4">
                 {followers.length === 0 ? (
@@ -469,15 +561,17 @@ const EmployerDashboard: React.FC = () => {
                     
                     const cardContent = (
                       <div className="flex items-start space-x-4">
-                        <Avatar className="w-16 h-16">
-                          <AvatarImage src={candidate.profiles?.avatar_url} />
-                          <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                            {candidate.profiles?.full_name?.charAt(0) || 'C'}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className={!hasActivePackage ? 'blur-sm select-none' : ''}>
+                          <Avatar className="w-16 h-16">
+                            <AvatarImage src={candidate.profiles?.avatar_url} />
+                            <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                              {candidate.profiles?.full_name?.charAt(0) || 'C'}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-h4 font-heading text-foreground">
+                            <h4 className={`text-h4 font-heading text-foreground ${!hasActivePackage ? 'blur-sm select-none' : ''}`}>
                               {candidate.profiles?.full_name || 'Candidate'}
                             </h4>
                           </div>
@@ -505,19 +599,11 @@ const EmployerDashboard: React.FC = () => {
                         key={follower.id}
                         className="p-4 border border-border bg-background hover:shadow-md transition-all duration-normal cursor-pointer"
                         onClick={() => {
-                          if (hasActivePackage) {
-                            setModalOpen(false);
-                            navigate(`/employer/candidates/${candidate.id}`);
-                          }
+                          setModalOpen(false);
+                          navigate(`/employer/candidates/${candidate.id}`);
                         }}
                       >
-                        <BlurredContent
-                          isBlurred={!hasActivePackage}
-                          message="Upgrade to view who is following you"
-                          upgradeLink="/employer/packages"
-                        >
-                          {cardContent}
-                        </BlurredContent>
+                        {cardContent}
                       </Card>
                     );
                   })

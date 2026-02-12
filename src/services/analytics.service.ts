@@ -9,10 +9,18 @@ export interface DetailedProfileView {
     id: string;
     viewer_id: string;
     created_at: string;
-    employer_profiles: {
+    employer_profiles?: {
         id: string;
         company_name: string;
         logo_url: string;
+    } | null;
+    candidate_profiles?: {
+        id: string;
+        title: string;
+        profiles: {
+            full_name: string;
+            avatar_url: string;
+        } | null;
     } | null;
 }
 
@@ -108,10 +116,10 @@ export const analyticsService = {
     },
 
     /**
-     * Gets detailed profile views with employer information.
+     * Gets detailed profile views with employer or candidate information.
      */
     async getDetailedViews(userId: string): Promise<DetailedProfileView[]> {
-        // 1) Hole zunächst die Views (ohne Join), da es offenbar keinen direkten FK zu employer_profiles gibt
+        // 1) Hole zunächst die Views (ohne Join)
         const { data: views, error: viewsError } = await supabase
             .from('profile_views')
             .select('id, viewer_id, created_at')
@@ -126,30 +134,35 @@ export const analyticsService = {
         const safeViews = views || [];
         if (safeViews.length === 0) return [];
 
-        // 2) Einmalig alle Employer-Profile der Viewer laden
         const viewerIds = Array.from(new Set(safeViews.map(v => v.viewer_id).filter(Boolean)));
         if (viewerIds.length === 0) {
-            // Keine Viewer IDs – gebe nur die Basisdaten zurück
             return safeViews.map(v => ({
                 id: v.id,
                 viewer_id: v.viewer_id,
-                created_at: v.created_at,
-                employer_profiles: null
+                created_at: v.created_at
             })) as DetailedProfileView[];
         }
 
-        const { data: employers, error: empError } = await supabase
-            .from('employer_profiles')
-            .select('id, company_name, logo_url')
-            .in('id', viewerIds);
+        // 2) Sowohl Employer als auch Candidate Profile laden
+        const [empRes, candRes] = await Promise.all([
+            supabase
+                .from('employer_profiles')
+                .select('id, company_name, logo_url')
+                .in('id', viewerIds),
+            supabase
+                .from('candidate_profiles')
+                .select('id, title, profiles(full_name, avatar_url)')
+                .in('id', viewerIds)
+        ]);
 
-        if (empError) {
-            console.error('Error fetching employer profiles for views:', empError);
-        }
+        const employersById = new Map<string, any>();
+        (empRes.data || []).forEach((e: any) => {
+            if (e && e.id) employersById.set(e.id, e);
+        });
 
-        const employersById = new Map<string, { id: string; company_name: string; logo_url: string }>();
-        (employers || []).forEach((e: any) => {
-            if (e && e.id) employersById.set(e.id, { id: e.id, company_name: e.company_name, logo_url: e.logo_url });
+        const candidatesById = new Map<string, any>();
+        (candRes.data || []).forEach((c: any) => {
+            if (c && c.id) candidatesById.set(c.id, c);
         });
 
         // 3) Zusammensetzen
@@ -157,7 +170,8 @@ export const analyticsService = {
             id: v.id,
             viewer_id: v.viewer_id,
             created_at: v.created_at,
-            employer_profiles: employersById.get(v.viewer_id) || null
+            employer_profiles: employersById.get(v.viewer_id) || null,
+            candidate_profiles: candidatesById.get(v.viewer_id) || null
         })) as DetailedProfileView[];
     }
 };

@@ -472,6 +472,12 @@ const JobSearch: React.FC = () => {
       });
       return;
     }
+
+    if (!hasPremiumAccess) {
+      navigate('/candidate/packages');
+      return;
+    }
+
     setSelectedJob(job);
     setApplyDialogOpen(true);
   };
@@ -645,7 +651,7 @@ const JobSearch: React.FC = () => {
                       </div>
                       <div>
                         <h4 className="font-bold text-foreground">Unlock Full Job Details</h4>
-                        <p className="text-sm text-muted-foreground">Upgrade your package to see company names, locations and to apply for jobs.</p>
+                        <p className="text-sm text-muted-foreground">Upgrade your package to see company names and to apply for jobs.</p>
                       </div>
                     </div>
                     <Button onClick={() => navigate('/packages')} className="bg-primary text-primary-foreground hover:bg-primary-hover shrink-0 font-bold">
@@ -727,13 +733,13 @@ const JobSearch: React.FC = () => {
                             <JobListCard
                               key={job.id}
                               job={job}
-                              onViewDetail={(id) => hasPremiumAccess || user.role === 'guest' ? navigate(`/jobs/${id}`) : navigate('/packages')}
+                              onViewDetail={(id) => navigate(`/jobs/${id}`)}
                               onApply={handleApply}
                               onSave={handleSaveJob}
                               isSaved={savedJobs.includes(job.id)}
                               isApplied={appliedJobIds.includes(job.id)}
                               showMatchScore={true}
-                              obfuscate={!hasPremiumAccess && user.role === 'candidate'}
+                              obfuscate={user.role === 'guest' || (user.role === 'candidate' && !hasPremiumAccess)}
                             />
                           ))}
                         </div>

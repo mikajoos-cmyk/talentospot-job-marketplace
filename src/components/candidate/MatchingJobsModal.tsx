@@ -89,9 +89,9 @@ const MatchingJobsModal: React.FC<MatchingJobsModalProps> = ({ isOpen, onClose, 
                                 <JobListCard
                                     key={job.id}
                                     job={job}
-                                    onViewDetail={(id) => hasPremiumAccess || user?.role !== 'candidate' ? navigate(`/jobs/${id}`) : navigate('/packages')}
+                                    onViewDetail={(id) => navigate(`/jobs/${id}`)}
                                     showMatchScore={true}
-                                    obfuscate={!hasPremiumAccess && user?.role === 'candidate'}
+                                    obfuscate={user?.role === 'guest' || (user?.role === 'candidate' && !hasPremiumAccess)}
                                 />
                             ))}
                         </div>

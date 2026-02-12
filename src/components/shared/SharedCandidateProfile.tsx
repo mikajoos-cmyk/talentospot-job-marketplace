@@ -31,19 +31,21 @@ interface SharedCandidateProfileProps {
     profileCompletion?: number;
     reviews?: any[];
     averageRating?: number;
+    bannerBelowHeader?: React.ReactNode; // Optionaler Banner unterhalb des Zurück-Buttons
 }
 
 export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
-                                                                                  data,
-                                                                                  user,
-                                                                                  isOwnProfile = false,
-                                                                                  isBlurred = false,
-                                                                                  actions,
-                                                                                  onBack,
-                                                                                  profileCompletion = 0,
-                                                                                  reviews = [],
-                                                                                  averageRating = 0
-                                                                              }) => {
+                                                                                   data,
+                                                                                   user,
+                                                                                   isOwnProfile = false,
+                                                                                   isBlurred = false,
+                                                                                   actions,
+                                                                                   onBack,
+                                                                                   profileCompletion = 0,
+                                                                                   reviews = [],
+                                                                                   averageRating = 0,
+                                                                                   bannerBelowHeader
+                                                                               }) => {
     const [selectedProject, setSelectedProject] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedAward, setSelectedAward] = useState<any>(null);
@@ -71,13 +73,13 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
     const primaryLocationString = [data.city, data.country].filter(Boolean).join(', ');
 
     // Blurring Logic Helpers
+    const displayName = isBlurred ? 'TalentoSPOT Candidate' : user.name;
+
     const renderText = (text: string | null | undefined, sensitive = false) => {
         if (!text) return <span className="text-muted-foreground italic">Not specified</span>;
-        if (sensitive && isBlurred) return <span className="blur-md select-none">{text}</span>;
+        if (sensitive && isBlurred) return <span className="blur-sm select-none">{text}</span>;
         return <span>{text}</span>;
     };
-
-    const displayName = isBlurred ? 'TalentoSPOT Candidate' : user.name;
 
     return (
         <div className="w-full space-y-6 pb-12">
@@ -101,6 +103,9 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                 {actions && <div className="flex gap-3 flex-wrap">{actions}</div>}
             </div>
 
+            {/* Optionaler Banner unterhalb des Zurück-Buttons */}
+            {bannerBelowHeader}
+
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
                 {/* LEFT COLUMN: Sidebar (Sticky) */}
@@ -119,7 +124,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                         </div>
                         <div className="px-6 pb-6">
                             <div className="relative flex justify-between items-end -mt-20 mb-6">
-                                <Avatar className={`w-48 h-48 rounded-2xl overflow-hidden border border-border bg-card shadow-md ${isBlurred ? 'blur-md' : ''}`}>
+                                <Avatar className={`w-48 h-48 rounded-2xl overflow-hidden border border-border bg-card shadow-md ${isBlurred ? 'blur-sm select-none' : ''}`}>
                                     <AvatarImage src={user.avatar} alt={displayName} />
                                     <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
                                         {displayName?.charAt(0) || 'U'}
@@ -160,7 +165,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                     </div>
                                     <div className="flex items-center text-sm">
                                         <Calendar className="w-4 h-4 mr-3 text-muted-foreground shrink-0" />
-                                        <span className={isBlurred ? "blur-md select-none" : ""}>
+                                        <span className={isBlurred ? "blur-sm select-none" : ""}>
                                             {data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString() : 'No birthdate'}
                                         </span>
                                     </div>
@@ -187,7 +192,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                             <MapPin className="w-4 h-4 mr-3 text-muted-foreground shrink-0 mt-0.5" />
                                             <div className={cn(
                                                 "flex flex-col text-foreground/90",
-                                                isBlurred && "blur-md select-none"
+                                                isBlurred && "blur-sm select-none"
                                             )}>
                                                 {streetDisplay && <span>{streetDisplay}</span>}
                                                 {cityDisplay && <span>{cityDisplay}</span>}

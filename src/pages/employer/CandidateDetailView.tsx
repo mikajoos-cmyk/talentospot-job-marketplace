@@ -23,6 +23,7 @@ import {
 } from '../../components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { SharedCandidateProfile } from '../../components/shared/SharedCandidateProfile';
+import UpgradeBanner from '../../components/shared/UpgradeBanner';
 
 const CandidateDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -113,6 +114,10 @@ const CandidateDetailView: React.FC = () => {
   };
 
   const handleMessage = () => {
+    if (user.role === 'employer' && !hasActivePackage) {
+      navigate('/employer/packages');
+      return;
+    }
     const basePath = user.role === 'admin' ? '/admin/messages' : '/employer/messages';
     navigate(`${basePath}?conversationId=${candidate?.id}`);
   };
@@ -234,6 +239,14 @@ const CandidateDetailView: React.FC = () => {
             isOwnProfile={false}
             actions={<ActionButtons />}
             onBack={() => navigate(user.role === 'guest' ? '/candidates' : '/employer/candidates')}
+            bannerBelowHeader={
+              !adminOverride && isBlurred ? (
+                <UpgradeBanner
+                  message="Sie benötigen ein Paket und/oder eine Freigabe, um die Kontaktdaten dieses Talents sehen zu können."
+                  upgradeLink="/employer/packages"
+                />
+              ) : null
+            }
         />
 
         <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>

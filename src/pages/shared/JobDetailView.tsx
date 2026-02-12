@@ -22,6 +22,8 @@ import { getCoordinates } from '@/utils/geocoding';
 import MapView from '@/components/maps/MapView';
 // import { Input } from '../../components/ui/input';
 
+import UpgradeBanner from '@/components/shared/UpgradeBanner';
+
 const JobDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -32,6 +34,7 @@ const JobDetailView: React.FC = () => {
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
+  const [hasActivePackage, setHasActivePackage] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
 
   React.useEffect(() => {
@@ -39,8 +42,12 @@ const JobDetailView: React.FC = () => {
       if (!id) return;
       setLoading(true);
       try {
-        const data = await jobsService.getJobById(id);
+        const [data, hasPackage] = await Promise.all([
+          jobsService.getJobById(id),
+          user?.id ? (await import('@/services/packages.service')).packagesService.hasActivePackage(user.id) : Promise.resolve(false)
+        ]);
         setJob(data);
+        setHasActivePackage(hasPackage);
 
         // Fetch coordinates for the map
         if (data.city) {
@@ -87,6 +94,11 @@ const JobDetailView: React.FC = () => {
         description: 'Your account type does not allow job applications',
         variant: 'destructive',
       });
+      return;
+    }
+
+    if (!hasActivePackage) {
+      navigate('/candidate/packages');
       return;
     }
 
@@ -212,26 +224,34 @@ const JobDetailView: React.FC = () => {
           </div>
         </div>
 
+        {/* Hinweis-Banner unter dem Zurück-Button, wenn Paket fehlt */}
+        {user.role === 'candidate' && !hasActivePackage && (
+          <UpgradeBanner
+            message="Sie benötigen ein Paket, um Kontaktdaten und vollständige Jobdetails sehen zu können."
+            upgradeLink="/candidate/packages"
+          />
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Hero Card */}
             <Card className="overflow-hidden border-none bg-background shadow-sm">
               <div className="relative h-32 md:h-40 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
-                <div className={`absolute -bottom-10 left-8 p-1 bg-background rounded-xl border border-border shadow-md ${user.role === 'guest' ? 'blur-md select-none' : ''}`}>
+                <div className="absolute -bottom-10 left-8 p-1 bg-background rounded-xl border border-border shadow-md">
                   <img
                     src={job.employer_profiles?.logo_url || "https://via.placeholder.com/80"}
                     alt={job.employer_profiles?.company_name}
-                    className="w-20 h-20 md:w-24 md:h-24 rounded-lg object-cover"
+                    className={`w-20 h-20 md:w-24 md:h-24 rounded-lg object-cover ${(user.role === 'guest' || (user.role === 'candidate' && !hasActivePackage)) ? 'blur-sm select-none' : ''}`}
                   />
                 </div>
               </div>
               <div className="pt-14 pb-8 px-8">
                 <div
-                  className={`group cursor-pointer inline-flex items-center ${user.role === 'guest' ? 'blur-md select-none pointer-events-none' : ''}`}
+                  className="group cursor-pointer inline-flex items-center"
                   onClick={() => job.employer_id && navigate(`/companies/${job.employer_id}`)}
                 >
-                  <h2 className="text-h2 font-heading text-foreground group-hover:text-primary transition-colors">
+                  <h2 className={`text-h2 font-heading text-foreground group-hover:text-primary transition-colors ${(user.role === 'guest' || (user.role === 'candidate' && !hasActivePackage)) ? 'blur-sm select-none' : ''}`}>
                     {job.employer_profiles?.company_name}
                   </h2>
                   <ArrowLeft className="w-5 h-5 ml-2 rotate-180 opacity-0 group-hover:opacity-100 transition-all text-primary" strokeWidth={1.5} />

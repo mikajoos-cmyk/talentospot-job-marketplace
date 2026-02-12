@@ -13,6 +13,7 @@ import { packagesService } from '@/services/packages.service';
 import { Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import BlurredContent from '@/components/shared/BlurredContent';
+import { cn } from '@/lib/utils';
 
 const Network: React.FC = () => {
   const navigate = useNavigate();
@@ -151,12 +152,12 @@ const Network: React.FC = () => {
             {isEmployer && (
               <TabsTrigger value="shortlisted" className="data-[state=active]:bg-background data-[state=active]:text-foreground">
                 <Heart className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                Shortlisted ({hasActivePackage ? shortlistedCandidates.length : '?'})
+                Shortlisted ({shortlistedCandidates.length})
               </TabsTrigger>
             )}
             <TabsTrigger value="followers" className="data-[state=active]:bg-background data-[state=active]:text-foreground">
               <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              Followers ({(!isEmployer || hasActivePackage) ? followers.length : '?'})
+              Followers ({followers.length})
             </TabsTrigger>
           </TabsList>
 
@@ -186,13 +187,15 @@ const Network: React.FC = () => {
                     <Card key={follow.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
                       <div className="space-y-4">
                         <div className="flex items-start justify-between">
-                          <img
-                            src={company.logo_url || "https://via.placeholder.com/64"}
-                            alt={company.company_name}
-                            className="w-16 h-16 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                            loading="lazy"
-                            onClick={() => navigate(`/companies/${company.id}`)}
-                          />
+                          <div className={cn(!hasActivePackage && "blur-sm select-none")}>
+                            <img
+                              src={company.logo_url || "https://via.placeholder.com/64"}
+                              alt={company.company_name}
+                              className="w-16 h-16 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                              loading="lazy"
+                              onClick={() => navigate(`/companies/${company.id}`)}
+                            />
+                          </div>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -206,7 +209,10 @@ const Network: React.FC = () => {
 
                         <div>
                           <h3
-                            className="text-h4 font-heading text-foreground mb-1 cursor-pointer hover:text-primary transition-colors"
+                            className={cn(
+                              "text-h4 font-heading text-foreground mb-1 cursor-pointer hover:text-primary transition-colors",
+                              !hasActivePackage && "blur-sm select-none"
+                            )}
                             onClick={() => navigate(`/companies/${company.id}`)}
                           >
                             {company.company_name}
@@ -266,16 +272,16 @@ const Network: React.FC = () => {
                         <div className="flex items-start justify-between">
                           <div
                             className="flex items-center space-x-3 cursor-pointer flex-1"
-                            onClick={() => hasActivePackage && navigate(`/employer/candidates/${candidate.id}`)}
+                            onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
                           >
-                            <Avatar className="w-12 h-12">
+                            <Avatar className={cn("w-12 h-12", !hasActivePackage && "blur-sm select-none")}>
                               <AvatarImage src={candidate.profiles?.avatar_url} alt={candidate.profiles?.full_name} />
                               <AvatarFallback className="bg-primary text-primary-foreground text-h4 font-heading">
                                 {candidate.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <h3 className="text-h4 font-heading text-foreground hover:text-primary transition-colors">
+                              <h3 className={cn("text-h4 font-heading text-foreground hover:text-primary transition-colors", !hasActivePackage && "blur-sm select-none")}>
                                 {candidate.profiles?.full_name || 'Anonymous'}
                               </h3>
                               <p className="text-body-sm text-muted-foreground">{candidate.job_title}</p>
@@ -306,7 +312,6 @@ const Network: React.FC = () => {
                         <Button
                           onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
                           className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                          disabled={!hasActivePackage}
                         >
                           View Profile
                         </Button>
@@ -315,13 +320,7 @@ const Network: React.FC = () => {
 
                     return (
                       <Card key={shortlist.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
-                        <BlurredContent
-                          isBlurred={!hasActivePackage}
-                          message="Upgrade to view shortlisted candidates"
-                          upgradeLink={`/${user.role}/packages`}
-                        >
-                          {cardContent}
-                        </BlurredContent>
+                        {cardContent}
                       </Card>
                     );
                   })}
@@ -331,29 +330,7 @@ const Network: React.FC = () => {
           )}
 
           <TabsContent value="followers" className="mt-6">
-            {isCandidate && !isPremium ? (
-              <Card className="p-12 border border-border bg-card text-center">
-                <div className="max-w-2xl mx-auto">
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-warning/10 flex items-center justify-center">
-                    <Users className="w-10 h-10 text-warning" strokeWidth={1.5} />
-                  </div>
-                  <h3 className="text-h2 font-heading text-foreground mb-4">Premium Feature</h3>
-                  <p className="text-body-lg text-foreground mb-2">
-                    <span className="font-bold text-primary">{followers.length} companies</span> are interested in your profile
-                  </p>
-                  <p className="text-body text-muted-foreground mb-8">
-                    Upgrade to Premium to see which companies have shortlisted you.
-                  </p>
-                  <Button
-                    onClick={() => navigate('/candidate/packages')}
-                    size="lg"
-                    className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal h-12 px-8"
-                  >
-                    Upgrade to Premium
-                  </Button>
-                </div>
-              </Card>
-            ) : followers.length === 0 ? (
+            {followers.length === 0 ? (
               <Card className="p-12 border border-border bg-card text-center">
                 <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground" strokeWidth={1.5} />
                 <h3 className="text-h3 font-heading text-foreground mb-2">No Followers Yet</h3>
@@ -371,10 +348,10 @@ const Network: React.FC = () => {
                     const company = item.employer_profiles;
                     if (!company) return null;
 
-                    return (
-                      <Card key={item.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
-                        <div className="space-y-4">
-                          <div className="flex items-start space-x-4">
+                    const content = (
+                      <div className="space-y-4">
+                        <div className="flex items-start space-x-4">
+                          <div className={!hasActivePackage ? 'blur-sm select-none' : ''}>
                             <img
                               src={company.logo_url || "https://via.placeholder.com/64"}
                               alt={company.company_name}
@@ -382,30 +359,39 @@ const Network: React.FC = () => {
                               loading="lazy"
                               onClick={() => navigate(`/companies/${company.id}`)}
                             />
-                            <div className="flex-1 min-w-0">
-                              <h3
-                                className="text-h4 font-heading text-foreground mb-1 truncate cursor-pointer hover:text-primary transition-colors"
-                                onClick={() => navigate(`/companies/${company.id}`)}
-                              >
-                                {company.company_name}
-                              </h3>
-                              <p className="text-body-sm text-muted-foreground truncate">{company.industry}</p>
-                            </div>
                           </div>
-
-                          <div className="flex items-center text-caption text-muted-foreground">
-                            <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                            <span>Interested since {new Date(item.created_at).toLocaleDateString()}</span>
+                          <div className="flex-1 min-w-0">
+                            <h3
+                              className={cn(
+                                "text-h4 font-heading text-foreground mb-1 truncate cursor-pointer hover:text-primary transition-colors",
+                                !hasActivePackage && "blur-sm select-none"
+                              )}
+                              onClick={() => navigate(`/companies/${company.id}`)}
+                            >
+                              {company.company_name}
+                            </h3>
+                            <p className="text-body-sm text-muted-foreground truncate">{company.industry}</p>
                           </div>
-
-                          <Button
-                            onClick={() => navigate(`/companies/${company.id}`)}
-                            className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                          >
-                            <Building2 className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                            View Company
-                          </Button>
                         </div>
+
+                        <div className="flex items-center text-caption text-muted-foreground">
+                          <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                          <span>Interested since {new Date(item.created_at).toLocaleDateString()}</span>
+                        </div>
+
+                        <Button
+                          onClick={() => navigate(`/companies/${company.id}`)}
+                          className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
+                        >
+                          <Building2 className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                          View Company
+                        </Button>
+                      </div>
+                    );
+
+                    return (
+                      <Card key={item.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
+                        {content}
                       </Card>
                     );
                   } else {
@@ -417,8 +403,8 @@ const Network: React.FC = () => {
                       <div className="space-y-4">
                         <div className="flex items-start space-x-4">
                           <Avatar
-                            className="w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => hasActivePackage && navigate(`/employer/candidates/${candidate.id}`)}
+                            className={cn("w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity", !hasActivePackage && "blur-sm select-none")}
+                            onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
                           >
                             <AvatarImage src={candidate.profiles?.avatar_url} alt={candidate.profiles?.full_name} />
                             <AvatarFallback className="bg-primary/10 text-primary text-h4 font-heading">
@@ -427,8 +413,11 @@ const Network: React.FC = () => {
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <h3
-                              className="text-h4 font-heading text-foreground mb-1 truncate cursor-pointer hover:text-primary transition-colors"
-                              onClick={() => hasActivePackage && navigate(`/employer/candidates/${candidate.id}`)}
+                              className={cn(
+                                "text-h4 font-heading text-foreground mb-1 truncate cursor-pointer hover:text-primary transition-colors",
+                                !hasActivePackage && "blur-sm select-none"
+                              )}
+                              onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
                             >
                               {candidate.profiles?.full_name || 'Candidate'}
                             </h3>
@@ -444,9 +433,7 @@ const Network: React.FC = () => {
                         <Button
                           onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
                           className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                          disabled={!hasActivePackage}
                         >
-                          <Users className="w-4 h-4 mr-2" strokeWidth={1.5} />
                           View Profile
                         </Button>
                       </div>
@@ -454,13 +441,7 @@ const Network: React.FC = () => {
 
                     return (
                       <Card key={item.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
-                        <BlurredContent
-                          isBlurred={!hasActivePackage}
-                          message="Upgrade to view who is following you"
-                          upgradeLink="/employer/packages"
-                        >
-                          {cardContent}
-                        </BlurredContent>
+                        {cardContent}
                       </Card>
                     );
                   }
