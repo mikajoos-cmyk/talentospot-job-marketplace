@@ -247,6 +247,7 @@ export const jobsService = {
     // Sync Master Data
     try {
       if (updates.title) await masterDataService.syncMasterData('job_titles', [updates.title]);
+      if (updates.sector) await masterDataService.syncMasterData('sectors', [updates.sector]);
       if (updates.required_skills) await masterDataService.syncMasterData('skills', updates.required_skills);
       if (updates.required_qualifications) await masterDataService.syncMasterData('qualifications', updates.required_qualifications);
       if (languagesWithLevels) {
@@ -362,6 +363,7 @@ export const jobsService = {
         employer_profiles!inner(
           company_name,
           logo_url,
+          industry,
           profiles!inner(full_name)
         )
       `)
@@ -372,7 +374,7 @@ export const jobsService = {
     }
 
     if (filters.sector) {
-      query = query.eq('employer_profiles.industry', filters.sector);
+      query = query.or(`sector.eq.${filters.sector},employer_profiles.industry.eq.${filters.sector}`);
     }
 
     if (filters.city) {
@@ -551,6 +553,7 @@ export const jobsService = {
         employer_profiles!inner(
           company_name,
           logo_url,
+          industry,
           profiles!inner(full_name)
         )
       `)
@@ -570,6 +573,7 @@ export const jobsService = {
         employer_profiles!inner(
           company_name,
           logo_url,
+          industry,
           profiles!inner(full_name)
         )
       `)

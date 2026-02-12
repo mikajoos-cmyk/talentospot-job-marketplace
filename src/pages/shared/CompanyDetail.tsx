@@ -18,7 +18,7 @@ import { analyticsService } from '../../services/analytics.service';
 import { reviewsService } from '@/services/reviews.service';
 import { Review } from '../../types/review';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
-import UpgradeBanner from '../../components/shared/UpgradeBanner';
+import UpgradeBanner from '@/components/shared/UpgradeBanner';
 
 const CompanyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -226,12 +226,12 @@ const CompanyDetail: React.FC = () => {
               <img
                 src={company.logo_url || "https://via.placeholder.com/128"}
                 alt={company.company_name}
-                className={`w-32 h-32 rounded-lg object-cover shadow-md ${(user.role === 'guest' || (user.role === 'candidate' && !hasActivePackage)) ? 'blur-sm select-none' : ''}`}
+                className={`w-32 h-32 rounded-lg object-cover shadow-md ${(user.role === 'guest' || (user.role === 'candidate' && !hasActivePackage)) ? 'blur-md select-none' : ''}`}
                 loading="lazy"
               />
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-3 mb-4">
-                  <h1 className={`text-h1 font-heading text-foreground ${user.role === 'candidate' && !hasActivePackage ? 'blur-sm select-none' : ''}`}>
+                  <h1 className={`text-h1 font-heading text-foreground ${(user.role === 'guest' || (user.role === 'candidate' && !hasActivePackage)) ? 'blur-md select-none' : ''}`}>
                     {company.company_name}
                   </h1>
                   {company.open_for_refugees && (
@@ -322,7 +322,7 @@ const CompanyDetail: React.FC = () => {
                         href={company.website?.startsWith('http') ? company.website : `https://${company.website}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`text-primary hover:text-primary-hover hover:underline ${user.role === 'guest' || !hasActivePackage ? 'blur-md select-none pointer-events-none' : ''}`}
+                        className={`text-primary hover:text-primary-hover hover:underline ${(user.role === 'guest' || (user.role === 'candidate' && !hasActivePackage)) ? 'blur-md select-none pointer-events-none' : ''}`}
                       >
                         Website
                       </a>

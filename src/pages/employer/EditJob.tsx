@@ -53,6 +53,7 @@ const EditJob: React.FC = () => {
             salary_max: job.salary_max || 250000,
             salary_currency: job.salary_currency || 'EUR',
             type: job.employment_type || 'full_time',
+            sector: job.sector || '',
             entryBonus: job.entry_bonus?.toString() || '',
             contractDuration: job.contract_duration || '',
             location: {
@@ -154,6 +155,7 @@ const EditJob: React.FC = () => {
         country: formData.location.country,
         city: formData.location.city,
         employment_type: formData.type,
+        sector: formData.sector,
         salary_min: formData.salary_min,
         salary_max: formData.salary_max,
         salary_currency: formData.salary_currency,
@@ -243,6 +245,20 @@ const EditJob: React.FC = () => {
                 value={formData.title}
                 onChange={(val) => setFormData({ ...formData, title: val })}
                 placeholder="e.g., Senior Frontend Developer"
+                className="bg-background text-foreground border-border"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="sector" className="text-body-sm font-medium text-foreground mb-2 block">
+                Sector
+              </Label>
+              <AutocompleteInput
+                category="sectors"
+                id="sector"
+                value={formData.sector || ''}
+                onChange={(val) => setFormData({ ...formData, sector: val })}
+                placeholder="e.g., Information Technology"
                 className="bg-background text-foreground border-border"
               />
             </div>

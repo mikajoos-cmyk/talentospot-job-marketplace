@@ -98,7 +98,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Industry</p>
-                                <p className="text-sm font-semibold">{job.employer_profiles?.industry || 'Not specified'}</p>
+                                <p className="text-sm font-semibold">{job.sector || job.company?.industry || 'Not specified'}</p>
                             </div>
                         </div>
 

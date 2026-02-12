@@ -269,6 +269,15 @@ const JobDetailView: React.FC = () => {
                   </div>
                   <div className="flex items-center text-body text-foreground/80">
                     <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mr-3">
+                      <Building2 className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                    </div>
+                    <div>
+                      <p className="text-caption text-muted-foreground font-medium uppercase tracking-wider">Sector</p>
+                      <p>{job.sector || job.employer_profiles?.industry || 'Not specified'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center text-body text-foreground/80">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mr-3">
                       <DollarSign className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
                     </div>
                     <div>
@@ -364,7 +373,7 @@ const JobDetailView: React.FC = () => {
                   {[
                     { label: 'Employment', value: job.employment_type?.replace(/_/g, ' '), icon: Briefcase },
                     { label: 'Career Level', value: job.career_level, icon: TrendingUp },
-                    { label: 'Experience', value: job.experience_years !== null ? `${job.experience_years} ${job.experience_years === 1 ? 'year' : 'years'}` : null, icon: Clock },
+                    { label: 'Experience', value: job.experience_years !== null && job.experience_years !== undefined ? `${job.experience_years} ${job.experience_years === 1 ? 'year' : 'years'}` : null, icon: Clock },
                     { label: 'Contract', value: job.contract_duration, icon: FileText },
                     { label: 'Vacation', value: job.vacation_days ? `${job.vacation_days} Days / Year` : null, icon: Calendar },
                     { label: 'Work Mode', value: job.home_office_available ? 'Home Office' : 'On-site', icon: Building2 },
@@ -381,10 +390,36 @@ const JobDetailView: React.FC = () => {
                   ))}
                 </div>
 
+                {job.contract_terms?.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-caption text-muted-foreground font-medium uppercase tracking-wider mb-2">Terms</p>
+                    <div className="flex flex-wrap gap-2">
+                      {job.contract_terms.map((term: string) => (
+                        <span key={term} className="px-2 py-0.5 bg-muted text-foreground text-[10px] rounded uppercase font-bold border border-border">
+                          {term.replace(/_/g, ' ')}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="h-px bg-border my-6" />
 
                 {/* Skills & Tags */}
                 <div className="space-y-6">
+                  {job.required_qualifications?.length > 0 && (
+                    <div>
+                      <h4 className="text-caption font-bold text-foreground uppercase tracking-widest mb-3">Qualifications</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {job.required_qualifications.map((qual: string) => (
+                          <span key={qual} className="px-3 py-1 bg-accent/10 text-accent text-xs rounded-full font-medium border border-accent/20">
+                            {qual}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {job.required_skills?.length > 0 && (
                     <div>
                       <h4 className="text-caption font-bold text-foreground uppercase tracking-widest mb-3">Skills</h4>

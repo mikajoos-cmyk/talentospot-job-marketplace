@@ -24,7 +24,7 @@ import {
 } from '../../components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { SharedCandidateProfile } from '../../components/shared/SharedCandidateProfile';
-import UpgradeBanner from '../../components/shared/UpgradeBanner';
+import UpgradeBanner from '@/components/shared/UpgradeBanner';
 
 const CandidateDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();

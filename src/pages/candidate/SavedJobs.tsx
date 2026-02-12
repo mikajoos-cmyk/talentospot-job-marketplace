@@ -13,7 +13,7 @@ import { applicationsService } from '../../services/applications.service';
 import { candidateService } from '../../services/candidate.service';
 import { packagesService } from '../../services/packages.service';
 import BlurredContent from '../../components/shared/BlurredContent';
-import UpgradeBanner from '../../components/shared/UpgradeBanner';
+import UpgradeBanner from '@/components/shared/UpgradeBanner';
 import {
   Dialog,
   DialogContent,

@@ -95,8 +95,6 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
         { id: 'lead', label: 'Lead / Manager' },
     ];
 
-    const sectors = ['IT', 'Healthcare', 'Finance', 'Engineering', 'Marketing', 'Sales', 'Education', 'Manufacturing', 'Retail', 'Other'];
-
     const handleEmploymentTypeToggle = (typeId: string) => {
         const current = filters.employmentTypes;
         const updated = current.includes(typeId)
@@ -331,21 +329,17 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                     </div>
 
                     {/* Sector */}
-                    <div>
-                        <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                    <div className="space-y-3">
+                        <Label className="text-body-sm font-medium text-foreground block">
                             Sector
                         </Label>
-                        <Select value={filters.sector || ''} onValueChange={(value) => onFiltersChange({ ...filters, sector: value })}>
-                            <SelectTrigger className="bg-background text-foreground border-border">
-                                <SelectValue placeholder="Select sector" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Sectors</SelectItem>
-                                {sectors.map(sector => (
-                                    <SelectItem key={sector} value={sector}>{sector}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <AutocompleteInput
+                            category="sectors"
+                            placeholder="Type sector..."
+                            value={filters.sector || ''}
+                            onChange={(val) => onFiltersChange({ ...filters, sector: val })}
+                            className="bg-background text-foreground border-border"
+                        />
                     </div>
 
                     {/* Location */}

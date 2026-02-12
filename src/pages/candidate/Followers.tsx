@@ -10,7 +10,7 @@ import { mockCompanies } from '../../data/mockCompanies';
 import { CandidateFollower } from '../../types/invitation';
 import { packagesService } from '../../services/packages.service';
 import BlurredContent from '../../components/shared/BlurredContent';
-import UpgradeBanner from '../../components/shared/UpgradeBanner';
+import UpgradeBanner from '@/components/shared/UpgradeBanner';
 
 const Followers: React.FC = () => {
   const navigate = useNavigate();

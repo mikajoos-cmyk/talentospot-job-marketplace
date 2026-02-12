@@ -72,6 +72,7 @@ const PostJob: React.FC = () => {
     salary_max: 250000,
     salary_currency: 'EUR',
     type: 'full_time',
+    sector: '',
     entryBonus: '',
     contractDuration: '',
     location: {
@@ -170,6 +171,7 @@ const PostJob: React.FC = () => {
         country: formData.location.country,
         city: formData.location.city,
         employment_type: formData.type,
+        sector: formData.sector,
         salary_min: formData.salary_min,
         salary_max: formData.salary_max,
         salary_currency: formData.salary_currency,
@@ -193,9 +195,12 @@ const PostJob: React.FC = () => {
       // Sync benefits to master data for suggestions
       // Don't block saving if this fails due to permissions
       try {
+        if (formData.sector) {
+          await masterDataService.syncMasterData('sectors', [formData.sector]);
+        }
         await masterDataService.syncMasterData('tags', benefits);
       } catch (err) {
-        console.warn('Failed to sync benefits to master data:', err);
+        console.warn('Failed to sync master data:', err);
       }
 
       await jobsService.createJob(jobData);
@@ -281,6 +286,20 @@ const PostJob: React.FC = () => {
                 value={formData.title}
                 onChange={(val: string) => setFormData({ ...formData, title: val })}
                 placeholder="e.g., Senior Frontend Developer"
+                className="bg-background text-foreground border-border"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="sector" className="text-body-sm font-medium text-foreground mb-2 block">
+                Sector
+              </Label>
+              <AutocompleteInput
+                category="sectors"
+                id="sector"
+                value={formData.sector || ''}
+                onChange={(val: string) => setFormData({ ...formData, sector: val })}
+                placeholder="e.g., Information Technology"
                 className="bg-background text-foreground border-border"
               />
             </div>
