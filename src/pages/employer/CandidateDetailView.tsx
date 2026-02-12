@@ -12,7 +12,7 @@ import { jobsService } from '../../services/jobs.service';
 import { shortlistsService } from '../../services/shortlists.service';
 import { analyticsService } from '../../services/analytics.service';
 import ReviewModal from '../../components/shared/ReviewModal';
-import { reviewsService } from '../../services/reviews.service';
+import { reviewsService } from '@/services/reviews.service';
 import UpgradeModal from '../../components/shared/UpgradeModal';
 import { Loader2 } from 'lucide-react';
 import {

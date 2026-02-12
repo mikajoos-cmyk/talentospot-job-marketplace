@@ -15,7 +15,7 @@ import ReviewModal from '../../components/shared/ReviewModal';
 import { useUser } from '../../contexts/UserContext';
 import { followsService } from '../../services/follows.service';
 import { analyticsService } from '../../services/analytics.service';
-import { reviewsService } from '../../services/reviews.service';
+import { reviewsService } from '@/services/reviews.service';
 import { Review } from '../../types/review';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import UpgradeBanner from '../../components/shared/UpgradeBanner';
