@@ -8,6 +8,14 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/contexts/ToastContext';
 import { useSettings } from '@/contexts/SettingsContext';
 
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+
 const AdminSettings = () => {
     const [resumeRequired, setResumeRequired] = useState(false);
     const [contentMaxWidth, setContentMaxWidth] = useState('max-w-7xl');
@@ -16,11 +24,25 @@ const AdminSettings = () => {
     const { showToast } = useToast();
     const { refreshSettings } = useSettings();
 
+    const widthOptions = [
+        { label: 'Extra Small (max-w-4xl)', value: 'max-w-4xl' },
+        { label: 'Small (max-w-5xl)', value: 'max-w-5xl' },
+        { label: 'Medium (max-w-6xl)', value: 'max-w-6xl' },
+        { label: 'Large (max-w-7xl)', value: 'max-w-7xl' },
+        { label: 'Extra Large (max-w-screen-xl)', value: 'max-w-screen-xl' },
+        { label: '2XL (max-w-screen-2xl)', value: 'max-w-screen-2xl' },
+        { label: '1200px (max-w-[1200px])', value: 'max-w-[1200px]' },
+        { label: '1400px (max-w-[1400px])', value: 'max-w-[1400px]' },
+        { label: '1600px (max-w-[1600px])', value: 'max-w-[1600px]' },
+        { label: 'Full Width (max-w-none)', value: 'max-w-none' },
+    ];
+
     useEffect(() => {
         fetchSettings();
     }, []);
 
     const fetchSettings = async () => {
+        setLoading(true);
         try {
             const { data, error } = await supabase
                 .from('system_settings')
@@ -143,36 +165,56 @@ const AdminSettings = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="max-width">Maximale Inhaltsbreite (Tailwind Class)</Label>
-                            <p className="text-sm text-muted-foreground">Definiert die maximale Breite des Inhaltsbereichs auf allen Seiten (z.B. max-w-7xl, max-w-[1200px])</p>
+                            <Label htmlFor="max-width">Maximale Inhaltsbreite</Label>
+                            <p className="text-sm text-muted-foreground">Definiert die maximale Breite des Inhaltsbereichs auf allen Seiten</p>
                             <div className="flex gap-2">
-                                <input 
-                                    id="max-width"
-                                    type="text"
-                                    value={contentMaxWidth}
-                                    onChange={(e) => setContentMaxWidth(e.target.value)}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                />
-                                <Button onClick={() => handleUpdateMaxWidth('content_max_width', contentMaxWidth)} disabled={loading}>
-                                    Speichern
-                                </Button>
+                                {loading ? (
+                                    <div className="h-9 w-full bg-muted animate-pulse rounded-md" />
+                                ) : (
+                                    <Select 
+                                        value={contentMaxWidth} 
+                                        onValueChange={(val) => handleUpdateMaxWidth('content_max_width', val)}
+                                        disabled={loading}
+                                    >
+                                        <SelectTrigger id="max-width" className="w-full border-primary/20">
+                                            <SelectValue placeholder="Größe auswählen" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {widthOptions.map((opt) => (
+                                                <SelectItem key={opt.value} value={opt.value}>
+                                                    {opt.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="search-max-width">Maximale Inhaltsbreite Suchseiten (Tailwind Class)</Label>
-                            <p className="text-sm text-muted-foreground">Definiert die maximale Breite speziell für die Job- und Kandidatensuche (z.B. max-w-[1600px])</p>
+                            <Label htmlFor="search-max-width">Maximale Inhaltsbreite Suchseiten</Label>
+                            <p className="text-sm text-muted-foreground">Definiert die maximale Breite speziell für die Job- und Kandidatensuche</p>
                             <div className="flex gap-2">
-                                <input 
-                                    id="search-max-width"
-                                    type="text"
-                                    value={searchMaxWidth}
-                                    onChange={(e) => setSearchMaxWidth(e.target.value)}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                />
-                                <Button onClick={() => handleUpdateMaxWidth('search_max_width', searchMaxWidth)} disabled={loading}>
-                                    Speichern
-                                </Button>
+                                {loading ? (
+                                    <div className="h-9 w-full bg-muted animate-pulse rounded-md" />
+                                ) : (
+                                    <Select 
+                                        value={searchMaxWidth} 
+                                        onValueChange={(val) => handleUpdateMaxWidth('search_max_width', val)}
+                                        disabled={loading}
+                                    >
+                                        <SelectTrigger id="search-max-width" className="w-full border-primary/20">
+                                            <SelectValue placeholder="Größe auswählen" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {widthOptions.map((opt) => (
+                                                <SelectItem key={opt.value} value={opt.value}>
+                                                    {opt.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             </div>
                         </div>
                     </CardContent>
