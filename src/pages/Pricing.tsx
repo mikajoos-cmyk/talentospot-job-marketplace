@@ -66,7 +66,7 @@ const Pricing: React.FC = () => {
       if (pkg.self_applications_limit !== undefined) {
           features.push(pkg.self_applications_limit === null ? 'Unlimited Applications' : `${pkg.self_applications_limit} Applications`);
       }
-      if (pkg.price_yearly > 0 || pkg.price_amount > 0) {
+      if (pkg.price_yearly > 0) {
         features.push('Priority in Search Results');
         features.push('Enhanced Profile Visibility');
       }
@@ -76,7 +76,7 @@ const Pricing: React.FC = () => {
   };
 
   const PackageCard = ({ pkg }: { pkg: any }) => {
-    const price = pkg.price_yearly !== undefined ? pkg.price_yearly : pkg.price_amount;
+    const price = pkg.price_yearly !== undefined ? pkg.price_yearly : 0;
     const isHighlight = pkg.name.toLowerCase().includes('premium') || price === 499 || price === 59 || price === 899;
 
     return (

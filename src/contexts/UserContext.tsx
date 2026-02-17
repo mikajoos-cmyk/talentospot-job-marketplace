@@ -71,11 +71,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         subscription = await packagesService.getUserSubscription(userId);
         if (subscription && subscription.status === 'active') {
           const packageName = subscription.packages?.name?.toLowerCase() || '';
-          const packagePrice = subscription.packages?.price_amount || 0;
           const packagePriceYearly = subscription.packages?.price_yearly || 0;
           const isFree = packageName.includes('kostenlos') || 
                          packageName.includes('free') || 
-                         (packagePrice === 0 && packagePriceYearly === 0);
+                         (packagePriceYearly === 0);
           hasActivePackage = !isFree;
         }
       } catch (error) {

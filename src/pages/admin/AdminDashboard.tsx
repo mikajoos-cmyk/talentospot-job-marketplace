@@ -38,52 +38,85 @@ const AdminDashboard: React.FC = () => {
       setLoading(true);
       try {
         // 1. Fetch General Stats
+        console.log('AdminDashboard: Fetching general stats...');
+
         // Candidates (profiles with role='candidate')
-        const { count: candidateCount } = await supabase
+        const { count: candidateCount, error: candErr } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
           .eq('role', 'candidate');
+        console.log('AdminDashboard: Candidate count:', { count: candidateCount, error: candErr });
 
         // Employers (profiles with role='employer')
-        const { count: employerCount } = await supabase
+        const { count: employerCount, error: empErr } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
           .eq('role', 'employer');
+        console.log('AdminDashboard: Employer count:', { count: employerCount, error: empErr });
         
         // Jobs
-        const { count: jobCount } = await supabase
+        const { count: jobCount, error: jobErr } = await supabase
           .from('jobs')
           .select('*', { count: 'exact', head: true });
+        console.log('AdminDashboard: Job count:', { count: jobCount, error: jobErr });
 
-        // Subscriptions (Active & Paid)
-        const { data: activePaidSubs, error: subsError } = await supabase
+        // Subscriptions (All for debugging)
+        console.log('AdminDashboard: Fetching all subscriptions for debugging...');
+        const { data: debugAllSubs, error: debugSubsError } = await supabase
           .from('subscriptions')
-          .select('id, packages!inner(price_amount)')
-          .eq('status', 'active')
-          .gt('expires_at', new Date().toISOString())
-          .gt('packages.price_amount', 0);
+          .select('id, created_at, package_id, status');
+        
+        console.log('AdminDashboard: RAW subscriptions from DB (no filter):', { 
+          count: debugAllSubs?.length || 0, 
+          data: debugAllSubs, 
+          error: debugSubsError 
+        });
 
-        if (subsError) throw subsError;
+        if (debugSubsError) {
+          console.error('AdminDashboard: Error fetching all subscriptions:', debugSubsError);
+        }
 
-        // Total Revenue (Sum of all paid subscriptions ever – excluding cancelled)
-        const { data: allPaidSubs, error: allPaidError } = await supabase
-          .from('subscriptions')
-          .select('id, packages!inner(price_amount)')
-          .not('status', 'eq', 'cancelled')
-          .gt('packages.price_amount', 0);
+        // Subscriptions (Active)
+        const allActiveSubs = (debugAllSubs || []).filter(s => s.status === 'active');
+        console.log('AdminDashboard: Subscriptions after client-side status=active filter:', {
+          count: allActiveSubs.length,
+          data: allActiveSubs
+        });
 
-        if (allPaidError) throw allPaidError;
+        // Load packages once and map prices (avoid joins causing 400 errors)
+        const { data: pkgs, error: pkgError } = await supabase
+          .from('packages')
+          .select('id, price_yearly');
+        console.log('AdminDashboard: All packages for mapping:', { data: pkgs, error: pkgError });
 
-        const totalRevenue = allPaidSubs?.reduce((acc: number, sub: any) => {
-          const pkg = (sub as any).packages as any;
-          return acc + (pkg?.price_amount || 0);
-        }, 0) || 0;
+        if (pkgError) throw pkgError;
+
+        const priceById: Record<string, number> = Object.fromEntries(
+          (pkgs || []).map((p: any) => [p.id, p.price_yearly || 0])
+        );
+        console.log('AdminDashboard: Price mapping:', priceById);
+
+        // Paid active subs = subs whose package price > 0
+        console.log('AdminDashboard: Starting paid filter process...');
+        const activePaidSubs = (allActiveSubs || []).filter((sub: any) => {
+          const price = priceById[sub.package_id] || 0;
+          const isPaid = price > 0;
+          console.log(`AdminDashboard: Checking sub ${sub.id}: package_id=${sub.package_id}, price=${price}, isPaid=${isPaid}`);
+          return isPaid;
+        });
+        console.log('AdminDashboard: Filtered active paid subscriptions result:', activePaidSubs);
+
+        // Total Revenue: sum of active paid subscriptions based on package prices
+        const totalRevenue = activePaidSubs.reduce((acc: number, sub: any) => {
+          return acc + (priceById[sub.package_id] || 0);
+        }, 0);
+        console.log('AdminDashboard: Calculated total revenue:', totalRevenue);
 
         setStats({
           totalCandidates: candidateCount || 0,
           totalEmployers: employerCount || 0,
           totalJobs: jobCount || 0,
-          activeSubscriptions: activePaidSubs?.length || 0,
+          activeSubscriptions: activePaidSubs.length,
           revenue: totalRevenue
         });
 
@@ -101,6 +134,7 @@ const AdminDashboard: React.FC = () => {
   }, [timeRange]);
 
   const fetchHistoricalData = async () => {
+    console.log('AdminDashboard: Fetching historical data for range:', timeRange);
     // Determine start date based on timeRange
     let startDate = subDays(new Date(), 30);
     let interval: 'day' | 'month' = 'day';
@@ -117,14 +151,47 @@ const AdminDashboard: React.FC = () => {
     }
 
     const startDateStr = startDate.toISOString();
+    console.log('AdminDashboard: Start date for historical data:', startDateStr);
 
     // Fetch all relevant entities created after startDate
-    const [jobsRes, profilesRes, employersRes, subsRes] = await Promise.all([
+    console.log('AdminDashboard: Fetching historical data with debug info...');
+    const [jobsRes, profilesRes, employersRes, subsRes, pkgsRes] = await Promise.all([
       supabase.from('jobs').select('created_at').gt('created_at', startDateStr),
       supabase.from('profiles').select('created_at').eq('role', 'candidate').gt('created_at', startDateStr),
       supabase.from('profiles').select('created_at').eq('role', 'employer').gt('created_at', startDateStr),
-      supabase.from('subscriptions').select('created_at, packages!inner(price_amount)').gt('created_at', startDateStr).gt('packages.price_amount', 0)
+      supabase.from('subscriptions').select('created_at, package_id, status').gt('created_at', startDateStr),
+      supabase.from('packages').select('id, price_yearly')
     ]);
+
+    console.log('AdminDashboard: Historical raw responses (all statuses):', {
+      jobs: jobsRes.data?.length || 0,
+      candidates: profilesRes.data?.length || 0,
+      employers: employersRes.data?.length || 0,
+      subsCount: subsRes.data?.length || 0,
+      subsData: subsRes.data,
+      pkgs: pkgsRes.data?.length || 0,
+      errors: {
+        jobs: jobsRes.error,
+        profiles: profilesRes.error,
+        employers: employersRes.error,
+        subs: subsRes.error,
+        pkgs: pkgsRes.error
+      }
+    });
+
+    // Build price map and filter paid subscriptions locally (no joins)
+    const priceByIdHist: Record<string, number> = Object.fromEntries(
+      (pkgsRes.data || []).map((p: any) => [p.id, p.price_yearly || 0])
+    );
+
+    const activeSubsHist = (subsRes.data || []).filter(s => s.status === 'active');
+    console.log('AdminDashboard: Historical active subs:', activeSubsHist.length);
+
+    const paidSubsData = activeSubsHist.filter((sub: any) => {
+      const price = priceByIdHist[sub.package_id] || 0;
+      return price > 0;
+    });
+    console.log('AdminDashboard: Historical paid active subscriptions count:', paidSubsData.length);
 
     // Process data into intervals
     let chartData: any[] = [];
@@ -141,8 +208,10 @@ const AdminDashboard: React.FC = () => {
           jobs: jobsRes.data?.filter(i => i.created_at.startsWith(dateStr)).length || 0,
           candidates: profilesRes.data?.filter(i => i.created_at.startsWith(dateStr)).length || 0,
           employers: employersRes.data?.filter(i => i.created_at.startsWith(dateStr)).length || 0,
-          subs: subsRes.data?.filter(i => i.created_at.startsWith(dateStr)).length || 0,
-          revenue: subsRes.data?.filter(i => i.created_at.startsWith(dateStr)).reduce((acc, i) => acc + ((i.packages as any).price_amount || 0), 0) || 0
+          subs: paidSubsData.filter(i => i.created_at.startsWith(dateStr)).length || 0,
+          revenue: paidSubsData
+            .filter(i => i.created_at.startsWith(dateStr))
+            .reduce((acc: number, i: any) => acc + (priceByIdHist[i.package_id] || 0), 0) || 0
         };
       });
     } else {
@@ -156,8 +225,10 @@ const AdminDashboard: React.FC = () => {
           jobs: jobsRes.data?.filter(i => i.created_at.startsWith(monthKey)).length || 0,
           candidates: profilesRes.data?.filter(i => i.created_at.startsWith(monthKey)).length || 0,
           employers: employersRes.data?.filter(i => i.created_at.startsWith(monthKey)).length || 0,
-          subs: subsRes.data?.filter(i => i.created_at.startsWith(monthKey)).length || 0,
-          revenue: subsRes.data?.filter(i => i.created_at.startsWith(monthKey)).reduce((acc, i) => acc + ((i.packages as any).price_amount || 0), 0) || 0
+          subs: paidSubsData.filter(i => i.created_at.startsWith(monthKey)).length || 0,
+          revenue: paidSubsData
+            .filter(i => i.created_at.startsWith(monthKey))
+            .reduce((acc: number, i: any) => acc + (priceByIdHist[i.package_id] || 0), 0) || 0
         };
       });
     }

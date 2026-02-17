@@ -95,11 +95,6 @@ const AdminPackages: React.FC = () => {
                             <div className="flex items-baseline gap-1">
                                 <span className="text-2xl font-bold">€{pkg.price_yearly}</span>
                                 <span className="text-muted-foreground text-sm">/ Jahr</span>
-                                {pkg.price_amount > 0 && (
-                                    <span className="text-muted-foreground text-xs ml-2">
-                                        (€{pkg.price_amount}/Monat)
-                                    </span>
-                                )}
                             </div>
 
                             <div className="space-y-2 text-sm">
@@ -217,15 +212,6 @@ const AdminPackages: React.FC = () => {
                                                     value={editingPackage.price_yearly}
                                                     onChange={e => setEditingPackage({ ...editingPackage, price_yearly: parseFloat(e.target.value) })}
                                                     required
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="price_amount">Preis pro Monat (€) - opt. Anzeige</Label>
-                                                <Input
-                                                    id="price_amount"
-                                                    type="number"
-                                                    value={editingPackage.price_amount}
-                                                    onChange={e => setEditingPackage({ ...editingPackage, price_amount: parseFloat(e.target.value) })}
                                                 />
                                             </div>
                                         </div>

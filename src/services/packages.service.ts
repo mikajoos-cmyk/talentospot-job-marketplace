@@ -289,7 +289,6 @@ export const packagesService = {
     if (!pkg) return false;
     
     const packageName = pkg.name?.toLowerCase() || '';
-    const packagePrice = pkg.price_amount || 0;
     const packagePriceYearly = pkg.price_yearly || 0;
 
     // A package is NOT premium if it contains "free" or "kostenlos" AND has no price
@@ -297,10 +296,10 @@ export const packagesService = {
     // or packages that are named "Free" but still have a price (unlikely but possible).
     // The most reliable way is checking the price.
     const isFree = (packageName.includes('kostenlos') || packageName.includes('free')) && 
-                   (packagePrice === 0 && packagePriceYearly === 0);
+                   (packagePriceYearly === 0);
     
     // Also, if price is 0 and it's not explicitly a paid package (we could add a flag is_premium to DB later)
-    if (packagePrice === 0 && packagePriceYearly === 0) {
+    if (packagePriceYearly === 0) {
       return false;
     }
 

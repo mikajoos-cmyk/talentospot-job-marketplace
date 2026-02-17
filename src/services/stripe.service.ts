@@ -9,7 +9,7 @@ export const stripeService = {
       body: {
         packageId,
         userId,
-        priceAmount: pkg.price_amount,
+        priceAmount: pkg.price_yearly,
         currency: pkg.price_currency || 'EUR',
       },
     });
@@ -25,7 +25,7 @@ export const stripeService = {
       userId,
       packageId,
       paymentMethodId,
-      priceAmount: pkg.price_amount,
+      priceAmount: pkg.price_yearly,
     };
 
     const { data, error } = await supabase.functions.invoke('create-subscription', {
