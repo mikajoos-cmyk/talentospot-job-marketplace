@@ -94,7 +94,7 @@ const CandidateProfile: React.FC = () => {
             onClick={() => window.open(candidateData.cvUrl, '_blank')}
             title="Download CV"
           >
-            <Download className="w-4 h-4 mr-2" /> CV
+            <Download className="w-4 h-4 mr-2" /> Resume
           </Button>
         )}
         <Button

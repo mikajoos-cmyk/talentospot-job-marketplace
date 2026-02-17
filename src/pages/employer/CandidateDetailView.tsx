@@ -274,7 +274,7 @@ const CandidateDetailView: React.FC = () => {
               onClick={() => window.open(candidate.cvUrl, '_blank')}
               title="Download CV"
             >
-              <Download className="w-4 h-4 mr-2" /> CV
+              <Download className="w-4 h-4 mr-2" /> Resume
             </Button>
           )}
 
