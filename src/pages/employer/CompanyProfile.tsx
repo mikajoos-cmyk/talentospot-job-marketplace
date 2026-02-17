@@ -12,6 +12,7 @@ import { employerService } from '../../services/employer.service';
 import { storageService } from '../../services/storage.service';
 import { Upload, Building2, Loader2, X, Eye } from 'lucide-react';
 import { LocationPicker } from '../../components/shared/LocationPicker';
+import ImageCropModal from '../../components/shared/ImageCropModal';
 
 const CompanyProfile: React.FC = () => {
   const { showToast } = useToast();
@@ -20,6 +21,8 @@ const CompanyProfile: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState<any>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -81,17 +84,30 @@ const CompanyProfile: React.FC = () => {
     if (!files || files.length === 0 || !user?.id) return;
 
     const file = files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSelectedImage(reader.result as string);
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
 
-    // Show preview
-    try {
-      const previewUrl = URL.createObjectURL(file);
-      setLogoPreview(previewUrl);
-    } catch (err) {
-      console.error('Failed to create preview:', err);
+    // Reset input value so the same file can be selected again
+    if (event.target) {
+      event.target.value = '';
     }
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!user?.id) return;
 
     setUploading(true);
     try {
+      const file = new File([croppedBlob], 'logo.png', { type: 'image/png' });
+      
+      // Update preview immediately
+      const previewUrl = URL.createObjectURL(croppedBlob);
+      setLogoPreview(previewUrl);
+
       const publicUrl = await storageService.uploadLogo(user.id, file);
       setFormData((prev: any) => ({ ...prev, logoUrl: publicUrl }));
       await refreshUser();
@@ -103,7 +119,7 @@ const CompanyProfile: React.FC = () => {
       console.error('Logo upload error:', error);
       showToast({
         title: 'Upload Failed',
-        description: 'Failed to upload logo. Please check your connection or storage permissions.',
+        description: 'Failed to upload logo.',
         variant: 'destructive',
       });
     } finally {
@@ -488,6 +504,14 @@ const CompanyProfile: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      <ImageCropModal
+        isOpen={cropModalOpen}
+        onClose={() => setCropModalOpen(false)}
+        imageSrc={selectedImage || ''}
+        onCropComplete={handleCropComplete}
+        aspect={1}
+      />
     </AppLayout>
   );
 };

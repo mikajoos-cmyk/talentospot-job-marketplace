@@ -17,6 +17,7 @@ import { Switch } from '../../components/ui/switch';
 import { masterDataService } from '../../services/master-data.service';
 import { AutocompleteInput } from '../../components/shared/AutocompleteInput';
 import { LocationPicker } from '../../components/shared/LocationPicker';
+import ImageCropModal from '../../components/shared/ImageCropModal';
 import { findContinent } from '../../utils/locationUtils';
 import DrivingLicenseSelector from '../../components/shared/DrivingLicenseSelector';
 import { formatLanguageLevel } from '../../utils/language-levels';
@@ -49,6 +50,8 @@ const EditProfile: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Refs for Datei-Uploads
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -231,49 +234,45 @@ const EditProfile: React.FC = () => {
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    console.log('handleAvatarUpload triggered', { fileCount: files?.length, userId: user?.id });
-
     if (!files || files.length === 0) return;
     const file = files[0];
 
-    // Show preview immediately - do this before any other checks
-    try {
-      const previewUrl = URL.createObjectURL(file);
-      console.log('Created preview URL:', previewUrl);
-      setAvatarPreview(previewUrl);
-    } catch (err) {
-      console.error('Failed to create preview URL:', err);
-    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSelectedImage(reader.result as string);
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
 
+    // Reset input value so the same file can be selected again
+    if (event.target) {
+      event.target.value = '';
+    }
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
     if (!user?.id) {
-      console.error('No user ID available for upload');
       showToast({ title: 'Error', description: 'User session not found. Please log in again.', variant: 'destructive' });
       return;
     }
 
     setUploading(true);
     try {
-      console.log('Starting upload for file:', file.name);
+      const file = new File([croppedBlob], 'avatar.png', { type: 'image/png' });
+      
+      // Update preview immediately
+      const previewUrl = URL.createObjectURL(croppedBlob);
+      setAvatarPreview(previewUrl);
+
       const publicUrl = await storageService.uploadAvatar(user.id, file);
-      console.log('Upload successful, public URL:', publicUrl);
-
-      setFormData((prev: any) => {
-        const next = { ...prev, avatar: publicUrl };
-        console.log('Updating formData avatar:', next.avatar);
-        return next;
-      });
-
+      
+      setFormData((prev: any) => ({ ...prev, avatar: publicUrl }));
       showToast({ title: 'Upload Success', description: 'Profile picture uploaded' });
     } catch (error) {
-      console.error('Avatar upload failed during service call:', error);
+      console.error('Avatar upload failed:', error);
       showToast({ title: 'Upload Failed', description: 'Could not upload image', variant: 'destructive' });
-      // We keep the preview for now so the user can see what they tried to upload
     } finally {
       setUploading(false);
-      // Reset input value so the same file can be selected again if needed
-      if (event.target) {
-        event.target.value = '';
-      }
     }
   };
 
@@ -2499,6 +2498,14 @@ const EditProfile: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog >
+
+      <ImageCropModal
+        isOpen={cropModalOpen}
+        onClose={() => setCropModalOpen(false)}
+        imageSrc={selectedImage || ''}
+        onCropComplete={handleCropComplete}
+        aspect={1}
+      />
     </AppLayout >
   );
 };
