@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { UserProvider } from './contexts/UserContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/auth/Login';
@@ -50,9 +51,10 @@ import AdminMessages from './pages/shared/Messages';
 function App() {
   return (
     <Router>
-      <UserProvider>
-        <LanguageProvider>
-          <ToastProvider>
+      <SettingsProvider>
+        <UserProvider>
+          <LanguageProvider>
+            <ToastProvider>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
@@ -303,7 +305,8 @@ function App() {
           </ToastProvider>
         </LanguageProvider>
       </UserProvider>
-    </Router>
+    </SettingsProvider>
+  </Router>
   );
 }
 

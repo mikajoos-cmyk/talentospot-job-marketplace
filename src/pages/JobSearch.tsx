@@ -9,6 +9,7 @@ import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2, Map as M
 import { jobsService } from '@/services/jobs.service';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { applicationsService } from '@/services/applications.service';
 import { storageService } from '@/services/storage.service';
 import { savedJobsService } from '@/services/saved-jobs.service';
@@ -52,6 +53,7 @@ const JobSearch: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { user } = useUser();
+  const { searchMaxWidth } = useSettings();
   const [searchQuery, setSearchQuery] = useState('');
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -655,7 +657,7 @@ const JobSearch: React.FC = () => {
 
   return (
     <>
-      <AppLayout isPublic={user.role === 'guest'}>
+      <AppLayout isPublic={user.role === 'guest'} maxWidthOverride={searchMaxWidth}>
         <div className="space-y-8">
           {user.role === 'guest' ? (
             <div className="text-center pt-8 mb-16">

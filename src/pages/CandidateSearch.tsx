@@ -4,6 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import CandidateFilters from '@/components/employer/CandidateFilters';
 import CandidateCard from '@/components/employer/CandidateCard';
 import { useUser } from '@/contexts/UserContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { CandidateFilters as CandidateFiltersType } from '@/types/candidate';
 import { candidateService } from '@/services/candidate.service';
 import { jobsService, Job } from '@/services/jobs.service';
@@ -36,6 +37,7 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 
 const CandidateSearch: React.FC = () => {
   const { user } = useUser();
+  const { searchMaxWidth } = useSettings();
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [accessRequests, setAccessRequests] = useState<Record<string, string>>({});
@@ -491,7 +493,7 @@ const CandidateSearch: React.FC = () => {
 
   return (
     <>
-      <AppLayout isPublic={user.role === 'guest'}>
+      <AppLayout isPublic={user.role === 'guest'} maxWidthOverride={searchMaxWidth}>
         <div className="space-y-8">
           {user.role === 'guest' ? (
             <div className="text-center pt-8 mb-16">

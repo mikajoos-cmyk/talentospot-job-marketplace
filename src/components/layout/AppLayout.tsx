@@ -9,18 +9,24 @@ import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { useSettings } from '@/contexts/SettingsContext';
 
 interface AppLayoutProps {
   children: React.ReactNode;
   fullHeight?: boolean;
   noPadding?: boolean;
   isPublic?: boolean;
+  maxWidthOverride?: string;
 }
 
-const AppLayout: React.FC<AppLayoutProps> = ({ children, fullHeight, noPadding, isPublic }) => {
+const AppLayout: React.FC<AppLayoutProps> = ({ children, fullHeight, noPadding, isPublic, maxWidthOverride }) => {
   const { user, isAuthenticated, loading } = useUser();
+  const { contentMaxWidth } = useSettings();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Determine the max width to apply
+  const activeMaxWidth = maxWidthOverride || contentMaxWidth;
 
   // 1. Loading State: Verhindert "Flackern" des falschen Layouts beim Laden
   if (loading) {
@@ -40,7 +46,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, fullHeight, noPadding, 
             {/* Container sorgt dafür, dass Dashboard-Seiten (die auf AppLayout vertrauen)
               auch hier ordentlich zentriert angezeigt werden */}
             <div className={cn(
-                "w-full",
+                "w-full mx-auto",
+                activeMaxWidth,
                 !noPadding && "p-4 md:p-8"
             )}>
               {children}
@@ -104,7 +111,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, fullHeight, noPadding, 
                 !noPadding && "p-4 md:p-8"
             )}>
               <div className={cn(
-                  "w-full",
+                  "w-full mx-auto",
+                  activeMaxWidth,
                   !noPadding && "pb-10",
                   fullHeight && "h-full"
               )}>

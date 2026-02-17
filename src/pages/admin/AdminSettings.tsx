@@ -3,13 +3,18 @@ import AppLayout from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/contexts/ToastContext';
+import { useSettings } from '@/contexts/SettingsContext';
 
 const AdminSettings = () => {
     const [resumeRequired, setResumeRequired] = useState(false);
+    const [contentMaxWidth, setContentMaxWidth] = useState('max-w-7xl');
+    const [searchMaxWidth, setSearchMaxWidth] = useState('max-w-7xl');
     const [loading, setLoading] = useState(true);
     const { showToast } = useToast();
+    const { refreshSettings } = useSettings();
 
     useEffect(() => {
         fetchSettings();
@@ -19,13 +24,18 @@ const AdminSettings = () => {
         try {
             const { data, error } = await supabase
                 .from('system_settings')
-                .select('value')
-                .eq('key', 'resume_required_at_registration')
-                .single();
+                .select('*');
 
             if (error) throw error;
             if (data) {
-                setResumeRequired(data.value as boolean);
+                const resumeReq = data.find(s => s.key === 'resume_required_at_registration');
+                if (resumeReq) setResumeRequired(resumeReq.value);
+                
+                const maxWidth = data.find(s => s.key === 'content_max_width');
+                if (maxWidth) setContentMaxWidth(maxWidth.value);
+
+                const sMaxWidth = data.find(s => s.key === 'search_max_width');
+                if (sMaxWidth) setSearchMaxWidth(sMaxWidth.value);
             }
         } catch (error) {
             console.error('Error fetching settings:', error);
@@ -65,6 +75,39 @@ const AdminSettings = () => {
         }
     };
 
+    const handleUpdateMaxWidth = async (key: string, value: string) => {
+        try {
+            if (key === 'content_max_width') setContentMaxWidth(value);
+            else if (key === 'search_max_width') setSearchMaxWidth(value);
+
+            const { error } = await supabase
+                .from('system_settings')
+                .upsert({
+                    key: key,
+                    value: value,
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'key'
+                });
+
+            if (error) throw error;
+
+            await refreshSettings();
+            
+            showToast({
+                title: 'Einstellungen gespeichert',
+                description: `Einstellung ${key} wurde auf ${value} aktualisiert.`,
+            });
+        } catch (error: any) {
+            console.error('Error updating settings:', error);
+            showToast({
+                title: 'Fehler beim Speichern',
+                description: error.message || 'Die Einstellung konnte nicht aktualisiert werden.',
+                variant: 'destructive',
+            });
+        }
+    };
+
     return (
         <AppLayout>
             <div className="space-y-6">
@@ -97,6 +140,40 @@ const AdminSettings = () => {
                                 onCheckedChange={handleToggleResumeRequired}
                                 disabled={loading}
                             />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="max-width">Maximale Inhaltsbreite (Tailwind Class)</Label>
+                            <p className="text-sm text-muted-foreground">Definiert die maximale Breite des Inhaltsbereichs auf allen Seiten (z.B. max-w-7xl, max-w-[1200px])</p>
+                            <div className="flex gap-2">
+                                <input 
+                                    id="max-width"
+                                    type="text"
+                                    value={contentMaxWidth}
+                                    onChange={(e) => setContentMaxWidth(e.target.value)}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                                <Button onClick={() => handleUpdateMaxWidth('content_max_width', contentMaxWidth)} disabled={loading}>
+                                    Speichern
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="search-max-width">Maximale Inhaltsbreite Suchseiten (Tailwind Class)</Label>
+                            <p className="text-sm text-muted-foreground">Definiert die maximale Breite speziell für die Job- und Kandidatensuche (z.B. max-w-[1600px])</p>
+                            <div className="flex gap-2">
+                                <input 
+                                    id="search-max-width"
+                                    type="text"
+                                    value={searchMaxWidth}
+                                    onChange={(e) => setSearchMaxWidth(e.target.value)}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                                <Button onClick={() => handleUpdateMaxWidth('search_max_width', searchMaxWidth)} disabled={loading}>
+                                    Speichern
+                                </Button>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

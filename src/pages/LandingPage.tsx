@@ -8,6 +8,7 @@ import { jobsService } from '../services/jobs.service';
 import { employerService } from '../services/employer.service';
 import { candidateService } from '../services/candidate.service';
 import PublicHeader from '../components/layout/PublicHeader';
+import { useSettings } from '@/contexts/SettingsContext';
 import MainHeroFilter from '../components/landing/MainHeroFilter';
 import QuickAccessStatus from '../components/landing/QuickAccessStatus';
 import CandidateListCard from '../components/landing/CandidateListCard';
@@ -19,8 +20,7 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useUser();
 
-  // Zentrale Konfiguration für die Inhaltsbreite auf der Landing Page
-  const contentMaxWidth = "max-w-7xl";
+  const { contentMaxWidth } = useSettings();
 
   useEffect(() => {
     if (isAuthenticated) {
