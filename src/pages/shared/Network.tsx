@@ -23,7 +23,6 @@ const Network: React.FC = () => {
   const [followers, setFollowers] = React.useState<any[]>([]);
   const [shortlistedCandidates, setShortlistedCandidates] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [hasActivePackage, setHasActivePackage] = React.useState(false);
 
   const isEmployer = user?.role === 'employer';
   const isCandidate = user?.role === 'candidate';
@@ -34,11 +33,6 @@ const Network: React.FC = () => {
 
       try {
         setLoading(true);
-
-        // Check if user has active package
-        const hasPackage = await packagesService.hasActivePackage(user.id);
-        console.log(`[Network] hasActivePackage: ${hasPackage}`);
-        setHasActivePackage(hasPackage);
 
         if (isCandidate) {
           // Fetch companies I follow
@@ -187,7 +181,7 @@ const Network: React.FC = () => {
                     <Card key={follow.id} className="p-6 border border-border bg-card hover:shadow-lg transition-all duration-normal hover:-translate-y-1">
                       <div className="space-y-4">
                         <div className="flex items-start justify-between">
-                          <div className={cn(!hasActivePackage && "blur-sm select-none")}>
+                          <div className={cn(!user.hasActivePackage && "blur-sm select-none")}>
                             <img
                               src={company.logo_url || "https://via.placeholder.com/64"}
                               alt={company.company_name}
@@ -211,7 +205,7 @@ const Network: React.FC = () => {
                           <h3
                             className={cn(
                               "text-h4 font-heading text-foreground mb-1 cursor-pointer hover:text-primary transition-colors",
-                              !hasActivePackage && "blur-sm select-none"
+                              !user.hasActivePackage && "blur-sm select-none"
                             )}
                             onClick={() => navigate(`/companies/${company.id}`)}
                           >
@@ -274,14 +268,14 @@ const Network: React.FC = () => {
                             className="flex items-center space-x-3 cursor-pointer flex-1"
                             onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
                           >
-                            <Avatar className={cn("w-12 h-12", !hasActivePackage && "blur-sm select-none")}>
+                            <Avatar className={cn("w-12 h-12", !user.hasActivePackage && "blur-sm select-none")}>
                               <AvatarImage src={candidate.profiles?.avatar_url} alt={candidate.profiles?.full_name} />
                               <AvatarFallback className="bg-primary text-primary-foreground text-h4 font-heading">
                                 {candidate.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <h3 className={cn("text-h4 font-heading text-foreground hover:text-primary transition-colors", !hasActivePackage && "blur-sm select-none")}>
+                              <h3 className={cn("text-h4 font-heading text-foreground hover:text-primary transition-colors", !user.hasActivePackage && "blur-sm select-none")}>
                                 {candidate.profiles?.full_name || 'Anonymous'}
                               </h3>
                               <p className="text-body-sm text-muted-foreground">{candidate.job_title}</p>
@@ -351,7 +345,7 @@ const Network: React.FC = () => {
                     const content = (
                       <div className="space-y-4">
                         <div className="flex items-start space-x-4">
-                          <div className={!hasActivePackage ? 'blur-sm select-none' : ''}>
+                          <div className={!user.hasActivePackage ? 'blur-sm select-none' : ''}>
                             <img
                               src={company.logo_url || "https://via.placeholder.com/64"}
                               alt={company.company_name}
@@ -364,7 +358,7 @@ const Network: React.FC = () => {
                             <h3
                               className={cn(
                                 "text-h4 font-heading text-foreground mb-1 truncate cursor-pointer hover:text-primary transition-colors",
-                                !hasActivePackage && "blur-sm select-none"
+                                !user.hasActivePackage && "blur-sm select-none"
                               )}
                               onClick={() => navigate(`/companies/${company.id}`)}
                             >
@@ -403,7 +397,7 @@ const Network: React.FC = () => {
                       <div className="space-y-4">
                         <div className="flex items-start space-x-4">
                           <Avatar
-                            className={cn("w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity", !hasActivePackage && "blur-sm select-none")}
+                            className={cn("w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity", !user.hasActivePackage && "blur-sm select-none")}
                             onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
                           >
                             <AvatarImage src={candidate.profiles?.avatar_url} alt={candidate.profiles?.full_name} />
@@ -415,7 +409,7 @@ const Network: React.FC = () => {
                             <h3
                               className={cn(
                                 "text-h4 font-heading text-foreground mb-1 truncate cursor-pointer hover:text-primary transition-colors",
-                                !hasActivePackage && "blur-sm select-none"
+                                !user.hasActivePackage && "blur-sm select-none"
                               )}
                               onClick={() => navigate(`/employer/candidates/${candidate.id}`)}
                             >

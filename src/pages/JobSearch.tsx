@@ -5,12 +5,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import RichTextEditor from '@/components/ui/rich-text-editor';
-import { Briefcase, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Sparkles } from 'lucide-react';
+import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2, Map as MapIcon, Award, Clock, FileText, TrendingUp, Loader2, Upload, X, ArrowUpDown, ArrowUp, ArrowDown, Sparkles } from 'lucide-react';
+import { jobsService } from '@/services/jobs.service';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
-import { jobsService } from '@/services/jobs.service';
-import { getCoordinates } from '@/utils/geocoding';
 import { applicationsService } from '@/services/applications.service';
+import { storageService } from '@/services/storage.service';
 import { savedJobsService } from '@/services/saved-jobs.service';
 
 import { candidateService } from '@/services/candidate.service';
@@ -61,6 +61,9 @@ const JobSearch: React.FC = () => {
   const [coverLetter, setCoverLetter] = useState('');
   const [appliedJobIds, setAppliedJobIds] = useState<string[]>([]);
   const [applying, setApplying] = useState(false);
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [cvUploading, setCvUploading] = useState(false);
+  const [resumeRequired, setResumeRequired] = useState(false);
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [sortAscending, setSortAscending] = useState<boolean>(false);
@@ -161,6 +164,18 @@ const JobSearch: React.FC = () => {
   });
 
   useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const required = await candidateService.isResumeRequired();
+        setResumeRequired(required);
+      } catch (e) {
+        console.warn('Fehler beim Laden der Systemeinstellungen:', e);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  useEffect(() => {
     const updateMapCenter = async () => {
       if (filters.city) {
         const coords = await getCoordinates(filters.city, filters.country);
@@ -187,10 +202,9 @@ const JobSearch: React.FC = () => {
   }, [filters, radiusValue]);
 
   useEffect(() => {
-    const checkAccess = async () => {
+    const checkAccess = () => {
       if (user.role === 'candidate') {
-        const hasPremium = await packagesService.hasActivePackage(user.id);
-        setHasPremiumAccess(hasPremium);
+        setHasPremiumAccess(!!user.hasActivePackage);
       }
       loadJobs();
     };
@@ -200,7 +214,7 @@ const JobSearch: React.FC = () => {
       loadSavedJobs();
       loadAppliedJobs();
     }
-  }, [user?.role, user?.id, radiusValue]);
+  }, [user?.role, user?.id, user?.hasActivePackage, radiusValue]);
 
   const loadJobs = async (currentFilters: JobFiltersState = filters) => {
     try {
@@ -494,9 +508,41 @@ const JobSearch: React.FC = () => {
 
     try {
       setApplying(true);
+
+      if (resumeRequired && !cvFile) {
+        showToast({
+          title: 'Lebenslauf erforderlich',
+          description: 'Bitte lade einen Lebenslauf hoch, um dich zu bewerben.',
+          variant: 'destructive',
+        });
+        setApplying(false);
+        return;
+      }
+
       if (!user.profile?.id) {
         const candidateProfile = await candidateService.getCandidateProfile(user.id);
         user.profile = candidateProfile;
+      }
+
+      // CV Upload if selected
+      let cvUrl: string | undefined = undefined;
+      if (cvFile) {
+        try {
+          setCvUploading(true);
+          cvUrl = await storageService.uploadCV(user.id, cvFile);
+        } catch (uploadErr: any) {
+          console.error('Error uploading CV:', uploadErr);
+          showToast({
+            title: 'Upload fehlgeschlagen',
+            description: uploadErr.message || 'Dein Lebenslauf konnte nicht hochgeladen werden.',
+            variant: 'destructive',
+          });
+          setApplying(false);
+          setCvUploading(false);
+          return;
+        } finally {
+          setCvUploading(false);
+        }
       }
 
       await applicationsService.applyToJob({
@@ -504,6 +550,7 @@ const JobSearch: React.FC = () => {
         candidate_id: user.profile.id,
         employer_id: selectedJob.employer_id,
         cover_letter: coverLetter,
+        cv_url: cvUrl,
       });
 
       setAppliedJobIds([...appliedJobIds, selectedJob.id]);
@@ -770,6 +817,50 @@ const JobSearch: React.FC = () => {
                       minHeight="200px"
                     />
                   </div>
+
+                  <div>
+                    <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                      Lebenslauf anhängen {resumeRequired ? <span className="text-error">(Pflicht)</span> : '(optional)'}
+                    </Label>
+                    <label htmlFor="cv-upload" className="block border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+                      <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
+                      <p className="text-body-sm text-foreground">
+                        {cvFile ? 'Datei gewählt: ' + cvFile.name : 'Klicke hier, um deinen Lebenslauf auszuwählen'}
+                      </p>
+                      <p className="text-caption text-muted-foreground">PDF, DOC, DOCX bis 10MB</p>
+                      <input
+                        id="cv-upload"
+                        type="file"
+                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          if (file && file.size > 10 * 1024 * 1024) {
+                            showToast({
+                              title: 'Datei zu groß',
+                              description: 'Bitte wähle eine Datei bis maximal 10MB.',
+                              variant: 'destructive',
+                            });
+                            e.currentTarget.value = '';
+                            return;
+                          }
+                          setCvFile(file);
+                        }}
+                      />
+                    </label>
+                    {cvFile && (
+                      <div className="mt-2 flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground truncate mr-3">{cvFile.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setCvFile(null)}
+                          className="inline-flex items-center text-error hover:text-error/80"
+                        >
+                          <X className="w-4 h-4 mr-1" /> Entfernen
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex justify-end space-x-4">
@@ -778,18 +869,24 @@ const JobSearch: React.FC = () => {
                     onClick={() => {
                       setApplyDialogOpen(false);
                       setCoverLetter('');
+                      setCvFile(null);
                     }}
-                    disabled={applying}
+                    disabled={applying || cvUploading}
                     className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
                   >
                     Cancel
                   </Button>
                   <Button
                     onClick={handleSubmitApplication}
-                    disabled={!coverLetter.trim() || applying}
+                    disabled={!coverLetter.trim() || applying || cvUploading || (resumeRequired && !cvFile)}
                     className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
                   >
-                    {applying ? (
+                    {cvUploading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Hochladen...
+                      </>
+                    ) : applying ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Submitting...

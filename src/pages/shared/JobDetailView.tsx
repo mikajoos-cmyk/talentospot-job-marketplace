@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import RichTextEditor from '@/components/ui/rich-text-editor';
-import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2, Map as MapIcon, Award, Clock, FileText, TrendingUp, Loader2 } from 'lucide-react';
+import { MapPin, DollarSign, Briefcase, Calendar, ArrowLeft, Building2, Map as MapIcon, Award, Clock, FileText, TrendingUp, Loader2, Upload, X } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
 import { useToast } from '@/contexts/ToastContext';
 import { useUser } from '@/contexts/UserContext';
@@ -18,8 +18,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { getCoordinates } from '@/utils/geocoding';
+import { candidateService } from '@/services/candidate.service';
+import { storageService } from '@/services/storage.service';
 import MapView from '@/components/maps/MapView';
+import { getCoordinates } from '@/utils/geocoding';
 // import { Input } from '../../components/ui/input';
 
 import UpgradeBanner from '@/components/shared/UpgradeBanner';
@@ -34,20 +36,30 @@ const JobDetailView: React.FC = () => {
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
-  const [hasActivePackage, setHasActivePackage] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [cvUploading, setCvUploading] = useState(false);
+  const [resumeRequired, setResumeRequired] = useState(false);
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const required = await candidateService.isResumeRequired();
+        setResumeRequired(required);
+      } catch (e) {
+        console.warn('Fehler beim Laden der Systemeinstellungen:', e);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   React.useEffect(() => {
     const fetchJob = async () => {
       if (!id) return;
       setLoading(true);
       try {
-        const [data, hasPackage] = await Promise.all([
-          jobsService.getJobById(id),
-          user?.id ? (await import('@/services/packages.service')).packagesService.hasActivePackage(user.id) : Promise.resolve(false)
-        ]);
+        const data = await jobsService.getJobById(id);
         setJob(data);
-        setHasActivePackage(hasPackage);
 
         // Fetch coordinates for the map
         if (data.city) {
@@ -88,27 +100,66 @@ const JobDetailView: React.FC = () => {
       return;
     }
 
-    if (user.role !== 'candidate') {
+    if (resumeRequired && !cvFile) {
       showToast({
-        title: 'Only Candidates Can Apply',
-        description: 'Your account type does not allow job applications',
+        title: 'Lebenslauf erforderlich',
+        description: 'Bitte lade einen Lebenslauf hoch, um dich zu bewerben.',
         variant: 'destructive',
       });
       return;
     }
 
-    if (!hasActivePackage) {
+    if (user.role !== 'candidate') {
+      showToast({
+        title: 'Nur Kandidaten können sich bewerben',
+        description: 'Ihr Account-Typ erlaubt keine Job-Bewerbungen',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (resumeRequired && !cvFile) {
+      showToast({
+        title: 'Lebenslauf erforderlich',
+        description: 'Bitte lade einen Lebenslauf hoch, um dich zu bewerben.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!user.hasActivePackage) {
       navigate('/candidate/packages');
       return;
     }
 
     try {
+      // Optional: upload CV to storage if selected
+      let cvUrl: string | undefined = undefined;
+      if (cvFile) {
+        try {
+          setCvUploading(true);
+          cvUrl = await storageService.uploadCV(user.id, cvFile);
+        } catch (uploadErr: any) {
+          console.error('Error uploading CV:', uploadErr);
+          showToast({
+            title: 'Upload fehlgeschlagen',
+            description: uploadErr.message || 'Dein Lebenslauf konnte nicht hochgeladen werden.',
+            variant: 'destructive',
+          });
+          setCvUploading(false);
+          return; // Abort application if CV upload failed
+        } finally {
+          setCvUploading(false);
+        }
+      }
+
       // 1. Submit Application
       await applicationsService.applyToJob({
         job_id: id!,
         candidate_id: user.id,
         employer_id: job.employer_id,
         cover_letter: coverLetter,
+        cv_url: cvUrl,
       });
 
       // 2. Notify Employer via Message
@@ -225,7 +276,7 @@ const JobDetailView: React.FC = () => {
         </div>
 
         {/* Hinweis-Banner unter dem Zurück-Button, wenn Paket fehlt */}
-        {user.role === 'candidate' && !hasActivePackage && (
+        {user.role === 'candidate' && !user.hasActivePackage && (
           <UpgradeBanner
             message="Sie benötigen ein Paket, um Kontaktdaten und vollständige Jobdetails sehen zu können."
             upgradeLink="/candidate/packages"
@@ -242,7 +293,7 @@ const JobDetailView: React.FC = () => {
                   <img
                     src={job.employer_profiles?.logo_url || "https://via.placeholder.com/80"}
                     alt={job.employer_profiles?.company_name}
-                    className={`w-20 h-20 md:w-24 md:h-24 rounded-lg object-cover ${(user.role === 'guest' || (user.role === 'candidate' && !hasActivePackage)) ? 'blur-sm select-none' : ''}`}
+                    className={`w-20 h-20 md:w-24 md:h-24 rounded-lg object-cover ${(user.role === 'guest' || (user.role === 'candidate' && !user.hasActivePackage)) ? 'blur-sm select-none' : ''}`}
                   />
                 </div>
               </div>
@@ -251,7 +302,7 @@ const JobDetailView: React.FC = () => {
                   className="group cursor-pointer inline-flex items-center"
                   onClick={() => job.employer_id && navigate(`/companies/${job.employer_id}`)}
                 >
-                  <h2 className={`text-h2 font-heading text-foreground group-hover:text-primary transition-colors ${(user.role === 'guest' || (user.role === 'candidate' && !hasActivePackage)) ? 'blur-sm select-none' : ''}`}>
+                  <h2 className={`text-h2 font-heading text-foreground group-hover:text-primary transition-colors ${(user.role === 'guest' || (user.role === 'candidate' && !user.hasActivePackage)) ? 'blur-sm select-none' : ''}`}>
                     {job.employer_profiles?.company_name}
                   </h2>
                   <ArrowLeft className="w-5 h-5 ml-2 rotate-180 opacity-0 group-hover:opacity-100 transition-all text-primary" strokeWidth={1.5} />
@@ -334,6 +385,7 @@ const JobDetailView: React.FC = () => {
                     zoom={13}
                     height="350px"
                     showRadius={false}
+                    disabled={applyDialogOpen}
                   />
                   <div className="p-4 bg-muted/30 border-t border-border flex items-center justify-between">
                     <div className="flex items-center">
@@ -507,13 +559,46 @@ const JobDetailView: React.FC = () => {
 
             <div>
               <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                Attach CV
+                Lebenslauf anhängen {resumeRequired ? <span className="text-error">(Pflicht)</span> : '(optional)'}
               </Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
-                <Building2 className="w-8 h-8 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
-                <p className="text-body-sm text-foreground">Click to upload your CV</p>
-                <p className="text-caption text-muted-foreground">PDF, DOC up to 10MB</p>
-              </div>
+              <label htmlFor="cv-upload" className="block border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+                <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
+                <p className="text-body-sm text-foreground">
+                  {cvFile ? 'Datei gewählt: ' + cvFile.name : 'Klicke hier, um deinen Lebenslauf auszuwählen'}
+                </p>
+                <p className="text-caption text-muted-foreground">PDF, DOC, DOCX bis 10MB</p>
+                <input
+                  id="cv-upload"
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    if (file && file.size > 10 * 1024 * 1024) {
+                      showToast({
+                        title: 'Datei zu groß',
+                        description: 'Bitte wähle eine Datei bis maximal 10MB.',
+                        variant: 'destructive',
+                      });
+                      e.currentTarget.value = '';
+                      return;
+                    }
+                    setCvFile(file);
+                  }}
+                />
+              </label>
+              {cvFile && (
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground truncate mr-3">{cvFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setCvFile(null)}
+                    className="inline-flex items-center text-error hover:text-error/80"
+                  >
+                    <X className="w-4 h-4 mr-1" /> Entfernen
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -527,10 +612,10 @@ const JobDetailView: React.FC = () => {
             </Button>
             <Button
               onClick={handleApply}
-              disabled={!coverLetter.trim()}
+              disabled={!coverLetter.trim() || cvUploading || (resumeRequired && !cvFile)}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
-              Submit Application
+              {cvUploading ? 'Hochladen...' : 'Submit Application'}
             </Button>
           </div>
         </DialogContent>

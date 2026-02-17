@@ -43,6 +43,8 @@ const AdminSettings = () => {
                     key: 'resume_required_at_registration',
                     value: checked,
                     updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'key'
                 });
 
             if (error) throw error;

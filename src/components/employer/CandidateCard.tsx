@@ -13,6 +13,7 @@ import { invitationsService } from '@/services/invitations.service';
 import { candidateService } from '@/services/candidate.service';
 import { shortlistsService } from '@/services/shortlists.service';
 import UpgradeModal from '@/components/shared/UpgradeModal';
+import { formatLanguageLevel } from '@/utils/language-levels';
 import {
   Dialog,
   DialogContent,
@@ -38,30 +39,12 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   const [upgradeModalContent, setUpgradeModalContent] = useState({ title: '', description: '' });
   const [requestPending, setRequestPending] = useState(accessStatus === 'pending');
   const [jobs, setJobs] = useState<any[]>([]);
-  const [hasActivePackage, setHasActivePackage] = useState(false);
   const [isShortlisted, setIsShortlisted] = useState(false);
 
   // Sync state with prop
   useEffect(() => {
     setRequestPending(accessStatus === 'pending' || accessStatus === 'rejected' || accessStatus === 'approved');
   }, [accessStatus]);
-
-  useEffect(() => {
-    const checkPackage = async () => {
-      if (user.role === 'employer' && user.id) {
-        try {
-          // Dynamically import to avoid circular dependency if any, or just use it.
-          // Assuming packagesService is available global or imported
-          const { packagesService } = await import('@/services/packages.service');
-          const hasPackage = await packagesService.hasActivePackage(user.id);
-          setHasActivePackage(hasPackage);
-        } catch (e) {
-          console.error("Error checking package", e);
-        }
-      }
-    }
-    checkPackage();
-  }, [user.id, user.role]);
 
   useEffect(() => {
     const checkShortlist = async () => {
@@ -103,20 +86,9 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   // Actually, usually "Shortlisted" means I saved them. If I don't have package, they appear blurred in shortlist.
 
   // Let's stick to: 
-  const isBlurred = user.role === 'guest' || (user.role === 'employer' && (!hasActivePackage && accessStatus !== 'approved')) || accessStatus !== 'approved';
-  // Wait, if accessStatus !== 'approved' it IS blurred.
-  // So: isBlurred = accessStatus !== 'approved';
-  // Logic: "blurring shortlisted candidates ... without a purchased package"
-  // This implies normally a shortlisted candidate might be visible? 
-  // If I shortlist someone, do I get to see them? No, usually I have to request access.
-  // So if I request access and it's approved, I see them.
-  // If I don't have package, can I request access? Probably not (limit check).
-  // So `accessStatus` check handles most. The only edge case is if I had package, got approval, then package expired.
-  // In that case, `hasActivePackage` is false, but `accessStatus` is `approved`.
-  // Should I blur then? Yes, "Restricting ... for employers without a purchased package".
-  // So:
-  const isBlurredEffect = user.role === 'guest' || accessStatus !== 'approved';
-  const canContact = user.role !== 'guest' && accessStatus === 'approved' && hasActivePackage;
+  const isBlurred = (user.role === 'admin' || accessStatus === 'approved' || (user.hasActivePackage && isShortlisted)) ? false : true;
+  const isBlurredEffect = isBlurred;
+  const canContact = user.role !== 'guest' && accessStatus === 'approved' && user.hasActivePackage;
 
   useEffect(() => {
     const loadJobs = async () => {
@@ -139,7 +111,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
     }
 
     // Check for package if employer
-    if (user.role === 'employer' && !hasActivePackage) {
+    if (user.role === 'employer' && !user.hasActivePackage) {
       setUpgradeModalContent({
         title: 'Paket erforderlich',
         description: 'Sie benötigen ein aktives Paket, um diese Aktion ausführen zu können.'
@@ -243,7 +215,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
       return;
     }
 
-    if (user.role === 'employer' && !hasActivePackage) {
+    if (user.role === 'employer' && !user.hasActivePackage) {
       setUpgradeModalContent({
         title: 'Paket erforderlich',
         description: 'Sie benötigen ein aktives Paket, um Einladungen an Talente senden zu können.'
@@ -457,7 +429,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                     const level = l.proficiency_level || l.level || '';
                     return (
                       <span key={index} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[11px] font-bold rounded-full border border-blue-100">
-                        {name}{level ? ` (${level})` : ''}
+                        {name}{level ? ` (${formatLanguageLevel(level)})` : ''}
                       </span>
                     );
                   })}

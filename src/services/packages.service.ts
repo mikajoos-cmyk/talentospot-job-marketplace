@@ -249,7 +249,7 @@ export const packagesService = {
     return true;
   },
 
-  // Check if user has an active package (not free tier)
+  // Check if user has an active package
   async hasActivePackage(userId: string): Promise<boolean> {
     try {
       if (!userId) {
@@ -265,30 +265,46 @@ export const packagesService = {
         return false;
       }
 
-      // Check if it's a free package (by name or price)
-      const packageName = subscription.packages?.name?.toLowerCase() || '';
-      const packagePrice = subscription.packages?.price_amount || 0;
-      const packagePriceYearly = subscription.packages?.price_yearly || 0;
+      // We consider any active, non-expired subscription as "having a package"
+      // However, for certain features, we might want to check if it's a paid one.
+      // For legacy reasons and current app logic, we'll keep the check for paid features here
+      // but make it more robust.
+      
+      const pkg = subscription.packages;
+      if (!pkg) return false;
 
-      console.log(`[packagesService] Checking package for ${userId}: ${packageName}, Price Monthly: ${packagePrice}, Price Yearly: ${packagePriceYearly}`);
+      const isPremium = this.isPremiumPackage(pkg);
 
-      // Free packages should not grant premium access
-      // We check for "kostenlos" or "free" in the name, OR price 0
-      const isFree = packageName.includes('kostenlos') || 
-                     packageName.includes('free') || 
-                     (packagePrice === 0 && packagePriceYearly === 0);
+      console.log(`[packagesService] Checking package for ${userId}: ${pkg.name}, isPremium: ${isPremium}`);
 
-      if (isFree) {
-        console.log(`[packagesService] User ${userId} has free package, denying premium features`);
-        return false;
-      }
-
-      console.log(`[packagesService] User ${userId} has paid package: ${packageName}`);
-      return true;
+      return isPremium;
     } catch (error) {
       console.error('[packagesService] Error checking active package:', error);
       return false;
     }
+  },
+
+  // Helper to determine if a package is considered "Premium" (paid)
+  isPremiumPackage(pkg: any): boolean {
+    if (!pkg) return false;
+    
+    const packageName = pkg.name?.toLowerCase() || '';
+    const packagePrice = pkg.price_amount || 0;
+    const packagePriceYearly = pkg.price_yearly || 0;
+
+    // A package is NOT premium if it contains "free" or "kostenlos" AND has no price
+    // This allows for "Free" trials that might be priced but discounted, 
+    // or packages that are named "Free" but still have a price (unlikely but possible).
+    // The most reliable way is checking the price.
+    const isFree = (packageName.includes('kostenlos') || packageName.includes('free')) && 
+                   (packagePrice === 0 && packagePriceYearly === 0);
+    
+    // Also, if price is 0 and it's not explicitly a paid package (we could add a flag is_premium to DB later)
+    if (packagePrice === 0 && packagePriceYearly === 0) {
+      return false;
+    }
+
+    return true;
   },
 
   // Check if user can send messages

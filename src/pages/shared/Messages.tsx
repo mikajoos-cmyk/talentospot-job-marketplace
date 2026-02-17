@@ -144,8 +144,10 @@ const Messages: React.FC = () => {
           setCanSendAttachments(true);
           return;
         }
-        const canMessage = await packagesService.canSendMessages(user.id);
-        const canAttach = await packagesService.canSendAttachments(user.id);
+        
+        const canMessage = !!user.hasActivePackage;
+        const canAttach = user.subscription?.packages?.can_send_attachments !== false;
+        
         setCanSendMessages(canMessage);
         setCanSendAttachments(canAttach);
       } catch (error) {

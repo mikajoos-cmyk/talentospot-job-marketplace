@@ -16,10 +16,11 @@ import {
     DialogTitle,
     DialogDescription,
 } from '../ui/dialog';
-import { X } from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 import { getYouTubeEmbedUrl } from '../../lib/utils';
 import { ProjectImageCarousel } from '../shared/ProjectImageCarousel';
 import { cn } from '@/lib/utils';
+import { formatLanguageLevel } from '../../utils/language-levels';
 
 interface SharedCandidateProfileProps {
     data: any;           // Das Profil-Objekt
@@ -32,6 +33,7 @@ interface SharedCandidateProfileProps {
     reviews?: any[];
     averageRating?: number;
     bannerBelowHeader?: React.ReactNode; // Optionaler Banner unterhalb des Zurück-Buttons
+    showCvInSidebar?: boolean;
 }
 
 export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
@@ -44,7 +46,8 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                                                                    profileCompletion = 0,
                                                                                    reviews = [],
                                                                                    averageRating = 0,
-                                                                                   bannerBelowHeader
+                                                                                   bannerBelowHeader,
+                                                                                   showCvInSidebar = true
                                                                                }) => {
     const [selectedProject, setSelectedProject] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -124,7 +127,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                         </div>
                         <div className="px-6 pb-6">
                             <div className="relative flex justify-between items-end -mt-16 sm:-mt-24 xl:-mt-28 mb-6">
-                                <Avatar className={`w-40 h-40 sm:w-56 sm:h-56 xl:w-64 xl:h-64 rounded-2xl overflow-hidden border border-border bg-card shadow-md ${isBlurred ? 'blur-sm select-none' : ''}`}>
+                                <Avatar className={`w-40 h-40 sm:w-56 sm:h-56 xl:w-64 xl:h-64 rounded-2xl overflow-hidden border border-border bg-card shadow-md ${isBlurred ? 'blur-xl select-none' : ''}`}>
                                     <AvatarImage src={user.avatar} alt={displayName} />
                                     <AvatarFallback className="bg-primary/10 text-primary text-3xl font-bold">
                                         {displayName?.charAt(0) || 'U'}
@@ -137,7 +140,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                     <h2 className="text-2xl font-bold text-foreground leading-tight">{displayName}</h2>
                                     <p className="text-primary font-medium mt-1">{data.title || 'No job title specified'}</p>
                                 </div>
-                                {data.cvUrl && !isBlurred && (
+                                {data.cvUrl && !isBlurred && showCvInSidebar && (
                                     <Button
                                         variant="outline"
                                         size="icon"
@@ -317,39 +320,27 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                         {data.languages.map((lang: any, idx: number) => (
                                             <div key={idx} className="flex flex-col bg-muted/50 px-2.5 py-1.5 rounded-md border border-border">
                                                 <span className="text-sm font-medium leading-none">{lang.name}</span>
-                                                <span className="text-[10px] text-muted-foreground uppercase mt-1">{lang.level || 'N/A'}</span>
+                                                <span className="text-[10px] text-muted-foreground uppercase mt-1">{formatLanguageLevel(lang.level || 'N/A')}</span>
                                             </div>
                                         ))}
                                     </div>
                                 )}
                             </div>
 
-                            {/* Tags */}
-                            {data.tags && data.tags.length > 0 && (
-                                <div>
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">Tags</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {data.tags.map((tag: string) => (
-                                            <span key={tag} className="px-2 py-1 bg-muted text-xs rounded-md border border-border capitalize">
-                                  # {tag}
-                              </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
                             {/* Abilities */}
                             {hasRequirements && (
                                 <div>
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">Abilities</p>
-                                    <ul className="space-y-1.5">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">Additional Abilities</p>
+                                    <div className="flex flex-wrap gap-2">
                                         {data.requirements.map((req: string, idx: number) => (
-                                            <li key={idx} className="flex items-start text-sm text-muted-foreground">
-                                                <div className="mt-1 mr-2 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                            <span 
+                                                key={idx} 
+                                                className="px-2.5 py-1 bg-muted text-foreground text-sm font-medium rounded-lg border border-border/50"
+                                            >
                                                 {req}
-                                            </li>
+                                            </span>
                                         ))}
-                                    </ul>
+                                    </div>
                                 </div>
                             )}
                         </CardContent>
@@ -362,7 +353,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                     {/* About / Summary */}
 
                     {/* Conditions Dashboard */}
-                    <Card className="border-blue-500 bg-card shadow-sm border">
+                    <Card className="border-[#45699a] bg-card shadow-sm border-[5px]">
                         <CardHeader className="py-3">
                             <CardTitle className="text-base flex items-center">
                                 <DollarSign className="w-4 h-4 mr-2 text-primary" />
@@ -507,6 +498,17 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                         {((data.additionalConditions && data.additionalConditions.length > 0) ? data.additionalConditions : data.conditions?.additionalConditions).map((cond: string, idx: number) => (
                                             <span key={idx} className="px-3 py-1 bg-orange-500/10 text-orange-600 text-[12px] rounded-2xl border border-orange-500/30 font-medium">
                                                 {cond}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Tags */}
+                                {data.tags && data.tags.length > 0 && (
+                                    <div className="w-full flex flex-wrap gap-2 mt-2 pt-2 border-t border-border/30">
+                                        {data.tags.map((tag: string) => (
+                                            <span key={tag} className="px-3 py-1 bg-orange-500/10 text-orange-600 text-[12px] rounded-2xl border border-orange-500/30 font-medium">
+                                                # {tag}
                                             </span>
                                         ))}
                                     </div>

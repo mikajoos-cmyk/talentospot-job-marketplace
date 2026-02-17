@@ -13,6 +13,7 @@ import { employerService } from '@/services/employer.service';
 import { followsService } from '@/services/follows.service';
 import { analyticsService } from '@/services/analytics.service';
 import { packagesService } from '@/services/packages.service';
+import { shortlistsService } from '@/services/shortlists.service';
 import UpgradeModal from '@/components/shared/UpgradeModal';
 import ProfileViewsChart from '@/components/candidate/ProfileViewsChart';
 import BlurredContent from '@/components/shared/BlurredContent';
@@ -28,7 +29,7 @@ const EmployerDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState<'candidates' | 'jobs' | 'applications' | 'views' | 'followers' | null>(null);
+  const [modalType, setModalType] = useState<'shortlist' | 'jobs' | 'applications' | 'views' | 'followers' | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [stats, setStats] = useState({
@@ -42,10 +43,10 @@ const EmployerDashboard: React.FC = () => {
   const [jobs, setJobs] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
   const [followers, setFollowers] = useState<any[]>([]);
+    const [shortlist, setShortlist] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [viewStats, setViewStats] = useState<any[]>([]);
   const [detailedViews, setDetailedViews] = useState<any[]>([]);
-  const [hasActivePackage, setHasActivePackage] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeModalContent, setUpgradeModalContent] = useState({ title: '', description: '' });
   const [isCheckingLimit, setIsCheckingLimit] = useState(false);
@@ -57,19 +58,16 @@ const EmployerDashboard: React.FC = () => {
       try {
         setLoading(true);
 
-        const [hasPackage, employerProfile] = await Promise.all([
-          packagesService.hasActivePackage(user.id),
-          user.profile || employerService.getEmployerProfile(user.id)
-        ]);
+        const employerProfile = user.profile || await employerService.getEmployerProfile(user.id);
 
-        console.log(`[EmployerDashboard] hasActivePackage: ${hasPackage}`);
-        setHasActivePackage(hasPackage);
+        console.log(`[EmployerDashboard] user.hasActivePackage: ${user.hasActivePackage}`);
         setProfile(employerProfile);
 
-        const [jobsData, applicationsData, followersData, statsData, totalViewsCount, detailedViewsData] = await Promise.all([
+        const [jobsData, applicationsData, followersData, shortlistData, statsData, totalViewsCount, detailedViewsData] = await Promise.all([
           jobsService.getJobsByEmployer(employerProfile.id),
           applicationsService.getApplicationsByEmployer(employerProfile.id),
           followsService.getFollowerCandidates(employerProfile.id),
+                    shortlistsService.getShortlist(employerProfile.id),
           analyticsService.getViewStats(user.id),
           analyticsService.getTotalViews(user.id),
           analyticsService.getDetailedViews(user.id)
@@ -81,6 +79,7 @@ const EmployerDashboard: React.FC = () => {
         setJobs(jobsData || []);
         setApplications(applicationsData || []);
         setFollowers(followersData || []);
+                setShortlist(shortlistData || []);
 
         const activeJobsCount = jobsData?.filter((j: any) => j.status === 'active').length || 0;
 
@@ -101,7 +100,7 @@ const EmployerDashboard: React.FC = () => {
     loadDashboardData();
   }, [user.id, user.role, user.profile]);
 
-  const handleOpenModal = (type: 'candidates' | 'jobs' | 'applications' | 'views' | 'followers') => {
+  const handleOpenModal = (type: 'shortlist' | 'jobs' | 'applications' | 'views' | 'followers') => {
     setModalType(type);
     setModalOpen(true);
   };
@@ -131,7 +130,7 @@ const EmployerDashboard: React.FC = () => {
 
   const getModalTitle = () => {
     switch (modalType) {
-      case 'candidates': return 'All Candidates';
+      case 'shortlist': return 'Shortlist';
       case 'jobs': return 'Active Jobs';
       case 'applications': return 'All Applications';
       case 'views': return 'Profile Views';
@@ -212,10 +211,10 @@ const EmployerDashboard: React.FC = () => {
           />
           <DashboardStatsCard
             icon={Users}
-            label="Candidates"
-            value={stats.totalCandidates}
+            label="Shortlist"
+            value={shortlist.length}
             color="success"
-            onClick={() => handleOpenModal('candidates')}
+            onClick={() => handleOpenModal('shortlist')}
           />
           <DashboardStatsCard
             icon={Users}
@@ -224,6 +223,17 @@ const EmployerDashboard: React.FC = () => {
             color="primary"
             onClick={() => handleOpenModal('followers')}
           />
+        </div>
+
+        <div className="flex justify-end mt-[-1rem]">
+          <Button
+            variant="link"
+            size="sm"
+            onClick={() => navigate('/employer/network')}
+            className="text-primary hover:text-primary-hover font-normal"
+          >
+            Go to Network →
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -337,7 +347,7 @@ const EmployerDashboard: React.FC = () => {
               <div>
                 <DialogTitle className="text-h3 font-heading text-foreground">{getModalTitle()}</DialogTitle>
                 <DialogDescription className="text-body text-muted-foreground">
-                  {modalType === 'candidates' && 'Browse all candidates through the search page'}
+                  {modalType === 'shortlist' && 'Ihre Shortlist mit Kandidaten'}
                   {modalType === 'jobs' && 'All your active job postings'}
                   {modalType === 'applications' && 'All applications received for your job postings'}
                   {modalType === 'views' && 'Your profile visibility over the last 14 days'}
@@ -345,6 +355,11 @@ const EmployerDashboard: React.FC = () => {
                 </DialogDescription>
               </div>
               <div className="flex gap-2">
+                {modalType === 'shortlist' && (
+                  <Button onClick={() => { setModalOpen(false); navigate('/employer/network'); }} size="sm" variant="outline">
+                    View Network
+                  </Button>
+                )}
                 {modalType === 'candidates' && (
                   <Button onClick={() => { setModalOpen(false); navigate('/candidates'); }} size="sm" variant="outline">
                     Go to Search
@@ -370,21 +385,68 @@ const EmployerDashboard: React.FC = () => {
           </DialogHeader>
 
           <div className="py-4">
-            {modalType === 'candidates' && (
-              <div className="text-center py-8">
-                <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-body text-muted-foreground mb-4">
-                  Search and browse candidates through the candidate search page
-                </p>
-                <Button
-                  onClick={() => {
-                    setModalOpen(false);
-                    navigate('/candidates');
-                  }}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
-                >
-                  Go to Candidate Search
-                </Button>
+            {modalType === 'shortlist' && (
+              <div className="space-y-4">
+                {shortlist.length === 0 ? (
+                  <p className="text-body-sm text-muted-foreground text-center py-8">Noch keine Kandidaten auf der Shortlist.</p>
+                ) : (
+                  shortlist.map((item) => {
+                    const candidate = item.candidate_profiles;
+                    if (!candidate) return null;
+                    const candidateId = candidate.id;
+                    const name = candidate.profiles?.full_name || 'Kandidat';
+                    const title = candidate.job_title || candidate.title || 'Kein Titel';
+                    const city = candidate.city;
+                    const country = candidate.country;
+                    const email = candidate.email || candidate.profiles?.email;
+                    const phone = candidate.phone || candidate.profiles?.phone;
+                    return (
+                      <Card
+                        key={`${item.id}`}
+                        className="p-4 border border-border bg-background hover:shadow-md transition-all duration-normal cursor-pointer"
+                        onClick={() => {
+                          setModalOpen(false);
+                          if (candidateId) navigate(`/employer/candidates/${candidateId}`);
+                        }}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className={!user.hasActivePackage ? 'blur-sm select-none' : ''}>
+                            <Avatar className="w-16 h-16">
+                              <AvatarImage src={candidate.profiles?.avatar_url} />
+                              <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                                {name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className={`text-h4 font-heading text-foreground ${!user.hasActivePackage ? 'blur-sm select-none' : ''}`}>{name}</h4>
+                            </div>
+                            <p className="text-body-sm text-muted-foreground mb-2">{title}</p>
+                            <div className="flex flex-wrap gap-3 text-caption text-muted-foreground mb-2">
+                              {city && (
+                                <div className="flex items-center">
+                                  <MapPin className="w-3 h-3 mr-1" strokeWidth={1.5} />
+                                  {city}{country ? `, ${country}` : ''}
+                                </div>
+                              )}
+                            </div>
+                            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${!user.hasActivePackage ? 'blur-sm select-none' : ''}`}>
+                              <div className="flex items-center">
+                                <Mail className="w-4 h-4 mr-2" />
+                                <span className="text-body-sm">{user.hasActivePackage ? (email || 'Nicht verfügbar') : 'E-Mail verborgen'}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <Phone className="w-4 h-4 mr-2" />
+                                <span className="text-body-sm">{user.hasActivePackage ? (phone || 'Nicht verfügbar') : 'Telefon verborgen'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })
+                )}
               </div>
             )}
 
@@ -505,7 +567,7 @@ const EmployerDashboard: React.FC = () => {
                   </Card>
                 </div>
 
-                {!hasActivePackage && (
+                {!user.hasActivePackage && (
                   <div className="relative overflow-hidden rounded-xl border border-warning/30 bg-gradient-to-r from-amber-50/80 to-yellow-50/60 dark:from-amber-900/10 dark:to-yellow-900/10 p-5">
                     <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-amber-200/30 blur-2xl" />
                     <div className="flex items-start gap-4">
@@ -557,7 +619,7 @@ const EmployerDashboard: React.FC = () => {
                       return (
                         <Card key={v.id} className="p-3 border border-border bg-background hover:shadow-md transition-all duration-normal cursor-pointer" onClick={onClick}>
                       <div className="flex items-center gap-3">
-                        <div className={!hasActivePackage ? 'blur-sm select-none' : ''}>
+                        <div className={!user.hasActivePackage ? 'blur-sm select-none' : ''}>
                           <Avatar className="w-10 h-10 rounded-lg">
                             <AvatarImage src={avatarUrl} className="object-cover" />
                             <AvatarFallback className="rounded-lg">
@@ -570,7 +632,7 @@ const EmployerDashboard: React.FC = () => {
                           </Avatar>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-body font-medium text-foreground ${!hasActivePackage ? 'blur-sm select-none' : ''}`}>
+                          <p className={`text-body font-medium text-foreground ${!user.hasActivePackage ? 'blur-sm select-none' : ''}`}>
                             {name}
                           </p>
                           <p className="text-caption text-muted-foreground">{formatDate(v.created_at)}</p>
@@ -597,7 +659,7 @@ const EmployerDashboard: React.FC = () => {
                     
                     const cardContent = (
                       <div className="flex items-start space-x-4">
-                        <div className={!hasActivePackage ? 'blur-sm select-none' : ''}>
+                        <div className={!user.hasActivePackage ? 'blur-sm select-none' : ''}>
                           <Avatar className="w-16 h-16">
                             <AvatarImage src={candidate.profiles?.avatar_url} />
                             <AvatarFallback className="bg-primary/10 text-primary font-medium">
@@ -607,7 +669,7 @@ const EmployerDashboard: React.FC = () => {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className={`text-h4 font-heading text-foreground ${!hasActivePackage ? 'blur-sm select-none' : ''}`}>
+                            <h4 className={`text-h4 font-heading text-foreground ${!user.hasActivePackage ? 'blur-sm select-none' : ''}`}>
                               {candidate.profiles?.full_name || 'Candidate'}
                             </h4>
                           </div>

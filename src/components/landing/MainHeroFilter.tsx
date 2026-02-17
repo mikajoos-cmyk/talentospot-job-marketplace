@@ -422,7 +422,7 @@ const MainHeroFilter = ({ className }: { className?: string }) => {
                 <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen} className="mt-2">
                     <div className="flex items-center justify-between px-2 py-1">
                         <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10 font-medium flex items-center gap-1.5">
+                            <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10 hover:text-primary font-medium flex items-center gap-1.5">
                                 <SlidersHorizontal className="w-4 h-4" />
                                 {isAdvancedOpen ? 'Hide' : 'Show'} All Filters
                                 <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isAdvancedOpen ? 'rotate-180' : ''}`} />
@@ -430,7 +430,7 @@ const MainHeroFilter = ({ className }: { className?: string }) => {
                         </CollapsibleTrigger>
                     </div>
 
-                    <CollapsibleContent className="px-4 py-8 border-4 border-primary/40 rounded-xl mt-4 space-y-12 animate-in slide-in-from-top duration-300 overflow-visible">
+                    <CollapsibleContent className="px-4 py-8 mt-4 space-y-12 animate-in slide-in-from-top duration-300 overflow-visible">
 
                         {/* 1. Precise Location & Radius */}
                         <section className="space-y-6">

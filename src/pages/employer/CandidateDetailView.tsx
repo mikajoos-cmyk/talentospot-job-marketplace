@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { Button } from '../../components/ui/button';
-import { MessageSquare, UserPlus, Heart, Star, Crown } from 'lucide-react';
+import { MessageSquare, UserPlus, Heart, Star, Crown, Download } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import { ToastAction } from '../../components/ui/toast';
 import { useToast } from '../../contexts/ToastContext';
@@ -43,7 +43,6 @@ const CandidateDetailView: React.FC = () => {
   const [upgradeModalContent, setUpgradeModalContent] = useState({ title: '', description: '' });
   const [accessStatus, setAccessStatus] = useState<string>('none');
   const [isShortlisted, setIsShortlisted] = useState(false);
-  const [hasActivePackage, setHasActivePackage] = useState(false);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -60,15 +59,6 @@ const CandidateDetailView: React.FC = () => {
         setEmployerJobs(jobsData?.filter((j: any) => j.status === 'active') || []);
 
         if (user.role === 'employer' && user.profile?.id) {
-          try {
-            const { packagesService } = await import('../../services/packages.service');
-            const canMessage = await packagesService.canSendMessages(user.id);
-            setHasActivePackage(canMessage);
-          } catch (e) {
-            console.error("Error checking package", e);
-            setHasActivePackage(false);
-          }
-
           const status = await candidateService.checkDataAccess(id, user.profile.id);
           setAccessStatus(status);
 
@@ -98,8 +88,8 @@ const CandidateDetailView: React.FC = () => {
   
   console.log('[CandidateDetailView] Override status:', { isOwnProfile, adminOverride, previewOverride, userRole: user?.role });
 
-  const isBlurred = (adminOverride || previewOverride) ? false : (accessStatus !== 'approved' || (!hasActivePackage && isShortlisted));
-  const canContact = adminOverride ? true : (accessStatus === 'approved' && hasActivePackage);
+  const isBlurred = (adminOverride || previewOverride || accessStatus === 'approved' || (user.hasActivePackage && isShortlisted)) ? false : true;
+  const canContact = adminOverride ? true : (accessStatus === 'approved' && user.hasActivePackage);
   const displayName = isBlurred ? 'TalentoSPOT Candidate' : candidate?.name;
 
   const handleShortlist = async () => {
@@ -121,7 +111,7 @@ const CandidateDetailView: React.FC = () => {
   };
 
   const handleInvite = async (jobTitle: string) => {
-    if (user.role === 'employer' && !hasActivePackage) {
+    if (user.role === 'employer' && !user.hasActivePackage) {
       setUpgradeModalContent({
         title: 'Paket erforderlich',
         description: 'Sie benötigen ein aktives Paket, um Einladungen an Talente senden zu können.'
@@ -157,7 +147,7 @@ const CandidateDetailView: React.FC = () => {
   };
 
   const handleMessage = () => {
-    if (user.role === 'employer' && !hasActivePackage) {
+    if (user.role === 'employer' && !user.hasActivePackage) {
       setUpgradeModalContent({
         title: 'Paket erforderlich',
         description: 'Sie benötigen ein aktives Paket, um Nachrichten an Talente senden zu können.'
@@ -171,7 +161,7 @@ const CandidateDetailView: React.FC = () => {
 
   const handleRequestData = async () => {
     if (!user.profile?.id) return;
-    if (user.role === 'employer' && !hasActivePackage) {
+    if (user.role === 'employer' && !user.hasActivePackage) {
       setUpgradeModalContent({
         title: 'Paket erforderlich',
         description: 'Sie benötigen ein aktives Paket, um Datenanfragen an Talente senden zu können.'
@@ -278,6 +268,16 @@ const CandidateDetailView: React.FC = () => {
             <UserPlus className="w-4 h-4 mr-2" /> Invite
           </Button>
 
+          {candidate?.cvUrl && !isBlurred && (
+            <Button
+              variant="outline"
+              onClick={() => window.open(candidate.cvUrl, '_blank')}
+              title="Download CV"
+            >
+              <Download className="w-4 h-4 mr-2" /> CV
+            </Button>
+          )}
+
           {(canContact || (accessStatus === 'approved')) && (
               <>
                 <Button onClick={() => setReviewModalOpen(true)} variant="outline" className="text-accent border-accent hover:bg-accent/10">
@@ -310,6 +310,7 @@ const CandidateDetailView: React.FC = () => {
             }}
             isBlurred={isBlurred}
             isOwnProfile={false}
+            showCvInSidebar={false}
             actions={<ActionButtons />}
             onBack={() => navigate(user.role === 'guest' ? '/candidates' : '/employer/candidates')}
             bannerBelowHeader={

@@ -15,20 +15,6 @@ import UpgradeBanner from '@/components/shared/UpgradeBanner';
 const Followers: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useUser();
-  const [hasActivePackage, setHasActivePackage] = useState(false);
-
-  React.useEffect(() => {
-    const fetchFollowers = async () => {
-      if (!user?.id) return;
-      try {
-        const hasPackage = await packagesService.hasActivePackage(user.id);
-        setHasActivePackage(hasPackage);
-      } catch (error) {
-        console.error('Error checking package status:', error);
-      }
-    };
-    fetchFollowers();
-  }, [user?.id]);
 
   return (
     <AppLayout>
@@ -41,7 +27,7 @@ const Followers: React.FC = () => {
         </div>
 
         {/* Hinweis-Banner oben, wenn Paket fehlt */}
-        {!hasActivePackage && (
+        {!user.hasActivePackage && (
           <UpgradeBanner
             message="Sie benötigen ein Paket, um die Kontaktdaten der Unternehmen sehen zu können."
             upgradeLink="/candidate/packages"
@@ -59,7 +45,7 @@ const Followers: React.FC = () => {
               const content = (
                 <div className="space-y-4">
                   <div className="flex items-start space-x-4">
-                    <div className={!hasActivePackage ? 'blur-sm select-none' : ''}>
+                    <div className={!user.hasActivePackage ? 'blur-sm select-none' : ''}>
                       <img
                         src={company?.logo || 'https://ui-avatars.com/api/?name=' + company?.name + '&background=6366f1&color=fff'}
                         alt={follower.companyName}
@@ -68,7 +54,7 @@ const Followers: React.FC = () => {
                       />
                     </div>
                     <div className="flex-1">
-                      <h3 className={`text-h4 font-heading text-foreground mb-1 ${!hasActivePackage ? 'blur-sm select-none' : ''}`}>
+                      <h3 className={`text-h4 font-heading text-foreground mb-1 ${!user.hasActivePackage ? 'blur-sm select-none' : ''}`}>
                         {follower.companyName}
                       </h3>
                       {company && (

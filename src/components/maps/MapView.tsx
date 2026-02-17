@@ -18,6 +18,7 @@ interface MapViewProps {
   zoom?: number;
   height?: string;
   onRadiusChange?: (radius: number) => void;
+  disabled?: boolean; // disables interactions and visually dims the map (e.g., when a modal is open)
 }
 
 const MapUpdater: React.FC<{ center: [number, number]; zoom: number }> = ({ center, zoom }) => {
@@ -34,14 +35,27 @@ const MapView: React.FC<MapViewProps> = ({
   showRadius = false,
   zoom = 10,
   height = '400px',
-  onRadiusChange
+  onRadiusChange,
+  disabled = false,
 }) => {
   return (
-    <div style={{ height, width: '100%', borderRadius: '12px', overflow: 'hidden' }}>
+    <div
+      style={{
+        height,
+        width: '100%',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        position: 'relative',
+        filter: disabled ? 'grayscale(100%) brightness(0.7)' : undefined,
+        opacity: disabled ? 0.6 : 1,
+        zIndex: disabled ? 0 : 1,
+        pointerEvents: disabled ? 'none' : 'auto',
+      }}
+    >
       <MapContainer
         center={center}
         zoom={zoom}
-        style={{ height: '100%', width: '100%' }}
+        style={{ height: '100%', width: '100%', zIndex: 0 }}
         scrollWheelZoom={false}
       >
         <MapUpdater center={center} zoom={zoom} />

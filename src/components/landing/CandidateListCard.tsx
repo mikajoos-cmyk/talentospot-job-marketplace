@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MapPin, DollarSign, CheckCircle2, Award, Languages, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { formatLanguageLevel } from '@/utils/language-levels';
 
 interface CandidateListCardProps {
     candidate: any;
@@ -157,7 +158,7 @@ const CandidateListCard: React.FC<CandidateListCardProps> = ({ candidate, onView
                                     const level = typeof l === 'string' ? '' : (l.proficiency_level || l.level || '');
                                     return (
                                         <span key={i} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[11px] font-bold rounded-full border border-blue-100">
-                                            {langName}{level ? ` (${level})` : ''}
+                                            {langName}{level ? ` (${formatLanguageLevel(level)})` : ''}
                                         </span>
                                     );
                                 })}

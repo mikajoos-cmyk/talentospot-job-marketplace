@@ -37,7 +37,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
             <div className={`flex flex-col ${isAuthenticated ? 'layout-xl:flex-row' : 'layout-md:flex-row'}`}>
                 {/* Left Section: Identity & Primary Info */}
                 <div className={`p-6 ${isAuthenticated ? 'layout-xl:w-1/4 layout-xl:border-b-0 layout-xl:border-r' : 'layout-md:w-1/4 layout-md:border-b-0 layout-md:border-r'} flex flex-col items-center text-center border-b border-border bg-muted/5`}>
-                    <div className={`relative mb-4 w-24 h-24 rounded-xl overflow-hidden bg-white shadow-sm border border-border/40 p-1 flex items-center justify-center group-hover:scale-105 transition-transform duration-500 ${obfuscate ? 'blur-sm select-none' : ''}`}>
+                    <div className={`relative mb-4 w-24 h-24 rounded-xl overflow-hidden bg-white shadow-sm border border-border/40 p-1 flex items-center justify-center group-hover:scale-105 transition-transform duration-500 ${obfuscate ? 'blur-lg select-none' : ''}`}>
                         {job.employer_profiles?.logo_url ? (
                             <img
                                 src={job.employer_profiles.logo_url}
@@ -50,7 +50,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                     </div>
 
                     <h4 className="text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">{job.title}</h4>
-                    <p className={`text-sm font-medium text-muted-foreground mb-1 ${obfuscate ? 'blur-sm select-none' : ''}`}>{job.employer_profiles?.company_name}</p>
+                    <p className={`text-sm font-medium text-muted-foreground mb-1 ${obfuscate ? 'blur-lg select-none' : ''}`}>{job.employer_profiles?.company_name}</p>
 
                     <div className="w-full pt-4 mt-auto border-t border-border/50 space-y-2">
                         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -85,7 +85,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                             <div className="p-2 rounded-lg bg-primary/5 text-primary">
                                 <MapPin className="w-4 h-4" />
                             </div>
-                            <div>
+                            <div className={obfuscate ? 'select-none' : ''}>
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Location</p>
                                 <p className="text-sm font-semibold">{job.city}, {job.country}</p>
                             </div>
@@ -96,7 +96,7 @@ const JobListCard: React.FC<JobListCardProps> = ({
                             <div className="p-2 rounded-lg bg-primary/5 text-primary">
                                 <Briefcase className="w-4 h-4" />
                             </div>
-                            <div>
+                            <div className={obfuscate ? 'select-none' : ''}>
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Industry</p>
                                 <p className="text-sm font-semibold">{job.sector || job.company?.industry || 'Not specified'}</p>
                             </div>

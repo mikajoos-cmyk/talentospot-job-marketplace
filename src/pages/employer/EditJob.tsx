@@ -503,12 +503,12 @@ const EditJob: React.FC = () => {
                 {languages.map((language) => (
                   <div
                     key={language.name}
-                    className="flex items-center space-x-1 px-3 py-1 bg-info/10 text-info rounded-full text-body-sm"
+                    className="flex items-center space-x-1 px-3 py-1 bg-info text-info-foreground rounded-full text-body-sm"
                   >
                     <span className="capitalize">{language.name} ({language.level})</span>
                     <button
                       onClick={() => handleRemoveLanguage(language.name)}
-                      className="hover:text-info-hover"
+                      className="hover:text-info-foreground/80 transition-colors"
                       aria-label={`Remove ${language.name}`}
                     >
                       <X className="w-4 h-4" strokeWidth={2} />
@@ -543,12 +543,12 @@ const EditJob: React.FC = () => {
                 {qualifications.map((qualification) => (
                   <div
                     key={qualification}
-                    className="flex items-center space-x-1 px-3 py-1 bg-accent/10 text-accent rounded-full text-body-sm"
+                    className="flex items-center space-x-1 px-3 py-1 bg-accent text-accent-foreground rounded-full text-body-sm"
                   >
                     <span>{qualification}</span>
                     <button
                       onClick={() => handleRemoveQualification(qualification)}
-                      className="hover:text-accent-hover"
+                      className="hover:text-accent-foreground/80 transition-colors"
                       aria-label={`Remove ${qualification}`}
                     >
                       <X className="w-4 h-4" strokeWidth={2} />
@@ -583,12 +583,12 @@ const EditJob: React.FC = () => {
                 {skills.map((skill) => (
                   <div
                     key={skill}
-                    className="flex items-center space-x-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-body-sm"
+                    className="flex items-center space-x-1 px-3 py-1 bg-primary text-primary-foreground rounded-full text-body-sm"
                   >
                     <span>{skill}</span>
                     <button
                       onClick={() => handleRemoveSkill(skill)}
-                      className="hover:text-primary-hover"
+                      className="hover:text-primary-foreground/80 transition-colors"
                       aria-label={`Remove ${skill}`}
                     >
                       <X className="w-4 h-4" strokeWidth={2} />
@@ -627,12 +627,12 @@ const EditJob: React.FC = () => {
                 {benefits.map((benefit) => (
                   <div
                     key={benefit}
-                    className="flex items-center space-x-1 px-3 py-1 bg-secondary/10 text-secondary rounded-full text-body-sm"
+                    className="flex items-center space-x-1 px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-body-sm"
                   >
                     <span>{benefit}</span>
                     <button
                       onClick={() => handleRemoveBenefit(benefit)}
-                      className="hover:text-secondary-hover"
+                      className="hover:text-secondary-foreground/80 transition-colors"
                       aria-label={`Remove ${benefit}`}
                     >
                       <X className="w-4 h-4" strokeWidth={2} />

@@ -13,6 +13,7 @@ interface User {
   role: UserRole;
   avatar?: string;
   packageTier?: 'free' | 'basic' | 'premium' | 'starting' | 'standard';
+  hasActivePackage?: boolean;
   companyName?: string;
   subscription?: any;
   profile?: any;
@@ -64,9 +65,19 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       let extendedProfile = null;
       let subscription = null;
+      let hasActivePackage = false;
 
       try {
         subscription = await packagesService.getUserSubscription(userId);
+        if (subscription && subscription.status === 'active') {
+          const packageName = subscription.packages?.name?.toLowerCase() || '';
+          const packagePrice = subscription.packages?.price_amount || 0;
+          const packagePriceYearly = subscription.packages?.price_yearly || 0;
+          const isFree = packageName.includes('kostenlos') || 
+                         packageName.includes('free') || 
+                         (packagePrice === 0 && packagePriceYearly === 0);
+          hasActivePackage = !isFree;
+        }
       } catch (error) {
         console.error('Error loading subscription:', error);
       }
@@ -104,6 +115,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         avatar: profile.avatar_url || undefined,
         companyName: extendedProfile?.company_name,
         profile: extendedProfile,
+        subscription: subscription,
+        hasActivePackage: hasActivePackage,
         packageTier: subscription?.packages?.name?.toLowerCase() as any || 'free',
         isVisible: profile.is_visible ?? true,
         showActivityStatus: profile.show_activity_status ?? true,

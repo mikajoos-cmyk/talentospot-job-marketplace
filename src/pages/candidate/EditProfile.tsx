@@ -19,6 +19,7 @@ import { AutocompleteInput } from '../../components/shared/AutocompleteInput';
 import { LocationPicker } from '../../components/shared/LocationPicker';
 import { findContinent } from '../../utils/locationUtils';
 import DrivingLicenseSelector from '../../components/shared/DrivingLicenseSelector';
+import { formatLanguageLevel } from '../../utils/language-levels';
 import {
   Dialog,
   DialogContent,
@@ -1210,12 +1211,12 @@ const EditProfile: React.FC = () => {
                   {qualifications.map((qualification) => (
                     <div
                       key={qualification}
-                      className="flex items-center space-x-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-body-sm border border-primary/20"
+                      className="flex items-center space-x-1 px-3 py-1 bg-primary text-primary-foreground rounded-full text-body-sm"
                     >
                       <span>{qualification}</span>
                       <button
                         onClick={() => handleRemoveQualification(qualification)}
-                        className="hover:text-primary/80"
+                        className="hover:text-primary-foreground/80 transition-colors"
                         aria-label={`Remove ${qualification}`}
                       >
                         <X className="w-4 h-4" strokeWidth={2} />
@@ -1328,12 +1329,12 @@ const EditProfile: React.FC = () => {
               {requirements.map((requirement) => (
                 <div
                   key={requirement}
-                  className="flex items-center space-x-1 px-3 py-1 bg-secondary/10 text-secondary-foreground rounded-full text-body-sm border border-secondary/20"
+                  className="flex items-center space-x-1 px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-body-sm"
                 >
                   <span>{requirement}</span>
                   <button
                     onClick={() => handleRemoveRequirement(requirement)}
-                    className="hover:text-secondary-foreground/80"
+                    className="hover:text-secondary-foreground/80 transition-colors"
                     aria-label={`Remove ${requirement}`}
                   >
                     <X className="w-4 h-4" strokeWidth={2} />
@@ -1382,12 +1383,12 @@ const EditProfile: React.FC = () => {
               {languages.map((language) => (
                 <div
                   key={language.name}
-                  className="flex items-center space-x-1 px-3 py-1 bg-info/10 text-info rounded-full text-body-sm"
+                  className="flex items-center space-x-1 px-3 py-1 bg-info text-info-foreground rounded-full text-body-sm"
                 >
-                  <span className="capitalize">{language.name} ({language.level.toUpperCase()})</span>
+                  <span className="capitalize">{language.name} ({formatLanguageLevel(language.level)})</span>
                   <button
                     onClick={() => handleRemoveLanguage(language.name)}
-                    className="hover:text-info-hover"
+                    className="hover:text-info-foreground/80 transition-colors"
                     aria-label={`Remove ${language.name}`}
                   >
                     <X className="w-4 h-4" strokeWidth={2} />

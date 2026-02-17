@@ -88,7 +88,7 @@ const AppHeader: React.FC = () => {
         {/* Hamburger Menu Links */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-lg">
+            <Button variant="ghost" size="icon" className="rounded-lg hover:bg-primary/10 hover:text-foreground">
               <Menu className="w-5 h-5 text-foreground" strokeWidth={1.5} />
             </Button>
           </DropdownMenuTrigger>
@@ -99,7 +99,7 @@ const AppHeader: React.FC = () => {
                 <DropdownMenuItem
                   key={link.path}
                   onClick={() => navigate(link.path)}
-                  className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-muted transition-colors"
+                  className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-primary/10 hover:text-foreground transition-colors"
                 >
                   {link.icon}
                   <span className="font-medium text-sm">{link.name}</span>
@@ -115,7 +115,7 @@ const AppHeader: React.FC = () => {
                 <DropdownMenuItem
                   key={link.path}
                   onClick={() => navigate(link.path)}
-                  className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-muted transition-colors"
+                  className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-primary/10 hover:text-foreground transition-colors"
                 >
                   {link.icon}
                   <span className="font-medium text-sm">{link.name}</span>
@@ -131,7 +131,7 @@ const AppHeader: React.FC = () => {
                 <DropdownMenuItem
                   key={link.path}
                   onClick={() => navigate(link.path)}
-                  className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-muted transition-colors"
+                  className="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-primary/10 hover:text-foreground transition-colors"
                 >
                   {link.icon}
                   <span className="font-medium text-sm">{link.name}</span>
@@ -146,7 +146,7 @@ const AppHeader: React.FC = () => {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex items-center gap-1.5 px-3 py-2 hover:bg-muted rounded-lg font-medium text-foreground"
+              className="flex items-center gap-1.5 px-3 py-2 hover:bg-primary/10 hover:text-foreground rounded-lg font-medium text-foreground"
               aria-label="Change language"
             >
               <Globe className="w-4 h-4" strokeWidth={1.5} />
@@ -164,10 +164,10 @@ const AppHeader: React.FC = () => {
                 <DropdownMenuItem
                   key={lang.code}
                   onClick={() => setLanguage(lang.code)}
-                  className={`cursor-pointer rounded-lg px-4 py-2 text-sm ${
+                  className={`cursor-pointer rounded-lg px-4 py-2 text-sm transition-colors ${
                     language === lang.code
                       ? 'bg-primary/10 text-primary font-bold'
-                      : 'text-foreground'
+                      : 'text-foreground hover:bg-primary/10 hover:text-foreground'
                   }`}
                 >
                   <span className="flex items-center justify-between w-full">
@@ -188,7 +188,7 @@ const AppHeader: React.FC = () => {
           <Button
             variant="ghost"
             onClick={() => navigate('/how-it-works')}
-            className="text-foreground hover:bg-muted font-medium rounded-lg text-sm"
+            className="text-foreground hover:bg-primary/10 hover:text-foreground font-medium rounded-lg text-sm"
           >
             How it works
           </Button>
@@ -202,7 +202,7 @@ const AppHeader: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative bg-transparent text-foreground hover:bg-muted hover:text-foreground rounded-lg"
+                className="relative bg-transparent text-foreground hover:bg-primary/10 hover:text-foreground rounded-lg"
                 aria-label="Notifications"
               >
                 <Bell className="w-5 h-5" strokeWidth={1.5} />
@@ -225,7 +225,7 @@ const AppHeader: React.FC = () => {
                   {notifications.map((notif: any) => (
                     <DropdownMenuItem
                       key={notif.id}
-                      className="p-4 cursor-pointer hover:bg-muted/50 focus:bg-muted/50"
+                      className="p-4 cursor-pointer hover:bg-primary/5 focus:bg-primary/5"
                       onClick={() => {
                         if (notif.link) navigate(notif.link);
                         setIsOpen(false);
@@ -246,7 +246,7 @@ const AppHeader: React.FC = () => {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="flex items-center space-x-3 cursor-pointer hover:bg-muted p-1 rounded-lg transition-colors group">
+            <div className="flex items-center space-x-3 cursor-pointer hover:bg-primary/10 p-1 rounded-lg transition-colors group">
               <Avatar className="w-10 h-10 border border-border group-hover:border-primary/20 transition-colors">
                 <AvatarImage src={user?.avatar} alt={user?.name || 'Guest'} />
                 <AvatarFallback className="bg-primary text-primary-foreground font-bold">
@@ -264,14 +264,14 @@ const AppHeader: React.FC = () => {
             <DropdownMenuLabel className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">My Account</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() => navigate(user.role === 'candidate' ? '/candidate/profile' : '/employer/profile')}
-              className="cursor-pointer text-foreground hover:bg-muted rounded-lg px-3 py-2.5"
+              className="cursor-pointer text-foreground hover:bg-primary/10 hover:text-foreground rounded-lg px-3 py-2.5"
             >
               <User className="w-4 h-4 mr-2 text-muted-foreground" />
               <span className="font-medium">My Profile</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => navigate(user.role === 'candidate' ? '/candidate/settings' : '/employer/settings')}
-              className="cursor-pointer text-foreground hover:bg-muted rounded-lg px-3 py-2.5"
+              className="cursor-pointer text-foreground hover:bg-primary/10 hover:text-foreground rounded-lg px-3 py-2.5"
             >
               <Settings className="w-4 h-4 mr-2 text-muted-foreground" />
               <span className="font-medium">Settings</span>

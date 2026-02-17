@@ -38,10 +38,9 @@ const MatchingJobsModal: React.FC<MatchingJobsModalProps> = ({ isOpen, onClose, 
         }
     }, [isOpen, filters]);
 
-    const checkAccess = async () => {
+    const checkAccess = () => {
         if (user?.id && user.role === 'candidate') {
-            const access = await packagesService.hasActivePackage(user.id);
-            setHasPremiumAccess(access);
+            setHasPremiumAccess(!!user.hasActivePackage);
         }
     };
 

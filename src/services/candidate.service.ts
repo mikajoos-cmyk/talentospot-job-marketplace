@@ -374,6 +374,26 @@ export const candidateService = {
     return this.mapDbToProfile(data);
   },
 
+  async isResumeRequired(): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'resume_required_at_registration')
+        .single();
+
+      if (error) {
+        console.warn('Fehler beim Abrufen der Resume-Pflicht Einstellung:', error);
+        return false;
+      }
+
+      return data?.value === true;
+    } catch (e) {
+      console.warn('Ausnahme beim Abrufen der Resume-Pflicht Einstellung:', e);
+      return false;
+    }
+  },
+
   async updateCandidateProfile(userId: string, updates: any) {
     console.log('Service empfängt Updates:', updates);
 

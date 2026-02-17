@@ -8,7 +8,6 @@ import { getCoordinates } from '../../utils/geocoding';
 import MapView from '../../components/maps/MapView';
 import { employerService } from '../../services/employer.service';
 import { jobsService } from '../../services/jobs.service';
-import { packagesService } from '../../services/packages.service';
 import { useToast } from '../../contexts/ToastContext';
 import ReviewCard from '../../components/shared/ReviewCard';
 import ReviewModal from '../../components/shared/ReviewModal';
@@ -33,7 +32,6 @@ const CompanyDetail: React.FC = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
-  const [hasActivePackage, setHasActivePackage] = useState(false);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -55,10 +53,6 @@ const CompanyDetail: React.FC = () => {
         if (user?.profile?.id && user.role === 'candidate') {
           const following = await followsService.isFollowing(user.profile.id, id);
           setIsFollowing(following);
-
-          // Check package status
-          const canMessage = await packagesService.canSendMessages(user.id);
-          setHasActivePackage(canMessage);
 
           // Record profile view
           try {
@@ -130,7 +124,7 @@ const CompanyDetail: React.FC = () => {
   }; 
 
   const handleMessage = () => {
-    if (user.role === 'candidate' && !hasActivePackage) {
+    if (user.role === 'candidate' && !user.hasActivePackage) {
       navigate('/candidate/packages');
       return;
     }
@@ -214,7 +208,7 @@ const CompanyDetail: React.FC = () => {
           </Button>
         </div>
         {/* Hinweis-Banner unter dem Zurück-Button, wenn Kontaktdaten wegen fehlendem Paket eingeschränkt sind */}
-        {user.role === 'candidate' && !hasActivePackage && (
+        {user.role === 'candidate' && !user.hasActivePackage && (
           <UpgradeBanner
             message="Sie benötigen ein Paket, um die Kontaktdaten dieses Unternehmens sehen und Nachrichten senden zu können."
             upgradeLink="/candidate/packages"
@@ -226,12 +220,12 @@ const CompanyDetail: React.FC = () => {
               <img
                 src={company.logo_url || "https://via.placeholder.com/128"}
                 alt={company.company_name}
-                className={`w-32 h-32 rounded-lg object-cover shadow-md ${(user.role === 'guest' || (user.role === 'candidate' && !hasActivePackage)) ? 'blur-md select-none' : ''}`}
+                className={`w-32 h-32 rounded-lg object-cover shadow-md ${(user.role === 'guest' || (user.role === 'candidate' && !user.hasActivePackage)) ? 'blur-md select-none' : ''}`}
                 loading="lazy"
               />
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-3 mb-4">
-                  <h1 className={`text-h1 font-heading text-foreground ${(user.role === 'guest' || (user.role === 'candidate' && !hasActivePackage)) ? 'blur-md select-none' : ''}`}>
+                  <h1 className={`text-h1 font-heading text-foreground ${(user.role === 'guest' || (user.role === 'candidate' && !user.hasActivePackage)) ? 'blur-md select-none' : ''}`}>
                     {company.company_name}
                   </h1>
                   {company.open_for_refugees && (
@@ -267,7 +261,7 @@ const CompanyDetail: React.FC = () => {
                               variant="outline"
                               className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
                             >
-                              {user.role === 'admin' || hasActivePackage ? (
+                              {user.role === 'admin' || user.hasActivePackage ? (
                                 <Send className="w-4 h-4 mr-2" strokeWidth={1.5} />
                               ) : (
                                 <Crown className="w-4 h-4 mr-2 text-yellow-500" strokeWidth={1.5} />
@@ -276,7 +270,7 @@ const CompanyDetail: React.FC = () => {
                             </Button>
                           </span>
                         </TooltipTrigger>
-                        {user.role !== 'admin' && !hasActivePackage && (
+                        {user.role !== 'admin' && !user.hasActivePackage && (
                           <TooltipContent>
                             <div className="flex items-center gap-2">
                               <Crown className="w-4 h-4 text-yellow-500" />
@@ -322,7 +316,7 @@ const CompanyDetail: React.FC = () => {
                         href={company.website?.startsWith('http') ? company.website : `https://${company.website}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`text-primary hover:text-primary-hover hover:underline ${(user.role === 'guest' || (user.role === 'candidate' && !hasActivePackage)) ? 'blur-md select-none pointer-events-none' : ''}`}
+                        className={`text-primary hover:text-primary-hover hover:underline ${(user.role === 'guest' || (user.role === 'candidate' && !user.hasActivePackage)) ? 'blur-md select-none pointer-events-none' : ''}`}
                       >
                         Website
                       </a>

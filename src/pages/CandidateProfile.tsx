@@ -4,7 +4,7 @@ import AppLayout from '../components/layout/AppLayout';
 import { Button } from '../components/ui/button';
 import { useUser } from '../contexts/UserContext';
 import { candidateService } from '../services/candidate.service';
-import { Loader2, UserCircle, Pencil } from 'lucide-react';
+import { Loader2, UserCircle, Pencil, Download } from 'lucide-react';
 import { SharedCandidateProfile } from '../components/shared/SharedCandidateProfile';
 
 const CandidateProfile: React.FC = () => {
@@ -88,6 +88,15 @@ const CandidateProfile: React.FC = () => {
           <UserCircle className="w-4 h-4 mr-2" />
           Public View
         </Button>
+        {candidateData?.cvUrl && (
+          <Button
+            variant="outline"
+            onClick={() => window.open(candidateData.cvUrl, '_blank')}
+            title="Download CV"
+          >
+            <Download className="w-4 h-4 mr-2" /> CV
+          </Button>
+        )}
         <Button
             onClick={() => navigate('/candidate/profile/edit')}
             className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
@@ -105,6 +114,7 @@ const CandidateProfile: React.FC = () => {
             user={user}
             isOwnProfile={true}
             isBlurred={false}
+            showCvInSidebar={false}
             profileCompletion={profileCompletion}
             actions={ProfileActions}
         />

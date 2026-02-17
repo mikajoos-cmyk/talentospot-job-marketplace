@@ -217,6 +217,7 @@ const LandingPage: React.FC = () => {
                   key={job.id}
                   job={job}
                   onViewDetail={(id) => navigate(`/jobs/${id}`)}
+                  obfuscate={!isAuthenticated}
                 />
               ))}
             </div>
@@ -235,7 +236,7 @@ const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {topCompanies.map((company) => (
               <Card key={company.id} className="p-6 border border-primary/10 hover:border-primary/30 transition-all duration-300 group cursor-pointer bg-white overflow-hidden relative" onClick={() => navigate(`/companies/${company.id}`)}>
-                <div className="flex items-center gap-4 mb-4 blur-md select-none">
+                <div className="flex items-center gap-4 mb-4 blur-lg select-none">
                   <div className="w-16 h-16 rounded-xl bg-primary/5 flex items-center justify-center p-2 border border-primary/5 group-hover:bg-primary/10 transition-colors overflow-hidden">
                     {company.logo_url ? (
                       <img src={company.logo_url} alt={company.company_name} className="w-full h-full object-contain" />
@@ -278,6 +279,7 @@ const LandingPage: React.FC = () => {
                 key={job.id}
                 job={job}
                 onViewDetail={(id) => navigate(`/jobs/${id}`)}
+                obfuscate={!isAuthenticated}
               />
             ))}
           </div>

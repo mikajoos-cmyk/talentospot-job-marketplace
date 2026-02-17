@@ -50,7 +50,6 @@ const CandidateDashboard: React.FC = () => {
   const [dataRequests, setDataRequests] = useState<any[]>([]);
   const [viewStats, setViewStats] = useState<any[]>([]);
   const [detailedViews, setDetailedViews] = useState<any[]>([]);
-  const [hasPackage, setHasPackage] = useState<boolean>(false);
   const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
@@ -62,7 +61,7 @@ const CandidateDashboard: React.FC = () => {
 
         const candidateProfile = user.profile || await candidateService.getCandidateProfile(user.id);
 
-        const [appsData, invitationsData, savedJobsData, followersData, requestsData, statsData, totalViewsCount, detailed, hasPkg] = await Promise.all([
+        const [appsData, invitationsData, savedJobsData, followersData, requestsData, statsData, totalViewsCount, detailed] = await Promise.all([
           applicationsService.getApplicationsByCandidate(candidateProfile.id),
           invitationsService.getInvitationsByCandidate(candidateProfile.id),
           savedJobsService.getSavedJobs(candidateProfile.id),
@@ -70,13 +69,11 @@ const CandidateDashboard: React.FC = () => {
           dataAccessService.getRequestsByCandidate(candidateProfile.id),
           analyticsService.getViewStats(user.id),
           analyticsService.getTotalViews(user.id),
-          analyticsService.getDetailedViews(user.id),
-          packagesService.hasActivePackage(user.id)
+          analyticsService.getDetailedViews(user.id)
         ]);
 
         setViewStats(statsData);
         setDetailedViews(detailed || []);
-        setHasPackage(!!hasPkg);
         setApplications(appsData || []);
         const appliedJobIds = new Set(appsData?.map((app: any) => app.job_id) || []);
         const filteredInvitations = invitationsData?.filter((inv: any) =>
@@ -537,7 +534,7 @@ const CandidateDashboard: React.FC = () => {
                   </Card>
                 </div>
 
-                {!hasPackage && (
+                {!user.hasActivePackage && (
                   <div className="relative overflow-hidden rounded-xl border border-warning/30 bg-gradient-to-r from-amber-50/80 to-yellow-50/60 dark:from-amber-900/10 dark:to-yellow-900/10 p-5">
                     <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-amber-200/30 blur-2xl" />
                     <div className="flex items-start gap-4">
@@ -578,7 +575,7 @@ const CandidateDashboard: React.FC = () => {
                           if (v.employer_profiles?.id) navigate(`/companies/${v.employer_profiles.id}`);
                         }}>
                           <div className="flex items-center gap-3">
-                            <div className={!hasPackage ? 'blur-sm select-none' : ''}>
+                            <div className={!user.hasActivePackage ? 'blur-sm select-none' : ''}>
                               <Avatar className="w-10 h-10 rounded-lg">
                                 <AvatarImage src={v.employer_profiles?.logo_url || ''} className="object-cover" />
                                 <AvatarFallback className="rounded-lg">
@@ -587,7 +584,7 @@ const CandidateDashboard: React.FC = () => {
                               </Avatar>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className={`text-body font-medium text-foreground ${!hasPackage ? 'blur-sm select-none' : ''}`}>
+                              <p className={`text-body font-medium text-foreground ${!user.hasActivePackage ? 'blur-sm select-none' : ''}`}>
                                 {name}
                               </p>
                               <p className="text-caption text-muted-foreground">{formatDate(v.created_at)}</p>

@@ -6,12 +6,13 @@ import { Button } from '../../components/ui/button';
 import { Label } from '../../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import RichTextEditor from '../../components/ui/rich-text-editor';
-import { Calendar, Building2, Briefcase, Check, X, Loader2, UserCheck, Eye } from 'lucide-react';
+import { Calendar, Building2, Briefcase, Check, X, Loader2, UserCheck, Eye, Upload } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import { useUser } from '../../contexts/UserContext';
 import { invitationsService } from '../../services/invitations.service';
 import { applicationsService } from '../../services/applications.service';
 import { candidateService } from '../../services/candidate.service';
+import { storageService } from '../../services/storage.service';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,21 @@ const MyInvitations: React.FC = () => {
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [selectedInvitation, setSelectedInvitation] = useState<any | null>(null);
   const [coverLetter, setCoverLetter] = useState('');
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [cvUploading, setCvUploading] = useState(false);
+  const [resumeRequired, setResumeRequired] = useState(false);
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const required = await candidateService.isResumeRequired();
+        setResumeRequired(required);
+      } catch (e) {
+        console.warn('Fehler beim Laden der Systemeinstellungen:', e);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   React.useEffect(() => {
     const fetchAll = async () => {
@@ -103,10 +119,40 @@ const MyInvitations: React.FC = () => {
       return;
     }
 
+    if (resumeRequired && !cvFile) {
+      showToast({
+        title: 'Lebenslauf erforderlich',
+        description: 'Bitte lade einen Lebenslauf hoch, um dich zu bewerben.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!selectedInvitation || !user?.id) return;
 
     try {
       setLoading(true);
+
+      // CV Upload if selected
+      let cvUrl: string | undefined = undefined;
+      if (cvFile) {
+        try {
+          setCvUploading(true);
+          cvUrl = await storageService.uploadCV(user.id, cvFile);
+        } catch (uploadErr: any) {
+          console.error('Error uploading CV:', uploadErr);
+          showToast({
+            title: 'Upload fehlgeschlagen',
+            description: uploadErr.message || 'Dein Lebenslauf konnte nicht hochgeladen werden.',
+            variant: 'destructive',
+          });
+          setLoading(false);
+          setCvUploading(false);
+          return;
+        } finally {
+          setCvUploading(false);
+        }
+      }
 
       // 1. Submit Application
       await applicationsService.applyToJob({
@@ -114,6 +160,7 @@ const MyInvitations: React.FC = () => {
         candidate_id: user.id,
         employer_id: selectedInvitation.employer_id || selectedInvitation.jobs?.employer_id,
         cover_letter: coverLetter,
+        cv_url: cvUrl,
       });
 
       // 2. The invitation is already marked as 'accepted' by applyToJob service
@@ -334,13 +381,46 @@ const MyInvitations: React.FC = () => {
 
             <div>
               <Label className="text-body-sm font-medium text-foreground mb-2 block">
-                Attach CV
+                Lebenslauf anhängen {resumeRequired ? <span className="text-error">(Pflicht)</span> : '(optional)'}
               </Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
-                <Building2 className="w-8 h-8 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
-                <p className="text-body-sm text-foreground">Click to upload your CV</p>
-                <p className="text-caption text-muted-foreground">PDF, DOC up to 10MB</p>
-              </div>
+              <label htmlFor="cv-upload" className="block border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+                <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" strokeWidth={1.5} />
+                <p className="text-body-sm text-foreground">
+                  {cvFile ? 'Datei gewählt: ' + cvFile.name : 'Klicke hier, um deinen Lebenslauf auszuwählen'}
+                </p>
+                <p className="text-caption text-muted-foreground">PDF, DOC, DOCX bis 10MB</p>
+                <input
+                  id="cv-upload"
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    if (file && file.size > 10 * 1024 * 1024) {
+                      showToast({
+                        title: 'Datei zu groß',
+                        description: 'Bitte wähle eine Datei bis maximal 10MB.',
+                        variant: 'destructive',
+                      });
+                      e.currentTarget.value = '';
+                      return;
+                    }
+                    setCvFile(file);
+                  }}
+                />
+              </label>
+              {cvFile && (
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground truncate mr-3">{cvFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setCvFile(null)}
+                    className="inline-flex items-center text-error hover:text-error/80"
+                  >
+                    <X className="w-4 h-4 mr-1" /> Entfernen
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -350,17 +430,31 @@ const MyInvitations: React.FC = () => {
               onClick={() => {
                 setApplyDialogOpen(false);
                 setCoverLetter('');
+                setCvFile(null);
               }}
+              disabled={loading || cvUploading}
               className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-normal"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSubmitApplication}
-              disabled={!coverLetter.trim()}
+              disabled={!coverLetter.trim() || loading || cvUploading || (resumeRequired && !cvFile)}
               className="bg-primary text-primary-foreground hover:bg-primary-hover font-normal"
             >
-              Submit Application
+              {cvUploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Hochladen...
+                </>
+              ) : loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Application'
+              )}
             </Button>
           </div>
         </DialogContent>

@@ -5,9 +5,9 @@ import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { MapPin, DollarSign, ArrowLeft, Mail, Phone, MessageSquare, Star, Loader2, Globe, Briefcase, GraduationCap, Award, Plane, Car, Crown } from 'lucide-react';
+import { formatLanguageLevel } from '../../utils/language-levels';
 import { useToast } from '../../contexts/ToastContext';
 import { applicationsService } from '../../services/applications.service';
-import { packagesService } from '../../services/packages.service';
 import ReviewModal from '../../components/shared/ReviewModal';
 import ReviewCard from '../../components/shared/ReviewCard';
 import UpgradeModal from '../../components/shared/UpgradeModal';
@@ -16,19 +16,19 @@ import { Review } from '../../types/review';
 import { Progress } from '../../components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
-import { supabase } from '../../lib/supabase';
+import { useUser } from '../../contexts/UserContext';
 
 const ApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user } = useUser();
   const [application, setApplication] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [hasActivePackage, setHasActivePackage] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [candidateReviews, setCandidateReviews] = useState<Review[]>([]);
   const [averageRating, setAverageRating] = useState(0);
@@ -38,12 +38,6 @@ const ApplicationDetail: React.FC = () => {
       if (!id) return;
       setLoading(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const canMessage = await packagesService.canSendMessages(user.id);
-          setHasActivePackage(canMessage);
-        }
-        
         const appData = await applicationsService.getApplicationById(id);
         setApplication(appData);
 
@@ -101,7 +95,6 @@ const ApplicationDetail: React.FC = () => {
 
     setProcessing(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       await applicationsService.acceptApplication(id, user.id);
@@ -132,7 +125,6 @@ const ApplicationDetail: React.FC = () => {
 
     setProcessing(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       await applicationsService.rejectApplication(id, user.id);
@@ -197,7 +189,7 @@ const ApplicationDetail: React.FC = () => {
   };
 
   const handleMessageClick = () => {
-    if (!hasActivePackage) {
+    if (!user.hasActivePackage) {
       setUpgradeModalOpen(true);
       return;
     }
@@ -291,7 +283,7 @@ const ApplicationDetail: React.FC = () => {
                   <div key={cl.id || cl.languages?.name}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-body-sm font-medium text-foreground">{cl.languages?.name}</span>
-                      <span className="text-body-sm text-muted-foreground capitalize">{cl.proficiency_level}</span>
+                      <span className="text-body-sm text-muted-foreground capitalize">{formatLanguageLevel(cl.proficiency_level)}</span>
                     </div>
                   </div>
                 ))}
@@ -399,7 +391,7 @@ const ApplicationDetail: React.FC = () => {
                             disabled={false}
                             className="w-full bg-info text-info-foreground hover:bg-info/90 font-normal disabled:opacity-50"
                           >
-                            {!hasActivePackage ? (
+                            {!user.hasActivePackage ? (
                               <Crown className="w-4 h-4 mr-2 text-yellow-500" strokeWidth={1.5} />
                             ) : (
                               <MessageSquare className="w-4 h-4 mr-2" strokeWidth={1.5} />
@@ -408,7 +400,7 @@ const ApplicationDetail: React.FC = () => {
                           </Button>
                         </span>
                       </TooltipTrigger>
-                      {!hasActivePackage && (
+                      {!user.hasActivePackage && (
                         <TooltipContent>
                           <div className="flex items-center gap-2">
                             <Crown className="w-4 h-4 text-yellow-500" />
