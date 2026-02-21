@@ -5,7 +5,7 @@ import { masterDataService } from '@/services/master-data.service';
 import { searchCities } from '@/utils/geocoding';
 
 interface AutocompleteInputProps {
-    category: 'skills' | 'qualifications' | 'languages' | 'job_titles' | 'tags' | 'requirements' | 'countries' | 'states' | 'nationalities' | 'cities' | 'sectors';
+    category: 'skills' | 'qualifications' | 'languages' | 'job_titles' | 'tags' | 'requirements' | 'countries' | 'states' | 'nationalities' | 'cities' | 'sectors' | 'personal_titles';
     value: string;
     onChange: (value: string) => void;
     onSelect?: (value: string | any) => void;
@@ -49,6 +49,7 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                     case 'job_titles': data = await masterDataService.getJobTitles(); break;
                     case 'tags': data = await masterDataService.getTags(); break;
                     case 'requirements': data = await masterDataService.getRequirements(); break;
+                    case 'personal_titles': data = await masterDataService.getPersonalTitles(); break;
                     case 'countries': data = await masterDataService.getCountries(); break;
                     case 'states': data = await masterDataService.getStates(filterId); break;
                     case 'nationalities': data = await masterDataService.getNationalities(); break;
@@ -136,7 +137,11 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleSelect(filteredSuggestions[activeIndex]);
+                    if (filteredSuggestions.length > 0) {
+                        handleSelect(filteredSuggestions[activeIndex]);
+                    } else if (value.trim() !== '') {
+                        handleSelect({ name: value.trim() });
+                    }
                     return;
                 }
             } else if (e.key === 'Enter' && value.trim() !== '') {
@@ -147,6 +152,13 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                 handleSelect({ name: value.trim() });
                 return;
             }
+        }
+        // Always handle Enter if it's NOT open but has a value
+        else if (e.key === 'Enter' && value.trim() !== '') {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSelect({ name: value.trim() });
+            return;
         }
         // If not handling selection, allow default behavior or propagation
     };

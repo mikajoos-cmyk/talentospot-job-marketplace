@@ -45,9 +45,10 @@ export function getLanguageLevelOptions(compact: boolean = false) {
       { value: 'B2', label: 'B2' },
       { value: 'C1', label: 'C1' },
       { value: 'C2', label: 'C2' },
-      { value: 'native', label: 'Native' }
+      { value: 'native', label: 'Native Speaker' }
     ];
   }
+  
   return [
     { value: 'A1', label: 'A1 (Beginner)' },
     { value: 'A2', label: 'A2 (Elementary)' },
@@ -55,7 +56,7 @@ export function getLanguageLevelOptions(compact: boolean = false) {
     { value: 'B2', label: 'B2 (Upper Intermediate)' },
     { value: 'C1', label: 'C1 (Advanced)' },
     { value: 'C2', label: 'C2 (Proficient)' },
-    { value: 'native', label: 'Native' }
+    { value: 'native', label: 'Native Speaker' }
   ];
 }
 
@@ -63,6 +64,6 @@ export function getLanguageLevelOptions(compact: boolean = false) {
  * Format language level for display
  */
 export function formatLanguageLevel(level: string): string {
-  const option = getLanguageLevelOptions().find(opt => opt.value === level);
+  const option = getLanguageLevelOptions(false).find(opt => opt.value === level);
   return option?.label || level;
 }

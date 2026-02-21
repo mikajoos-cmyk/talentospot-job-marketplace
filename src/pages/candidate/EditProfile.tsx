@@ -20,7 +20,9 @@ import { LocationPicker } from '../../components/shared/LocationPicker';
 import ImageCropModal from '../../components/shared/ImageCropModal';
 import { findContinent } from '../../utils/locationUtils';
 import DrivingLicenseSelector from '../../components/shared/DrivingLicenseSelector';
-import { formatLanguageLevel } from '../../utils/language-levels';
+import { formatLanguageLevel, getLanguageLevelOptions } from '../../utils/language-levels';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { Badge } from '../../components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +49,7 @@ const EditProfile: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { user, refreshUser } = useUser();
+  const languageContext = useLanguage();
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -77,6 +80,7 @@ const EditProfile: React.FC = () => {
   const [education, setEducation] = useState<any[]>([]);
   const [skills, setSkills] = useState<any[]>([]);
   const [qualifications, setQualifications] = useState<any[]>([]);
+  const [personalTitles, setPersonalTitles] = useState<any[]>([]);
   const [requirements, setRequirements] = useState<string[]>([]);
   const [formData, setFormData] = useState<any>(null);
 
@@ -140,6 +144,7 @@ const EditProfile: React.FC = () => {
           setEducation(profile.education || []);
           setSkills(profile.skills || []);
           setQualifications(profile.qualifications || []);
+          setPersonalTitles(profile.personalTitles || []);
           setRequirements(profile.requirements || []);
           setLanguages(profile.languages || []);
           setDrivingLicenses(profile.drivingLicenses || []);
@@ -196,6 +201,7 @@ const EditProfile: React.FC = () => {
 
   const [skillInput, setSkillInput] = useState('');
   const [qualificationInput, setQualificationInput] = useState('');
+  const [personalTitleInput, setPersonalTitleInput] = useState('');
   const [requirementInput, setRequirementInput] = useState('');
   const [languages, setLanguages] = useState<{ name: string; level: string }[]>([]);
   const [languageInput, setLanguageInput] = useState('');
@@ -471,6 +477,17 @@ const EditProfile: React.FC = () => {
     }
   };
 
+  const handleAddPersonalTitle = () => {
+    if (personalTitleInput.trim() && !personalTitles.includes(personalTitleInput.trim())) {
+      setPersonalTitles([...personalTitles, personalTitleInput.trim()]);
+      setPersonalTitleInput('');
+    }
+  };
+
+  const handleRemovePersonalTitle = (title: string) => {
+    setPersonalTitles(personalTitles.filter(t => t !== title));
+  };
+
   const handleAddRequirement = () => {
     if (requirementInput.trim() && !requirements.includes(requirementInput.trim())) {
       setRequirements([...requirements, requirementInput.trim()]);
@@ -683,7 +700,7 @@ const EditProfile: React.FC = () => {
         country: formData.country,
         latitude: formData.latitude,
         longitude: formData.longitude,
-        job_title: formData.title,
+        job_title: formData.title || '', // Fallback für Einzel-String Feld
         sector: formData.sector,
         career_level: formData.careerLevel,
         employment_status: formData.status,
@@ -709,6 +726,7 @@ const EditProfile: React.FC = () => {
         experience: experience,
         education: education,
         qualifications: qualifications,
+        personalTitles: personalTitles,
         requirements: requirements,
         languages: languages.map(l => ({ name: l.name, proficiency_level: l.level })),
         preferredLocations: preferredLocations,
@@ -1091,7 +1109,7 @@ const EditProfile: React.FC = () => {
 
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+              <div className="md:col-span-2">
                 <Label htmlFor="title" className="text-body-sm font-medium text-foreground mb-2 block">
                   Job Title <span className="text-error">*</span>
                 </Label>
@@ -1100,89 +1118,9 @@ const EditProfile: React.FC = () => {
                   id="title"
                   value={formData.title}
                   onChange={(val) => setFormData({ ...formData, title: val })}
-                  className="bg-background text-foreground border-border"
+                  placeholder="e.g. Software Engineer"
+                  className="w-full bg-background text-foreground border-border"
                 />
-              </div>
-
-              <div className="md:col-span-2">
-                <Label htmlFor="description" className="text-body-sm font-medium text-foreground mb-2 block">
-                  About Me / Profile Description
-                </Label>
-                <textarea
-                  id="description"
-                  placeholder="Describe your professional background and what you are looking for..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full min-h-[120px] px-3 py-2 rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-sans text-body-sm"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="sector" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Sector
-                </Label>
-                <AutocompleteInput
-                  category="sectors"
-                  value={formData.sector}
-                  onChange={(value) => setFormData({ ...formData, sector: value })}
-                  placeholder="Search sector..."
-                  className="bg-background text-foreground border-border"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="careerLevel" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Career Level
-                </Label>
-                <Select value={formData.careerLevel} onValueChange={(value) => setFormData({ ...formData, careerLevel: value })}>
-                  <SelectTrigger className="bg-background text-foreground border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="junior">Junior</SelectItem>
-                    <SelectItem value="mid">Mid-Level</SelectItem>
-                    <SelectItem value="senior">Senior</SelectItem>
-                    <SelectItem value="lead">Lead</SelectItem>
-                    <SelectItem value="executive">Executive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="yearsOfExperience" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Professional Experience (Years)
-                </Label>
-                <div className="flex items-center space-x-4">
-                  <Slider
-                    value={[formData.yearsOfExperience]}
-                    onValueChange={(value) => setFormData({ ...formData, yearsOfExperience: value[0] })}
-                    min={0}
-                    max={50}
-                    step={1}
-                    className="flex-1"
-                  />
-                  <span className="text-body-sm font-medium w-12 text-center">{formData.yearsOfExperience}y</span>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="noticePeriod" className="text-body-sm font-medium text-foreground mb-2 block">
-                  Notice Period
-                </Label>
-                <Select value={formData.noticePeriod} onValueChange={(value) => setFormData({ ...formData, noticePeriod: value })}>
-                  <SelectTrigger className="bg-background text-foreground border-border">
-                    <SelectValue placeholder="Select notice period" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="immediate">Immediate</SelectItem>
-                    <SelectItem value="1-week">1 Week</SelectItem>
-                    <SelectItem value="2-weeks">2 Weeks</SelectItem>
-                    <SelectItem value="1-month">1 Month</SelectItem>
-                    <SelectItem value="2-months">2 Months</SelectItem>
-                    <SelectItem value="3-months">3 Months</SelectItem>
-                    <SelectItem value="6-months">6 Months</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="md:col-span-2">
@@ -1221,6 +1159,51 @@ const EditProfile: React.FC = () => {
                         <X className="w-4 h-4" strokeWidth={2} />
                       </button>
                     </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor="personalTitles" className="text-body-sm font-medium text-foreground mb-2 block">
+                  Personal Titles (e.g. Dr., Prof.)
+                </Label>
+                <div className="flex space-x-2 mb-3">
+                  <AutocompleteInput
+                    category="personal_titles"
+                    id="personalTitles"
+                    value={personalTitleInput}
+                    onChange={(val) => setPersonalTitleInput(val)}
+                    onSelect={(val) => {
+                      if (typeof val === 'string') handleAddPersonalTitle();
+                      else if (val && val.name) handleAddPersonalTitle();
+                    }}
+                    placeholder="Search personal titles..."
+                    className="flex-1 bg-background text-foreground border-border"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddPersonalTitle}
+                    className="border-primary text-primary hover:bg-primary/5"
+                  >
+                    Add Title
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {personalTitles.map((title) => (
+                    <Badge
+                      key={title}
+                      variant="secondary"
+                      className="px-3 py-1 bg-primary/10 text-primary border-none flex items-center space-x-2"
+                    >
+                      <span className="text-caption font-medium">{title}</span>
+                      <button
+                        onClick={() => handleRemovePersonalTitle(title)}
+                        className="hover:text-primary-dark transition-colors"
+                      >
+                        <X className="w-3 h-3 ml-1" />
+                      </button>
+                    </Badge>
                   ))}
                 </div>
               </div>
@@ -1361,13 +1344,9 @@ const EditProfile: React.FC = () => {
                   <SelectValue placeholder="Level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="A1">A1 (Beginner)</SelectItem>
-                  <SelectItem value="A2">A2 (Elementary)</SelectItem>
-                  <SelectItem value="B1">B1 (Intermediate)</SelectItem>
-                  <SelectItem value="B2">B2 (Upper Intermediate)</SelectItem>
-                  <SelectItem value="C1">C1 (Advanced)</SelectItem>
-                  <SelectItem value="C2">C2 (Proficient)</SelectItem>
-                  <SelectItem value="native">Native</SelectItem>
+                  {getLanguageLevelOptions(false, languageContext.language).map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Button
@@ -1384,7 +1363,7 @@ const EditProfile: React.FC = () => {
                   key={language.name}
                   className="flex items-center space-x-1 px-3 py-1 bg-info text-info-foreground rounded-full text-body-sm"
                 >
-                  <span className="capitalize">{language.name} ({formatLanguageLevel(language.level)})</span>
+                  <span className="capitalize">{language.name} ({formatLanguageLevel(language.level, languageContext.language)})</span>
                   <button
                     onClick={() => handleRemoveLanguage(language.name)}
                     className="hover:text-info-foreground/80 transition-colors"

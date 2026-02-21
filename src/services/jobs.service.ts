@@ -26,6 +26,7 @@ export interface Job {
   required_languages?: JobLanguageRequirement[] | string[]; // Support both formats for backward compatibility
   home_office_available?: boolean;
   required_qualifications?: string[];
+  required_personal_titles?: string[];
   required_skills?: string[];
   career_level?: string;
   experience_years?: number;
@@ -108,6 +109,9 @@ export const jobsService = {
     }
     if (job.required_skills) {
       resolvedJob.required_skills = await this.resolveEntities(job.required_skills, 'skills');
+    }
+    if (job.required_personal_titles) {
+      resolvedJob.required_personal_titles = await this.resolveEntities(job.required_personal_titles, 'personal_titles');
     }
 
     // Geocode city if provided
@@ -214,6 +218,9 @@ export const jobsService = {
     if (updates.required_skills) {
       resolvedUpdates.required_skills = await this.resolveEntities(updates.required_skills, 'skills');
     }
+    if (updates.required_job_titles) {
+      resolvedUpdates.required_job_titles = await this.resolveEntities(updates.required_job_titles, 'job_titles');
+    }
 
     // Geocode city if updated
     if (updates.city) {
@@ -302,6 +309,10 @@ export const jobsService = {
     if (data.required_skills?.length > 0) {
       const { data: skills } = await supabase.from('skills').select('id, name').in('id', data.required_skills);
       data.required_skills = data.required_skills.map((id: string) => skills?.find(s => s.id === id)?.name || id);
+    }
+    if (data.required_personal_titles?.length > 0) {
+      const { data: p_titles } = await supabase.from('personal_titles').select('id, name').in('id', data.required_personal_titles);
+      data.required_personal_titles = data.required_personal_titles.map((id: string) => p_titles?.find(t => t.id === id)?.name || id);
     }
 
     // Map company data if employer_profiles join exists
@@ -480,6 +491,17 @@ export const jobsService = {
       const ids = matchedQuals?.map(m => m.id) || [];
       if (ids.length > 0) {
         query = query.overlaps('required_qualifications', ids);
+      } else {
+        query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+      }
+    }
+
+    if (filters.required_personal_titles && filters.required_personal_titles.length > 0) {
+      const orStr = filters.required_personal_titles.map((t: string) => `name.ilike.%${t.trim()}%`).join(',');
+      const { data: matchedTitles } = await supabase.from('personal_titles').select('id').or(orStr);
+      const ids = matchedTitles?.map(m => m.id) || [];
+      if (ids.length > 0) {
+        query = query.overlaps('required_personal_titles', ids);
       } else {
         query = query.eq('id', '00000000-0000-0000-0000-000000000000');
       }

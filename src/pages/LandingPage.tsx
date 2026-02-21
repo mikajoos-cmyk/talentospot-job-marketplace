@@ -22,12 +22,7 @@ const LandingPage: React.FC = () => {
 
   const { contentMaxWidth } = useSettings();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      const dashboardPath = user.role === 'employer' ? '/employer/dashboard' : '/candidate/dashboard';
-      navigate(dashboardPath);
-    }
-  }, [isAuthenticated, user.role, navigate]);
+  // No auto-redirect for authenticated users - allow them to see the landing page
 
   const [latestJobs, setLatestJobs] = useState<any[]>([]);
   const [featuredJobs, setFeaturedJobs] = useState<any[]>([]);

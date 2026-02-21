@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { X, Plus, ChevronDown, User, Briefcase, Sparkles, MapPin } from 'lucide-react';
@@ -45,6 +46,7 @@ interface CandidateFiltersProps {
 const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersChange, mapCenter }) => {
   const [skillInput, setSkillInput] = useState('');
   const [qualificationInput, setQualificationInput] = useState('');
+  const [personalTitleInput, setPersonalTitleInput] = useState('');
   const [languageInput, setLanguageInput] = useState('');
   const [languageLevel, setLanguageLevel] = useState('B2');
   const [tagInput, setTagInput] = useState('');
@@ -95,6 +97,25 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
     onFiltersChange({
       ...filters,
       qualifications: filters.qualifications.filter(q => q !== qualification),
+    });
+  };
+
+  const handleAddPersonalTitle = () => {
+    const currentTitles = filters.personalTitles || [];
+    if (personalTitleInput.trim() && !currentTitles.includes(personalTitleInput.trim())) {
+      onFiltersChange({
+        ...filters,
+        personalTitles: [...currentTitles, personalTitleInput.trim()],
+      });
+      setPersonalTitleInput('');
+    }
+  };
+
+  const handleRemovePersonalTitle = (title: string) => {
+    const currentTitles = filters.personalTitles || [];
+    onFiltersChange({
+      ...filters,
+      personalTitles: currentTitles.filter(t => t !== title),
     });
   };
 
@@ -241,7 +262,7 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
   const noticePeriods = ['immediate', '1-week', '2-weeks', '1-month', '2-months', '3-months'];
 
   return (
-    <Card className="p-6 border border-primary/30 bg-card sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 group/filters">
+    <Card className="p-6 border-4 border-primary/40 bg-blue-50/50 sticky top-24 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 group/filters">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-h4 font-heading text-foreground">Filters</h3>
         <Button
@@ -298,12 +319,13 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
             </Label>
             <AutocompleteInput
               category="job_titles"
-              placeholder="Search by job title..."
+              placeholder="e.g. Software Engineer"
               value={filters.jobTitle || ''}
               onChange={(val) => onFiltersChange({ ...filters, jobTitle: val })}
               className="bg-background text-foreground border-border"
             />
           </div>
+
 
           {/* Talent Status */}
           <div>
@@ -510,6 +532,52 @@ const CandidateFilters: React.FC<CandidateFiltersProps> = ({ filters, onFiltersC
                       <X className="w-4 h-4" strokeWidth={2} />
                     </button>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Personal Titles */}
+            <div>
+              <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                Personal Titles
+              </Label>
+              <div className="flex space-x-2 mb-3">
+                <AutocompleteInput
+                  category="personal_titles"
+                  placeholder="Search personal titles..."
+                  value={personalTitleInput}
+                  onChange={(val) => setPersonalTitleInput(val)}
+                  onSelect={(val) => {
+                    if (typeof val === 'string') handleAddPersonalTitle();
+                    else if (val && val.name) handleAddPersonalTitle();
+                  }}
+                  className="flex-1 bg-background text-foreground border-border"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleAddPersonalTitle}
+                  className="h-10 w-10 border-primary text-primary hover:bg-primary/5"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(filters.personalTitles || []).map((title) => (
+                  <Badge
+                    key={title}
+                    variant="secondary"
+                    className="px-2 py-0.5 bg-primary/10 text-primary border-none flex items-center space-x-1"
+                  >
+                    <span className="text-[11px] font-medium">{title}</span>
+                    <button
+                      onClick={() => handleRemovePersonalTitle(title)}
+                      className="hover:text-primary-dark transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
                 ))}
               </div>
             </div>

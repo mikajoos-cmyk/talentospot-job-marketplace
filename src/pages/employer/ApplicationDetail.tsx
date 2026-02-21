@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { MapPin, DollarSign, ArrowLeft, Mail, Phone, MessageSquare, Star, Loader2, Globe, Briefcase, GraduationCap, Award, Plane, Car, Crown } from 'lucide-react';
 import { formatLanguageLevel } from '../../utils/language-levels';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useToast } from '../../contexts/ToastContext';
 import { applicationsService } from '../../services/applications.service';
 import ReviewModal from '../../components/shared/ReviewModal';
@@ -23,6 +24,7 @@ const ApplicationDetail: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { user } = useUser();
+  const { language } = useLanguage();
   const [application, setApplication] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -283,7 +285,7 @@ const ApplicationDetail: React.FC = () => {
                   <div key={cl.id || cl.languages?.name}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-body-sm font-medium text-foreground">{cl.languages?.name}</span>
-                      <span className="text-body-sm text-muted-foreground capitalize">{formatLanguageLevel(cl.proficiency_level)}</span>
+                      <span className="text-body-sm text-muted-foreground capitalize">{formatLanguageLevel(cl.proficiency_level, language)}</span>
                     </div>
                   </div>
                 ))}

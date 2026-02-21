@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, DollarSign, Calendar, UserPlus, Briefcase, Award } from 'lucide-react';
+import { MapPin, DollarSign, Calendar, UserPlus, Briefcase, Award, Activity } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { toast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
@@ -14,6 +14,7 @@ import { candidateService } from '@/services/candidate.service';
 import { shortlistsService } from '@/services/shortlists.service';
 import UpgradeModal from '@/components/shared/UpgradeModal';
 import { formatLanguageLevel } from '@/utils/language-levels';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   const navigate = useNavigate();
   const { user } = useUser();
   const { showToast } = useToast();
+  const { language } = useLanguage();
 
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -264,6 +266,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
 
   const shouldBlurIdentity = isBlurredEffect;
   const candidateAvatar = candidate.profiles?.avatar_url || candidate.avatar;
+  const personalTitles = candidate.candidate_personal_titles || candidate.personalTitles || [];
   const candidateTitle = candidate.job_title || candidate.title || 'Professional';
   const location = candidate.city && candidate.country ? `${candidate.city}, ${candidate.country}` : candidate.location || 'Location not specified';
   const minSalary = candidate.salary_expectation_min || candidate.salary?.min || 0;
@@ -281,6 +284,10 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
   const languages = candidate.candidate_languages || candidate.languages || [];
   const qualifications = candidate.candidate_qualifications || candidate.qualifications || [];
   const nationalityCode = candidate.nationality_code || candidate.nationalityCode;
+
+  const displayTitle = personalTitles.length > 0 
+    ? `${personalTitles.map((t: any) => typeof t === 'string' ? t : t.personal_titles?.name).join(', ')} ${candidateTitle}`
+    : candidateTitle;
 
   return (
     <>
@@ -313,7 +320,9 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
             <h4 className={`text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors ${shouldBlurIdentity ? 'blur-sm select-none' : ''}`}>
               {displayName}
             </h4>
-            <p className="text-sm font-medium text-muted-foreground mb-4">{candidateTitle}</p>
+            <div className="text-sm font-medium text-muted-foreground mb-4">
+              {displayTitle}
+            </div>
 
             <div className="w-full pt-4 border-t border-border/50 space-y-3">
               <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider">
@@ -366,8 +375,13 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                   <Award className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Career Level</p>
-                  <p className="text-sm font-semibold capitalize">{careerLevel}</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Qualification / Titles</p>
+                  <p className="text-sm font-semibold capitalize">
+                    {[
+                      ...personalTitles.map((t: any) => typeof t === 'string' ? t : (t.personal_titles?.name || t.name)),
+                      (qualifications[0] ? (typeof qualifications[0] === 'string' ? qualifications[0] : (qualifications[0].qualifications?.name || qualifications[0].name)) : null)
+                    ].filter(Boolean).join(', ') || 'N/A'}
+                  </p>
                 </div>
               </div>
 
@@ -384,9 +398,14 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 text-muted-foreground pt-2">
-                <Calendar className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-bold uppercase tracking-wide">Notice Period: {noticePeriod}</span>
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/5 text-primary">
+                  <Activity className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Career Level</p>
+                  <p className="text-sm font-semibold capitalize">{careerLevel}</p>
+                </div>
               </div>
             </div>
 
@@ -410,15 +429,20 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, accessStatus, 
               <div className="space-y-3">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Qualifications</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {qualifications.slice(0, 3).map((q: any, index: number) => {
+                  {qualifications.map((q: any, index: number) => {
                     const qualName = typeof q === 'string' ? q : (q.qualifications?.name || q.name || 'Qualification');
                     return (
-                      <span key={index} className="px-2 py-0.5 bg-accent/10 text-accent text-[11px] font-bold rounded-md border border-accent/20">
+                      <span key={`qual-${index}`} className="px-2 py-0.5 bg-accent/10 text-accent text-[11px] font-bold rounded-md border border-accent/20">
                         {qualName}
                       </span>
                     );
                   })}
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-muted-foreground pt-2">
+                <Calendar className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-bold uppercase tracking-wide">Notice Period: {noticePeriod}</span>
               </div>
 
               <div className="space-y-3">

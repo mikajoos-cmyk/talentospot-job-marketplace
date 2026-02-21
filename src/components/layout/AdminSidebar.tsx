@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
+    Home,
     Users,
     Package,
     Settings,
@@ -56,6 +57,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle }) => {
                     <NavLink to="/admin/dashboard" className={navItemClass} title={t('nav.dashboard')}>
                         <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
                         {!collapsed && <span className="ml-3">{t('nav.dashboard')}</span>}
+                    </NavLink>
+
+                    <NavLink to="/" className={navItemClass} title={t('nav.home')}>
+                        <Home className="h-5 w-5 flex-shrink-0" />
+                        {!collapsed && <span className="ml-3">{t('nav.home')}</span>}
                     </NavLink>
 
                     <NavLink to="/admin/users" className={navItemClass} title={t('nav.users')}>

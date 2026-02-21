@@ -28,6 +28,7 @@ const MainHeroFilter = ({ className }: { className?: string }) => {
     const [filters, setFilters] = useState({
         // Common
         jobTitle: '',
+        personalTitles: [] as string[],
         location: '',
         radius: 50,
         sector: 'any',
@@ -78,6 +79,7 @@ const MainHeroFilter = ({ className }: { className?: string }) => {
 
     const [skillInput, setSkillInput] = useState('');
     const [qualificationInput, setQualificationInput] = useState('');
+    const [personalTitleInput, setPersonalTitleInput] = useState('');
     const [languageInput, setLanguageInput] = useState('');
     const [languageLevel, setLanguageLevel] = useState('B2');
     const [tagInput, setTagInput] = useState('');
@@ -99,7 +101,12 @@ const MainHeroFilter = ({ className }: { className?: string }) => {
 
     const handleSearch = () => {
         const searchParams = new URLSearchParams();
-        if (filters.jobTitle) searchParams.set('title', filters.jobTitle);
+        if (filters.jobTitle) {
+            searchParams.set('title', filters.jobTitle);
+        }
+        if (filters.personalTitles.length > 0) {
+            searchParams.set('p_titles', filters.personalTitles.join(','));
+        }
         if (filters.location) searchParams.set('location', filters.location);
         if (filters.radius) searchParams.set('radius', filters.radius.toString());
         if (filters.sector !== 'any') searchParams.set('sector', filters.sector);
@@ -227,6 +234,23 @@ const MainHeroFilter = ({ className }: { className?: string }) => {
         }
     };
 
+    const handleAddPersonalTitle = () => {
+        if (personalTitleInput.trim() && !filters.personalTitles.includes(personalTitleInput.trim())) {
+            setFilters({
+                ...filters,
+                personalTitles: [...filters.personalTitles, personalTitleInput.trim()],
+            });
+            setPersonalTitleInput('');
+        }
+    };
+
+    const handleRemovePersonalTitle = (title: string) => {
+        setFilters({
+            ...filters,
+            personalTitles: filters.personalTitles.filter(t => t !== title),
+        });
+    };
+
     const handleRemoveQualification = (qualification: string) => {
         setFilters({
             ...filters,
@@ -336,11 +360,11 @@ const MainHeroFilter = ({ className }: { className?: string }) => {
                 {/* Main Search Bar */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                     {/* Job Title */}
-                    <div className={`${searchMode === 'candidates' ? 'md:col-span-3' : 'md:col-span-4'} space-y-1.5 p-2`}>
+                    <div className={`${searchMode === 'candidates' ? 'md:col-span-4' : 'md:col-span-4'} space-y-1.5 p-2`}>
                         <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider ml-1">Job Title</Label>
                         <AutocompleteInput
                             category="job_titles"
-                            placeholder="Work title, skills..."
+                            placeholder="e.g. Software Engineer"
                             value={filters.jobTitle}
                             onChange={(val) => setFilters({ ...filters, jobTitle: val })}
                             inputClassName="h-12 bg-muted/40 border-none focus-visible:ring-1 focus-visible:ring-primary text-base rounded-xl"
@@ -349,7 +373,7 @@ const MainHeroFilter = ({ className }: { className?: string }) => {
                     </div>
 
                     {/* Location (Simplified for main bar) */}
-                    <div className={`${searchMode === 'candidates' ? 'md:col-span-3' : 'md:col-span-4'} space-y-1.5 p-2`}>
+                    <div className={`${searchMode === 'candidates' ? 'md:col-span-4' : 'md:col-span-4'} space-y-1.5 p-2`}>
                         <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider ml-1">Location / Work Preference</Label>
                         <AutocompleteInput
                             category="cities"
@@ -683,6 +707,46 @@ const MainHeroFilter = ({ className }: { className?: string }) => {
                                                         <span key={q} className="px-2.5 py-1 bg-accent/10 text-accent text-xs font-bold rounded-md flex items-center gap-1.5 border border-accent/20">
                                                             {q} <X className="w-3 h-3 cursor-pointer hover:text-accent/70" onClick={() => handleRemoveQualification(q)} />
                                                         </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Personal Titles */}
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase">Personal Titles</Label>
+                                                <div className="flex gap-2">
+                                                    <AutocompleteInput
+                                                        category="personal_titles"
+                                                        placeholder="Dr., Prof..."
+                                                        value={personalTitleInput}
+                                                        onChange={(val) => setPersonalTitleInput(val)}
+                                                        onSelect={(val) => {
+                                                            if (typeof val === 'string') handleAddPersonalTitle();
+                                                            else if (val && val.name) handleAddPersonalTitle();
+                                                        }}
+                                                        className="h-10 flex-1"
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="icon"
+                                                        onClick={handleAddPersonalTitle}
+                                                        className="h-10 w-10 border-primary text-primary hover:bg-primary/5 shrink-0"
+                                                    >
+                                                        <Plus className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {filters.personalTitles.map((title) => (
+                                                        <div
+                                                            key={title}
+                                                            className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-md flex items-center gap-1 border border-primary/20"
+                                                        >
+                                                            <span>{title}</span>
+                                                            <button onClick={() => handleRemovePersonalTitle(title)}>
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
                                                     ))}
                                                 </div>
                                             </div>

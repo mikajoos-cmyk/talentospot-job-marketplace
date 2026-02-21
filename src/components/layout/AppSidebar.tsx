@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LayoutDashboard, User, Briefcase, Settings, Users, Building2, ChevronLeft, ChevronRight, CreditCard, Bookmark, Mail, MessageSquare, Network as NetworkIcon, Bell, LogOut } from 'lucide-react';
+import { LayoutDashboard, Home, User, Briefcase, Settings, Users, Building2, ChevronLeft, ChevronRight, CreditCard, Bookmark, Mail, MessageSquare, Network as NetworkIcon, Bell, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import logoImg from '@/assets/logo.png';
@@ -19,6 +19,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
 
   const candidateMenuItems = [
     { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/candidate/dashboard' },
+    { icon: Home, label: t('nav.home'), path: '/' },
     { icon: User, label: t('nav.profile'), path: '/candidate/profile' },
     { icon: Briefcase, label: t('nav.jobs'), path: '/candidate/jobs' },
     { icon: Bell, label: t('nav.alerts'), path: '/candidate/alerts' },
@@ -32,6 +33,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
 
   const employerMenuItems = [
     { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/employer/dashboard' },
+    { icon: Home, label: t('nav.home'), path: '/' },
     { icon: Users, label: t('nav.candidates'), path: '/employer/candidates' },
     { icon: Bell, label: t('nav.alerts'), path: '/employer/alerts' },
     { icon: Briefcase, label: t('nav.myJobs'), path: '/employer/jobs' },
@@ -44,6 +46,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggle }) => {
 
   const adminMenuItems = [
     { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/admin/dashboard' },
+    { icon: Home, label: t('nav.home'), path: '/' },
     { icon: Users, label: t('nav.users'), path: '/admin/users' },
     { icon: Settings, label: t('nav.settings'), path: '/admin/settings' },
   ];

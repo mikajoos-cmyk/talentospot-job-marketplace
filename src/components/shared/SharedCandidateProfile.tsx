@@ -21,6 +21,7 @@ import { getYouTubeEmbedUrl } from '../../lib/utils';
 import { ProjectImageCarousel } from '../shared/ProjectImageCarousel';
 import { cn } from '@/lib/utils';
 import { formatLanguageLevel } from '../../utils/language-levels';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface SharedCandidateProfileProps {
     data: any;           // Das Profil-Objekt
@@ -49,6 +50,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                                                                    bannerBelowHeader,
                                                                                    showCvInSidebar = true
                                                                                }) => {
+    const { language } = useLanguage();
     const [selectedProject, setSelectedProject] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedAward, setSelectedAward] = useState<any>(null);
@@ -61,6 +63,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
     const hasLanguages = data.languages && data.languages.length > 0;
     const hasLicenses = data.drivingLicenses && data.drivingLicenses.length > 0;
     const hasQualifications = data.qualifications && data.qualifications.length > 0;
+    const hasPersonalTitles = data.personalTitles && data.personalTitles.length > 0;
     const hasExperience = data.experience && data.experience.length > 0;
     const hasEducation = data.education && data.education.length > 0;
     const hasRequirements = data.requirements && data.requirements.length > 0;
@@ -115,7 +118,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                 <div className="xl:col-span-4 space-y-6 xl:sticky xl:top-6">
 
                     {/* Identity Card */}
-                    <Card className="overflow-hidden border-border bg-card shadow-sm">
+                    <Card className="overflow-hidden border-primary/40 bg-card shadow-sm border-[5px]">
                         <div className="h-28 sm:h-36 xl:h-40 bg-gradient-to-r from-primary/10 via-primary/5 to-background border-b border-border/50 relative">
                             {data.isRefugee && (
                                 <div className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm border border-accent/20 text-accent text-xs font-medium px-2.5 py-1 rounded-full flex items-center shadow-sm">
@@ -138,7 +141,16 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                             <div className="mb-6 flex items-center justify-between">
                                 <div>
                                     <h2 className="text-2xl font-bold text-foreground leading-tight">{displayName}</h2>
-                                    <p className="text-primary font-medium mt-1">{data.title || 'No job title specified'}</p>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {hasPersonalTitles && data.personalTitles.map((title: string, idx: number) => (
+                                            <span key={idx} className="text-primary font-medium">
+                                                {title}{' '}
+                                            </span>
+                                        ))}
+                                        <span className="text-primary font-medium">
+                                            {data.title || 'No job title specified'}
+                                        </span>
+                                    </div>
                                 </div>
                                 {data.cvUrl && !isBlurred && showCvInSidebar && (
                                     <Button
@@ -237,9 +249,14 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                     </div>
                                     <div className="flex flex-col">
                           <span className="text-xs text-muted-foreground flex items-center mb-1">
-                              <GraduationCap className="w-3 h-3 mr-1" /> Qualification
+                              <GraduationCap className="w-3 h-3 mr-1" /> Qualification / Titles
                           </span>
-                                        <span className="text-sm font-semibold capitalize">{(data.highestQualification) || (hasQualifications ? data.qualifications[0] : 'N/A')}</span>
+                                        <span className="text-sm font-semibold capitalize">
+                                            {[
+                                                ...(hasPersonalTitles ? data.personalTitles : []),
+                                                (data.highestQualification) || (hasQualifications ? data.qualifications[0] : null)
+                                            ].filter(Boolean).join(', ') || 'N/A'}
+                                        </span>
                                     </div>
                                     <div className="flex flex-col">
                           <span className="text-xs text-muted-foreground flex items-center mb-1">
@@ -260,13 +277,13 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                 </div>
                             )}
 
-                            {/* Qualifications / Titles */}
+                            {/* Qualifications */}
                             {hasQualifications && (
                                 <div className="mt-6 pt-4 border-t border-border">
-                                    <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Qualifications / Titles</p>
+                                    <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Qualifications</p>
                                     <div className="flex flex-wrap gap-2">
                                         {data.qualifications.map((q: string, idx: number) => (
-                                            <span key={idx} className="px-2 py-1 bg-accent/5 text-accent text-xs rounded border border-accent/20">
+                                            <span key={`qual-${idx}`} className="px-2 py-1 bg-accent/5 text-accent text-xs rounded border border-accent/20">
                                                 {q}
                                             </span>
                                         ))}
@@ -320,7 +337,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                         {data.languages.map((lang: any, idx: number) => (
                                             <div key={idx} className="flex flex-col bg-muted/50 px-2.5 py-1.5 rounded-md border border-border">
                                                 <span className="text-sm font-medium leading-none">{lang.name}</span>
-                                                <span className="text-[10px] text-muted-foreground uppercase mt-1">{formatLanguageLevel(lang.level || 'N/A')}</span>
+                                                <span className="text-[10px] text-muted-foreground uppercase mt-1">{formatLanguageLevel(lang.level || 'N/A', language)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -353,10 +370,10 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                     {/* About / Summary */}
 
                     {/* Conditions Dashboard */}
-                    <Card className="border-[#45699a] bg-card shadow-sm border-[5px]">
+                    <Card className="border-[#FFB800] bg-card shadow-sm border-[5px]">
                         <CardHeader className="py-3">
                             <CardTitle className="text-base flex items-center">
-                                <DollarSign className="w-4 h-4 mr-2 text-primary" />
+                                <DollarSign className="w-4 h-4 mr-2 text-[#FFB800]" />
                                 Work Preferences & Conditions
                             </CardTitle>
                         </CardHeader>
@@ -373,7 +390,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                             : 'Not specified'}
                                     </p>
                                     {data.conditions?.entryBonus > 0 && (
-                                        <div className="mt-1 inline-flex items-center px-2 py-0.5 bg-orange-500/10 text-orange-600 text-[11px] font-medium rounded-2xl border border-orange-500/30">
+                                        <div className="mt-1 inline-flex items-center px-2 py-0.5 bg-[#FFB800]/10 text-[#FFB800] text-[11px] font-medium rounded-2xl border border-[#FFB800]/30">
                                             + {data.currency || '€'}{data.conditions.entryBonus.toLocaleString()} Bonus
                                         </div>
                                     )}
@@ -409,7 +426,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                     <div className="flex flex-wrap gap-2 mt-1">
                                         {data.contractTermPreference && data.contractTermPreference.length > 0 ? (
                                             data.contractTermPreference.map((term: string) => (
-                                                <span key={term} className="px-2 py-0.5 bg-blue-500/10 text-blue-600 text-[11px] rounded-md border border-blue-500/20 capitalize font-medium">
+                                                <span key={term} className="px-2 py-0.5 bg-[#45699a]/10 text-[#45699a] text-[11px] rounded-md border border-[#45699a]/20 capitalize font-medium">
                                                     {term === 'unlimited' ? 'Permanent' : term}
                                                 </span>
                                             ))
@@ -496,7 +513,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                 {((data.additionalConditions && data.additionalConditions.length > 0) || (data.conditions?.additionalConditions && data.conditions.additionalConditions.length > 0)) && (
                                     <div className="w-full flex flex-wrap gap-2 mt-1">
                                         {((data.additionalConditions && data.additionalConditions.length > 0) ? data.additionalConditions : data.conditions?.additionalConditions).map((cond: string, idx: number) => (
-                                            <span key={idx} className="px-3 py-1 bg-orange-500/10 text-orange-600 text-[12px] rounded-2xl border border-orange-500/30 font-medium">
+                                            <span key={idx} className="px-3 py-1 bg-[#FFB800]/10 text-[#FFB800] text-[12px] rounded-2xl border border-[#FFB800]/30 font-medium">
                                                 {cond}
                                             </span>
                                         ))}
@@ -507,7 +524,7 @@ export const SharedCandidateProfile: React.FC<SharedCandidateProfileProps> = ({
                                 {data.tags && data.tags.length > 0 && (
                                     <div className="w-full flex flex-wrap gap-2 mt-2 pt-2 border-t border-border/30">
                                         {data.tags.map((tag: string) => (
-                                            <span key={tag} className="px-3 py-1 bg-orange-500/10 text-orange-600 text-[12px] rounded-2xl border border-orange-500/30 font-medium">
+                                            <span key={tag} className="px-3 py-1 bg-[#FFB800]/10 text-[#FFB800] text-[12px] rounded-2xl border border-[#FFB800]/30 font-medium">
                                                 # {tag}
                                             </span>
                                         ))}

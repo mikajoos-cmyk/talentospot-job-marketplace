@@ -23,6 +23,7 @@ export interface CandidateProfile {
   email?: string;
   phone?: string;
   title: string;
+  personalTitles: string[];
   location: string;
   city?: string;
   country?: string;
@@ -108,6 +109,7 @@ export interface CandidateFilters {
     cities: string[];
   };
   jobTitle?: string;
+  personalTitles?: string[];
   jobTypes?: string[];
   careerLevel?: string[];
   yearsOfExperience?: number[];

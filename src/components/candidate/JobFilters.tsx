@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronDown, Sparkles, RotateCcw, X, Plus, Users, Briefcase } from 'lucide-react';
 
 import { getLanguageLevelOptions } from '@/utils/language-levels';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
 import DrivingLicenseSelector from '@/components/shared/DrivingLicenseSelector';
 import { Switch } from '../../components/ui/switch';
@@ -47,6 +48,7 @@ export interface JobFiltersState {
     contractDuration: string;
     skills: string[];
     qualifications: string[];
+    personalTitles: string[];
     languages: { name: string; level: string }[] | string[];
     careerLevel: string;
     experienceYears: number | null;
@@ -70,10 +72,12 @@ interface JobFiltersProps {
 }
 
 const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMatchProfile, onReset, mapCenter }) => {
+    const { language } = useLanguage();
     const [requirementsOpen, setRequirementsOpen] = useState(false);
     const [conditionsOpen, setConditionsOpen] = useState(false);
     const [skillInput, setSkillInput] = useState('');
     const [qualificationInput, setQualificationInput] = useState('');
+    const [personalTitleInput, setPersonalTitleInput] = useState('');
     const [languageInput, setLanguageInput] = useState('');
     const [languageLevel, setLanguageLevel] = useState('B2');
     const [benefitInput, setBenefitInput] = useState('');
@@ -112,10 +116,10 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
     };
 
     const handleAddSkill = () => {
-        if (skillInput.trim() && !filters.skills.includes(skillInput.trim())) {
+        if (skillInput.trim() && !(filters.skills || []).includes(skillInput.trim())) {
             onFiltersChange({
                 ...filters,
-                skills: [...filters.skills, skillInput.trim()],
+                skills: [...(filters.skills || []), skillInput.trim()],
             });
             setSkillInput('');
         }
@@ -124,7 +128,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
     const handleRemoveSkill = (skill: string) => {
         onFiltersChange({
             ...filters,
-            skills: filters.skills.filter(s => s !== skill),
+            skills: (filters.skills || []).filter(s => s !== skill),
         });
     };
 
@@ -146,10 +150,10 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
     };
 
     const handleAddQualification = () => {
-        if (qualificationInput.trim() && !filters.qualifications.includes(qualificationInput.trim())) {
+        if (qualificationInput.trim() && !(filters.qualifications || []).includes(qualificationInput.trim())) {
             onFiltersChange({
                 ...filters,
-                qualifications: [...filters.qualifications, qualificationInput.trim()],
+                qualifications: [...(filters.qualifications || []), qualificationInput.trim()],
             });
             setQualificationInput('');
         }
@@ -158,7 +162,24 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
     const handleRemoveQualification = (qualification: string) => {
         onFiltersChange({
             ...filters,
-            qualifications: filters.qualifications.filter(q => q !== qualification),
+            qualifications: (filters.qualifications || []).filter(q => q !== qualification),
+        });
+    };
+
+    const handleAddPersonalTitle = () => {
+        if (personalTitleInput.trim() && !(filters.personalTitles || []).includes(personalTitleInput.trim())) {
+            onFiltersChange({
+                ...filters,
+                personalTitles: [...(filters.personalTitles || []), personalTitleInput.trim()],
+            });
+            setPersonalTitleInput('');
+        }
+    };
+
+    const handleRemovePersonalTitle = (title: string) => {
+        onFiltersChange({
+            ...filters,
+            personalTitles: (filters.personalTitles || []).filter(t => t !== title),
         });
     };
 
@@ -200,6 +221,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
             contractDuration: '',
             skills: [],
             qualifications: [],
+            personalTitles: [],
             languages: [],
             careerLevel: '',
             experienceYears: null,
@@ -217,7 +239,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
     };
 
     return (
-        <Card className="p-6 border border-primary/30 bg-card sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 group/filters">
+        <Card className="p-6 border-4 border-primary/40 bg-blue-50/50 sticky top-24 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 group/filters">
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-h4 font-heading text-foreground">Filters</h3>
                 <Button
@@ -457,10 +479,41 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                                 </Button>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {filters.qualifications.map(qual => (
+                                {(filters.qualifications || []).map(qual => (
                                     <div key={qual} className="flex items-center gap-1 px-3 py-1 bg-accent/10 text-accent rounded-full text-body-sm">
                                         <span>{qual}</span>
                                         <button onClick={() => handleRemoveQualification(qual)}><X className="w-4 h-4" /></button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Personal Titles */}
+                        <div>
+                            <Label className="text-body-sm font-medium text-foreground mb-2 block">
+                                Personal Titles
+                            </Label>
+                            <div className="flex space-x-2 mb-3">
+                                <AutocompleteInput
+                                    category="personal_titles"
+                                    placeholder="Add title..."
+                                    value={personalTitleInput}
+                                    onChange={setPersonalTitleInput}
+                                    onSelect={(val) => {
+                                        if (typeof val === 'string') handleAddPersonalTitle();
+                                        else if (val && val.name) handleAddPersonalTitle();
+                                    }}
+                                    className="bg-background text-foreground border-border"
+                                />
+                                <Button size="icon" onClick={handleAddPersonalTitle} className="bg-accent text-accent-foreground shrink-0">
+                                    <Plus className="w-5 h-5" />
+                                </Button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {(filters.personalTitles || []).map(title => (
+                                    <div key={title} className="flex items-center gap-1 px-3 py-1 bg-accent/10 text-accent rounded-full text-body-sm">
+                                        <span>{title}</span>
+                                        <button onClick={() => handleRemovePersonalTitle(title)}><X className="w-4 h-4" /></button>
                                     </div>
                                 ))}
                             </div>
@@ -485,7 +538,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                                         <SelectValue placeholder="Lvl" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {getLanguageLevelOptions().map(opt => (
+                                        {getLanguageLevelOptions(false, language).map(opt => (
                                             <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                                         ))}
                                     </SelectContent>
@@ -527,7 +580,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({ filters, onFiltersChange, onMat
                                 </Button>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {filters.skills.map(skill => (
+                                {(filters.skills || []).map(skill => (
                                     <div key={skill} className="flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-body-sm">
                                         <span>{skill}</span>
                                         <button onClick={() => handleRemoveSkill(skill)}><X className="w-4 h-4" /></button>

@@ -20,6 +20,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { candidateService } from '@/services/candidate.service';
 import { storageService } from '@/services/storage.service';
+import { formatLanguageLevel } from '@/utils/language-levels';
+import { useLanguage } from '@/contexts/LanguageContext';
 import MapView from '@/components/maps/MapView';
 import { getCoordinates } from '@/utils/geocoding';
 // import { Input } from '../../components/ui/input';
@@ -31,6 +33,7 @@ const JobDetailView: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { user, isAuthenticated } = useUser();
+  const { language } = useLanguage();
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
@@ -459,25 +462,12 @@ const JobDetailView: React.FC = () => {
 
                 {/* Skills & Tags */}
                 <div className="space-y-6">
-                  {job.required_qualifications?.length > 0 && (
-                    <div>
-                      <h4 className="text-caption font-bold text-foreground uppercase tracking-widest mb-3">Qualifications</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {job.required_qualifications.map((qual: string) => (
-                          <span key={qual} className="px-3 py-1 bg-accent/10 text-accent text-xs rounded-full font-medium border border-accent/20">
-                            {qual}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   {job.required_skills?.length > 0 && (
                     <div>
                       <h4 className="text-caption font-bold text-foreground uppercase tracking-widest mb-3">Skills</h4>
                       <div className="flex flex-wrap gap-2">
                         {job.required_skills.map((skill: string) => (
-                          <span key={skill} className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium border border-primary/20">
+                          <span key={skill} className="px-3 py-1 bg-muted text-muted-foreground text-xs rounded-full font-medium border border-border">
                             {skill}
                           </span>
                         ))}
@@ -490,8 +480,34 @@ const JobDetailView: React.FC = () => {
                       <h4 className="text-caption font-bold text-foreground uppercase tracking-widest mb-3">Benefits</h4>
                       <div className="flex flex-wrap gap-2">
                         {job.benefits.map((benefit: string) => (
-                          <span key={benefit} className="px-3 py-1 bg-secondary/10 text-secondary text-xs rounded-full font-medium border border-secondary/20">
+                          <span key={benefit} className="px-3 py-1 bg-[#FFB800]/10 text-[#FFB800] text-xs rounded-full font-medium border border-[#FFB800]/20">
                             {benefit}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {job.required_qualifications?.length > 0 && (
+                    <div>
+                      <h4 className="text-caption font-bold text-foreground uppercase tracking-widest mb-3">Qualifications</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {job.required_qualifications.map((qual: string) => (
+                          <span key={qual} className="px-3 py-1 bg-muted text-muted-foreground text-xs rounded-full font-medium border border-border">
+                            {qual}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {job.required_personal_titles?.length > 0 && (
+                    <div>
+                      <h4 className="text-caption font-bold text-foreground uppercase tracking-widest mb-3">Required Titles</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {job.required_personal_titles.map((title: string) => (
+                          <span key={title} className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium border border-primary/20">
+                            {title}
                           </span>
                         ))}
                       </div>
@@ -507,7 +523,7 @@ const JobDetailView: React.FC = () => {
                           const langLevel = typeof lang === 'object' && lang.level ? lang.level : null;
                           return (
                             <span key={index} className="px-3 py-1 bg-info/10 text-info text-xs rounded-full font-medium border border-info/20">
-                              {langName}{langLevel && ` (${langLevel})`}
+                              {langName}{langLevel && ` (${formatLanguageLevel(langLevel)})`}
                             </span>
                           );
                         })}

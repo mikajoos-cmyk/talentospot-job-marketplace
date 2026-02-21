@@ -1,9 +1,10 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, DollarSign, CheckCircle2, Award, Languages, Briefcase } from 'lucide-react';
+import { MapPin, DollarSign, CheckCircle2, Award, Languages, Briefcase, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatLanguageLevel } from '@/utils/language-levels';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CandidateListCardProps {
     candidate: any;
@@ -11,9 +12,15 @@ interface CandidateListCardProps {
 }
 
 const CandidateListCard: React.FC<CandidateListCardProps> = ({ candidate, onViewProfile }) => {
+    const { language } = useLanguage();
     // Extract info safely
     const name = candidate.profiles?.full_name || 'TalentoSPOT Candidate';
-    const title = candidate.job_title || 'Professional';
+    const personalTitles = candidate.candidate_personal_titles || candidate.personalTitles || [];
+    const jobTitle = candidate.job_title || candidate.jobTitle || 'Professional';
+    const personalTitleDisplay = personalTitles.length > 0 
+        ? personalTitles.map((t: any) => typeof t === 'string' ? t : (t.personal_titles?.name || t.name)).join(', ')
+        : '';
+    const fullTitle = personalTitleDisplay ? `${personalTitleDisplay} ${jobTitle}` : jobTitle;
     const location = `${candidate.city || ''}, ${candidate.country || ''}`;
     const status = candidate.employment_status || candidate.employmentStatus || 'Available';
     const isRefugee = candidate.is_refugee === true || candidate.isRefugee === true;
@@ -51,7 +58,9 @@ const CandidateListCard: React.FC<CandidateListCardProps> = ({ candidate, onView
                         )}
                     </div>
                     <h4 className={`text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors ${isBlurred ? 'blur-md select-none' : ''}`}>{name}</h4>
-                    <p className="text-sm font-medium text-muted-foreground mb-4">{title}</p>
+                    <div className="text-sm font-medium text-muted-foreground mb-4">
+                        {fullTitle}
+                    </div>
 
                     <div className="w-full pt-4 border-t border-border/50 space-y-2">
                         <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider">
@@ -96,8 +105,13 @@ const CandidateListCard: React.FC<CandidateListCardProps> = ({ candidate, onView
                                 <Award className="w-4 h-4" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Career Level</p>
-                                <p className="text-sm font-semibold capitalize">{careerLevel}</p>
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Qualification / Titles</p>
+                                <p className="text-sm font-semibold capitalize">
+                                    {[
+                                        ...personalTitles.map((t: any) => typeof t === 'string' ? t : (t.personal_titles?.name || t.name)),
+                                        (candidate.candidate_qualifications || candidate.qualifications || [])[0] ? (typeof (candidate.candidate_qualifications || candidate.qualifications || [])[0] === 'string' ? (candidate.candidate_qualifications || candidate.qualifications || [])[0] : ((candidate.candidate_qualifications || candidate.qualifications || [])[0].qualifications?.name || (candidate.candidate_qualifications || candidate.qualifications || [])[0].name)) : null
+                                    ].filter(Boolean).join(', ') || 'N/A'}
+                                </p>
                             </div>
                         </div>
 
@@ -109,6 +123,16 @@ const CandidateListCard: React.FC<CandidateListCardProps> = ({ candidate, onView
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Salary Expectation</p>
                                 <p className="text-sm font-semibold">{salary}</p>
                                 {bonus && <p className="text-xs font-bold text-[#FFB800]">Entry Bonus: {bonus}</p>}
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-lg bg-primary/5 text-primary">
+                                <CheckCircle2 className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Career Level</p>
+                                <p className="text-sm font-semibold capitalize">{careerLevel}</p>
                             </div>
                         </div>
                     </div>
@@ -134,10 +158,10 @@ const CandidateListCard: React.FC<CandidateListCardProps> = ({ candidate, onView
 
                         <div className="space-y-2">
                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight flex items-center gap-1.5">
-                                <Award className="w-3 h-3" /> Qualifications
+                                <Activity className="w-3 h-3" /> Qualifications
                             </p>
                             <div className="flex flex-wrap gap-1.5">
-                                {(candidate.candidate_qualifications || candidate.qualifications || []).slice(0, 3).map((q: any, i: number) => {
+                                {(candidate.candidate_qualifications || candidate.qualifications || []).map((q: any, i: number) => {
                                     const qualName = typeof q === 'string' ? q : (q.qualifications?.name || q.name || 'Qualification');
                                     return (
                                         <span key={i} className="px-2 py-0.5 bg-accent/10 text-accent text-[11px] font-bold rounded-md border border-accent/20">

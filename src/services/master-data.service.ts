@@ -183,7 +183,17 @@ export const masterDataService = {
     return data;
   },
 
-  async syncMasterData(category: 'skills' | 'qualifications' | 'languages' | 'job_titles' | 'tags' | 'requirements' | 'sectors', names: string[]) {
+  async getPersonalTitles() {
+    const { data, error } = await supabase
+      .from('personal_titles')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    return data;
+  },
+
+  async syncMasterData(category: 'skills' | 'qualifications' | 'languages' | 'job_titles' | 'tags' | 'requirements' | 'sectors' | 'personal_titles', names: string[]) {
     if (!names || names.length === 0) return;
 
     // Only allow for authenticated users
@@ -203,16 +213,19 @@ export const masterDataService = {
 
     const { error } = await supabase
       .from(category)
-      .upsert(insertData, { onConflict: 'name' });
+      .insert(insertData);
 
     if (error) {
+      if (error.code === '23505' || error.status === 409) {
+        return; // Ignore conflict
+      }
       console.error(`Error syncing master data for ${category}:`, error);
       // Don't throw to avoid breaking the caller
     }
   },
 
   async ensureMasterDataExists(category: string, name: string) {
-    const validCategories = ['skills', 'qualifications', 'job_titles', 'tags', 'requirements', 'sectors'];
+    const validCategories = ['skills', 'qualifications', 'job_titles', 'tags', 'requirements', 'sectors', 'personal_titles'];
     if (!validCategories.includes(category) || !name || name.trim() === '') return;
 
     try {
@@ -220,17 +233,20 @@ export const masterDataService = {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Check if it already exists in our local cache/suggestions if possible
-      // But upsert is idempotent, so it's fine to just call it.
-      // We use name as the conflict target.
-      const { error } = await supabase
-        .from(category)
-        .upsert({ name: name.trim() }, { onConflict: 'name' });
-      
-      if (error) {
-        // Log error but don't crash
-        console.error(`Error ensuring master data exists for ${category}:`, error);
+    // For upsert, we need both INSERT and UPDATE permissions in Supabase if we want it to be truly idempotent.
+    // However, if we only have INSERT, it will fail on conflict if the policy doesn't allow update.
+    // Given the 403 error, we check if we can just do a simple insert and ignore conflict.
+    const { error } = await supabase
+      .from(category)
+      .insert({ name: name.trim() });
+    
+    if (error) {
+      if (error.code === '23505' || error.status === 409) {
+        return; // Ignore conflict
       }
+      // Log error but don't crash
+      console.error(`Error ensuring master data exists for ${category}:`, error);
+    }
     } catch (error) {
       console.error(`Error ensuring master data exists for ${category}:`, error);
     }

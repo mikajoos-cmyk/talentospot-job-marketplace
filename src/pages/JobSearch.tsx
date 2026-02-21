@@ -150,6 +150,7 @@ const JobSearch: React.FC = () => {
       contractDuration: '',
       skills: [],
       qualifications: [],
+      personalTitles: [],
       languages: [],
       careerLevel: '',
       experienceYears: null,
@@ -246,6 +247,7 @@ const JobSearch: React.FC = () => {
         if (currentFilters.contractDuration) searchParams.contract_duration = currentFilters.contractDuration;
         if (currentFilters.skills.length > 0) searchParams.required_skills = currentFilters.skills;
         if (currentFilters.qualifications.length > 0) searchParams.required_qualifications = currentFilters.qualifications;
+        if (currentFilters.personalTitles.length > 0) searchParams.required_personal_titles = currentFilters.personalTitles;
         if (currentFilters.languages.length > 0) searchParams.required_languages = currentFilters.languages;
         if (currentFilters.careerLevel && currentFilters.careerLevel !== 'all') searchParams.career_level = currentFilters.careerLevel;
         if (currentFilters.experienceYears !== null) searchParams.experience_years = currentFilters.experienceYears;
@@ -348,6 +350,8 @@ const JobSearch: React.FC = () => {
         contractDuration: '',
         skills: (profile.skills || []).map((s: any) => s.name),
         qualifications: profile.qualifications || [],
+        personalTitles: profile.personalTitles || [],
+        jobTitles: profile.titles || [],
         languages: (profile.languages || []).map((l: any) =>
           typeof l === 'string' ? l : { name: l.name, level: l.level || l.proficiency_level || 'B2' }
         ),
@@ -392,6 +396,7 @@ const JobSearch: React.FC = () => {
       contractDuration: '',
       skills: [],
       qualifications: [],
+      personalTitles: [],
       languages: [],
       careerLevel: '',
       experienceYears: null,

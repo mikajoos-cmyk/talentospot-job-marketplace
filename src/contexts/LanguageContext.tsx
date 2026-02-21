@@ -22,6 +22,7 @@ interface LanguageContextType {
 const manualTranslations: Record<'en' | 'de', Record<string, string>> = {
   en: {
     'nav.dashboard': 'Dashboard',
+    'nav.home': 'Home',
     'nav.profile': 'My Profile',
     'nav.jobs': 'Find Jobs',
     'nav.saved': 'Saved Jobs',
@@ -62,6 +63,7 @@ const manualTranslations: Record<'en' | 'de', Record<string, string>> = {
   },
   de: {
     'nav.dashboard': 'Dashboard',
+    'nav.home': 'Landing Page',
     'nav.profile': 'Mein Profil',
     'nav.jobs': 'Jobs Finden',
     'nav.saved': 'Gespeicherte Jobs',
@@ -173,9 +175,23 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
     }
 
-    // Fallback: LocalStorage
-    const savedLang = localStorage.getItem('app_language') || 'en';
-    setLanguageState(savedLang);
+    // Fallback: Check browser language
+    const browserLang = navigator.language.split('-')[0];
+    const defaultLang = (browserLang === 'de') ? 'de' : 'en';
+
+    // Fallback: LocalStorage (but ONLY if it was explicitly set before, 
+    // otherwise we might be overriding the new default for returning users 
+    // who never manually switched. But for now, we just respect it if it exists.)
+    const savedLang = localStorage.getItem('app_language');
+    
+    if (savedLang) {
+      setLanguageState(savedLang);
+    } else {
+      // NEW DEFAULT: always 'en' as requested, 
+      // ignoring browser lang if we want to be strict,
+      // but 'en' is the safest bet for "standardmäßig auf englisch".
+      setLanguageState('en');
+    }
   }, []);
 
   // 3. Funktion zum Sprachwechsel
@@ -183,43 +199,32 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     setLanguageState(langCode);
     localStorage.setItem('app_language', langCode);
 
-    if (langCode === 'de') {
-      // MANUELLER MODUS: Google Translate ausschalten
-      // Cookie löschen, damit Google Translate nicht mehr eingreift
+    // Google Translate aktivieren (oder deaktivieren bei 'en', falls gewünscht, 
+    // aber wir folgen dem Wunsch nach "keine Ausnahme" und behandeln alle gleich)
+    if (langCode === 'en') {
+      // Bei Englisch Google Translate deaktivieren
       const domain = window.location.hostname;
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + domain;
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + domain;
-
-      // Seite neu laden um Google Translate Artefakte zu entfernen
-      window.location.reload();
     } else {
-      // AUTOMATISCHER MODUS: Google Translate aktivieren
-      // Cookie setzen: /quellsprache/zielsprache (auto = auto detect source)
+      // Alle anderen Sprachen (inkl. 'de') über Google Translate aktivieren
       document.cookie = `googtrans=/auto/${langCode}; path=/`;
-
-      // Optional: Auch für die Domain setzen, falls nötig
       const domain = window.location.hostname;
       if (domain !== 'localhost') {
         document.cookie = `googtrans=/auto/${langCode}; path=/; domain=.${domain}`;
       }
-
-      // Seite neu laden um Übersetzung zu triggern
-      window.location.reload();
     }
+
+    // Seite neu laden um Google Translate zu triggern/entfernen
+    window.location.reload();
   };
 
   // 4. Übersetzungsfunktion t()
   const t = (key: string): string => {
-    // Wenn Sprache DE ist, nimm deutsches Wörterbuch
-    if (language === 'de') {
-      return manualTranslations.de[key] || key;
-    }
-
-    // Wir geben immer den englischen Key zurück, damit Google Translate
-    // eine stabile Basis zum Übersetzen hat.
-    // Aber für Menü-Labels, die NICHT in manualTranslations stehen,
-    // geben wir den Key selbst zurück.
+    // Wir geben immer den englischen Wert aus manualTranslations zurück,
+    // damit Google Translate diesen als Basis für die Übersetzung nehmen kann.
+    // Das stellt sicher, dass alle Sprachen (außer Englisch) genau gleich behandelt werden.
     return manualTranslations.en[key] || key;
   };
 

@@ -23,6 +23,7 @@ import UpgradeModal from '../../components/shared/UpgradeModal';
 import { LocationPicker } from '../../components/shared/LocationPicker';
 import { findContinent } from '../../utils/locationUtils';
 
+import { Badge } from '../../components/ui/badge';
 const PostJob: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -93,6 +94,8 @@ const PostJob: React.FC = () => {
   const [languageLevel, setLanguageLevel] = useState('B2');
   const [qualifications, setQualifications] = useState<string[]>([]);
   const [qualificationInput, setQualificationInput] = useState('');
+  const [personalTitles, setPersonalTitles] = useState<string[]>([]);
+  const [personalTitleInput, setPersonalTitleInput] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState('');
   const [benefits, setBenefits] = useState<string[]>([]);
@@ -118,6 +121,17 @@ const PostJob: React.FC = () => {
 
   const handleRemoveQualification = (qualification: string) => {
     setQualifications(qualifications.filter(q => q !== qualification));
+  };
+
+  const handleAddPersonalTitle = () => {
+    if (personalTitleInput.trim() && !personalTitles.includes(personalTitleInput.trim())) {
+      setPersonalTitles([...personalTitles, personalTitleInput.trim()]);
+      setPersonalTitleInput('');
+    }
+  };
+
+  const handleRemovePersonalTitle = (title: string) => {
+    setPersonalTitles(personalTitles.filter(t => t !== title));
   };
 
   const handleAddSkill = () => {
@@ -146,7 +160,7 @@ const PostJob: React.FC = () => {
     if (!formData.title || !formData.description) {
       showToast({
         title: 'Error',
-        description: 'Please fill in all required fields',
+        description: 'Please fill in all required fields (Job Title and Description)',
         variant: 'destructive',
       });
       return;
@@ -179,6 +193,7 @@ const PostJob: React.FC = () => {
         contract_duration: formData.contractDuration,
         required_languages: languages,
         required_qualifications: qualifications,
+        required_personal_titles: personalTitles,
         required_skills: skills,
         home_office_available: formData.homeOfficeAvailable,
         career_level: formData.careerLevel,
@@ -276,7 +291,7 @@ const PostJob: React.FC = () => {
 
         <Card className="p-6 md:p-8 border border-border bg-card">
           <div className="space-y-6">
-            <div>
+            <div className="md:col-span-2">
               <Label htmlFor="title" className="text-body-sm font-medium text-foreground mb-2 block">
                 Job Title <span className="text-error">*</span>
               </Label>
@@ -285,10 +300,11 @@ const PostJob: React.FC = () => {
                 id="title"
                 value={formData.title}
                 onChange={(val: string) => setFormData({ ...formData, title: val })}
-                placeholder="e.g., Senior Frontend Developer"
+                placeholder="e.g. Software Engineer"
                 className="bg-background text-foreground border-border"
               />
             </div>
+
 
             <div>
               <Label htmlFor="sector" className="text-body-sm font-medium text-foreground mb-2 block">
@@ -595,6 +611,51 @@ const PostJob: React.FC = () => {
                       <X className="w-4 h-4" strokeWidth={2} />
                     </button>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="personalTitles" className="text-body-sm font-medium text-foreground mb-2 block">
+                Required Personal Titles (e.g. Dr., Prof.)
+              </Label>
+              <div className="flex space-x-2 mb-3">
+                <AutocompleteInput
+                  category="personal_titles"
+                  id="personalTitles"
+                  value={personalTitleInput}
+                  onChange={(val: string) => setPersonalTitleInput(val)}
+                  onSelect={(val) => {
+                    if (typeof val === 'string') handleAddPersonalTitle();
+                    else if (val && val.name) handleAddPersonalTitle();
+                  }}
+                  placeholder="Search personal titles..."
+                  className="flex-1 bg-background text-foreground border-border"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddPersonalTitle}
+                  className="border-primary text-primary hover:bg-primary/5"
+                >
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {personalTitles.map((title) => (
+                  <Badge
+                    key={title}
+                    variant="secondary"
+                    className="px-3 py-1 bg-primary/10 text-primary border-none flex items-center space-x-2"
+                  >
+                    <span className="text-caption font-medium">{title}</span>
+                    <button
+                      onClick={() => handleRemovePersonalTitle(title)}
+                      className="hover:text-primary-dark transition-colors"
+                    >
+                      <X className="w-3 h-3 ml-1" />
+                    </button>
+                  </Badge>
                 ))}
               </div>
             </div>

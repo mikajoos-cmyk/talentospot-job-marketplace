@@ -244,6 +244,7 @@ export const candidateService = {
       nationality: data.nationality || '',
       gender: data.gender || '',
       nationalityCode: data.nationality_code || '',
+      description: data.description || '',
       salary: {
         min: data.salary_expectation_min || 0,
         max: data.salary_expectation_max || 0
@@ -254,6 +255,7 @@ export const candidateService = {
         percentage: item.proficiency_percentage
       })) || [],
       qualifications: data.candidate_qualifications?.map((q: any) => q.qualifications?.name) || [],
+      personalTitles: data.candidate_personal_titles?.map((t: any) => t.personal_titles?.name) || [],
       requirements: data.candidate_requirements?.map((r: any) => r.requirements?.name) || [],
       isRefugee: data.is_refugee,
       originCountry: data.origin_country,
@@ -357,6 +359,7 @@ export const candidateService = {
         candidate_education(*),
         candidate_awards(*),
         candidate_qualifications(qualifications(id, name)),
+        candidate_personal_titles(personal_titles(id, name)),
         candidate_requirements(requirements(id, name)),
         candidate_preferred_locations(
           id,
@@ -521,8 +524,14 @@ export const candidateService = {
       if (dbUpdates.tags && dbUpdates.tags.length > 0) {
         await masterDataService.syncMasterData('tags', dbUpdates.tags);
       }
+      if (updates.personalTitles && updates.personalTitles.length > 0) {
+        await masterDataService.syncMasterData('personal_titles', updates.personalTitles);
+      }
+      if (updates.qualifications && updates.qualifications.length > 0) {
+        await masterDataService.syncMasterData('qualifications', updates.qualifications);
+      }
     } catch (e) {
-      console.error('Error syncing master data tags/titles:', e);
+      console.error('Error syncing master data tags/titles/quals:', e);
     }
 
     // 3. Relationen speichern
@@ -636,6 +645,41 @@ export const candidateService = {
 
         if (qualId) {
           await supabase.from('candidate_qualifications').insert({ candidate_id: userId, qualification_id: qualId });
+        }
+      }
+    }
+
+    // --- Personal Titles (NEW) ---
+    if (updates.personalTitles && Array.isArray(updates.personalTitles)) {
+      await supabase.from('candidate_personal_titles').delete().eq('candidate_id', userId);
+
+      for (const titleName of updates.personalTitles) {
+        if (!titleName) continue;
+        let titleId;
+        const { data: existing } = await supabase
+          .from('personal_titles')
+          .select('id')
+          .ilike('name', titleName)
+          .maybeSingle();
+
+        if (existing) {
+          titleId = existing.id;
+        } else {
+          const { data: newTitle, error: insertError } = await supabase
+            .from('personal_titles')
+            .insert({ name: titleName })
+            .select('id')
+            .single();
+
+          if (insertError) {
+            console.error('Error creating personal title:', insertError);
+            continue;
+          }
+          titleId = newTitle?.id;
+        }
+
+        if (titleId) {
+          await supabase.from('candidate_personal_titles').insert({ candidate_id: userId, personal_title_id: titleId });
         }
       }
     }
@@ -871,6 +915,9 @@ export const candidateService = {
       candidate_qualifications${filters.qualifications?.length ? '!inner' : ''}(
         qualifications(name)
       ),
+      candidate_personal_titles${filters.personalTitles?.length ? '!inner' : ''}(
+        personal_titles(name)
+      ),
       driving_licenses,
       work_radius_km
     `;
@@ -880,8 +927,12 @@ export const candidateService = {
       .select(selectString)
       .eq('profiles.is_visible', true);
 
-    if (filters.job_title) {
-      query = query.ilike('job_title', `%${filters.job_title.trim()}%`);
+    if (filters.jobTitle) {
+      query = query.ilike('job_title', `%${filters.jobTitle.trim()}%`);
+    }
+
+    if (filters.personalTitles && Array.isArray(filters.personalTitles) && filters.personalTitles.length > 0) {
+      query = query.in('candidate_personal_titles.personal_titles.name', filters.personalTitles);
     }
 
     if (filters.sector) {
